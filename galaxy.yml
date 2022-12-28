@@ -22,3 +22,4 @@ build_ignore:
   - .gitignore
   - changelogs/.plugin-cache.yaml
   - .DS_Store
+  - "*.tar.gz"
