@@ -12,7 +12,7 @@ name: scaleway
 author:
   - Nathanael Demacon (@quantumsheep)
 short_description: Scaleway inventory source
-version_added: "1.1.0"
+version_added: "1.0.0"
 requirements:
   - scaleway >= 0.3.0
 description:
