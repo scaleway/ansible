@@ -1,6 +1,6 @@
 # See https://docs.ansible.com/ansible/latest/dev_guide/collections_galaxy_meta.html
 
-namespace: community
+namespace: quantumsheep
 name: scaleway
 version: 1.0.0
 readme: README.md
@@ -14,10 +14,10 @@ tags:
   - cloud
   - compute
   - instances
-repository: https://github.com/ansible-collections/community.scaleway
+repository: https://github.com/quantumsheep/community.scaleway
 #documentation: https://github.com/ansible-collection-migration/community.REPO_NAME/tree/main/docs
-homepage: https://github.com/ansible-collections/community.scaleway
-issues: https://github.com/ansible-collections/community.scaleway/issues
+homepage: https://github.com/quantumsheep/community.scaleway
+issues: https://github.com/quantumsheep/community.scaleway/issues
 build_ignore:
   - .gitignore
   - changelogs/.plugin-cache.yaml

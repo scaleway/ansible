@@ -24,9 +24,9 @@ extends_documentation_fragment:
 options:
   plugin:
     description:
-      - The name of the Scaleway Inventory Plugin, this should always be C(community.scaleway.scaleway).
+      - The name of the Scaleway Inventory Plugin, this should always be C(quantumsheep.scaleway.scaleway).
     required: true
-    choices: ['community.scaleway.scaleway']
+    choices: ['quantumsheep.scaleway.scaleway']
   profile:
     description:
       - The Scaleway profile to load. Leave empty to disable.
@@ -103,7 +103,7 @@ options:
 """
 
 EXAMPLES = r"""
-plugin: community.scaleway.scaleway
+plugin: quantumsheep.scaleway.scaleway
 access_key: <your access key>
 secret_key: <your secret key>
 api_url: https://api.scaleway.com
@@ -150,7 +150,7 @@ class _Host:
     public_ipv6: Optional[str]
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
-    NAME = "community.scaleway.scaleway"
+    NAME = "quantumsheep.scaleway.scaleway"
 
     def verify_file(self, path: str):
         if not super(InventoryModule, self).verify_file(path):
