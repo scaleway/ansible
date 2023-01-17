@@ -2,7 +2,7 @@
 
 This collection contains modules and plugins for Ansible to automate the management of Scaleway infrastructure and services.
 
-## Useful information
+## Useful links
 
 - [Scaleway](https://www.scaleway.com/)
 - [Scaleway Developers Website](https://developers.scaleway.com/)
