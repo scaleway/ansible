@@ -122,6 +122,10 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructa
 from scaleway import Client, ScalewayException
 from scaleway.instance.v1 import InstanceV1API, ServerState, Server as InstanceServer
 from scaleway.baremetal.v1 import BaremetalV1API, IPVersion, Server as BaremetalServer
+from scaleway.applesilicon.v1alpha1 import (
+    ApplesiliconV1Alpha1API,
+    Server as ApplesiliconServer,
+)
 from scaleway_core.bridge import Zone
 
 _ALLOWED_FILE_NAME_SUFFIXES = (
@@ -148,6 +152,7 @@ class _Host:
     public_ipv4: Optional[str]
     private_ipv4: Optional[str]
     public_ipv6: Optional[str]
+
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = "quantumsheep.scaleway.scaleway"
@@ -240,7 +245,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             host = _Host(
                 id=server.id,
                 hostname=server.hostname,
-                tags=server.tags,
+                tags=["instance", *server.tags],
                 zone=server.zone,
                 public_ipv4=server.public_ip.address if server.public_ip else None,
                 private_ipv4=server.private_ip,
@@ -278,7 +283,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             host = _Host(
                 id=server.id,
                 hostname=server.name,
-                tags=server.tags,
+                tags=["elastic_metal", *server.tags],
                 zone=server.zone,
                 public_ipv4=public_ipv4.address if public_ipv4 else None,
                 private_ipv4=None,
@@ -287,7 +292,36 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             results.append(host)
 
-        self.display.display(f"Found {len(results)} elastic metal servers")
+        return results
+
+    def _get_apple_sillicon(self, client: Client, filters: _Filters) -> List[_Host]:
+        api = ApplesiliconV1Alpha1API(client)
+
+        servers: List[ApplesiliconServer] = []
+
+        for zone in filters.zones:
+            try:
+                found = api.list_servers_all(
+                    zone=zone,
+                )
+
+                servers.extend(found)
+            except ScalewayException:
+                pass
+
+        results: List[_Host] = []
+        for server in servers:
+            host = _Host(
+                id=server.id,
+                hostname=server.name,
+                tags=["apple_sillicon"],
+                zone=server.zone,
+                public_ipv4=server.ip,
+                private_ipv4=None,
+                public_ipv6=None,
+            )
+
+            results.append(host)
 
         return results
 
