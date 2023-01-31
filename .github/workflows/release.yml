@@ -28,7 +28,7 @@ jobs:
 
       - name: Set galaxy.yml version
         run: |
-          sed -i -e "s/version:.*/version: ${{ github.ref }}/" galaxy.yml
+          sed -i -e "s/version:.*/version: ${{ github.ref_name }}/" galaxy.yml
 
       - name: Build changelog
         run: antsibull-changelog release
