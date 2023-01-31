@@ -56,3 +56,4 @@ jobs:
             Update changelog for ${{ github.ref_name }}
           branch: docs/update-changelog-${{ github.ref_name }}
           delete-branch: true
+          base: main
