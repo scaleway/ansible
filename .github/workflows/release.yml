@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  publish:
+    name: Publish to Galaxy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Install Ansible
+        run: pip install ansible
+
+      - name: Install antsibull-changelog
+        run: pip install antsibull-changelog
+
+      - name: Set galaxy.yml version
+        run: |
+          sed -i -e "s/version:.*/version: ${{ github.ref }}/" galaxy.yml
+
+      - name: Build changelog
+        run: antsibull-changelog release
+
+      - name: Build collection
+        run: ansible-galaxy collection build
+
+      - name: Build and publish collection to Galaxy
+        run: ansible-galaxy collection publish --api-key ${{ secrets.GALAXY_API_KEY }} quantumsheep-scaleway-${{ github.ref }}.tar.gz
