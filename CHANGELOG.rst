@@ -1,5 +1,28 @@
-Will be updated by antsibull-changelog. Do not edit this manually!
+================================
+Community Scaleway Release Notes
+================================
 
-See https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst for information on how to use antsibull-changelog.
+.. contents:: Topics
 
-Check out ``changelogs/config.yaml`` for its configuration. You need to change at least the ``title`` field in there.
+
+v1.2.0
+======
+
+v1.1.0
+======
+
+Minor Changes
+-------------
+
+- scaleway inventory script - add elastic metal and apple silicon support
+
+v1.0.0
+======
+
+New Plugins
+-----------
+
+Inventory
+~~~~~~~~~
+
+- scaleway - Scaleway inventory source

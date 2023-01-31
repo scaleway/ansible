@@ -1,1 +1,16 @@
-releases: {}
+ancestor: null
+releases:
+  1.0.0:
+    plugins:
+      inventory:
+      - description: Scaleway inventory source
+        name: scaleway
+        namespace: null
+    release_date: '2023-01-17'
+  1.1.0:
+    changes:
+      minor_changes:
+      - scaleway inventory script - add elastic metal and apple silicon support
+    release_date: '2023-01-17'
+  1.2.0:
+    release_date: '2023-01-17'
