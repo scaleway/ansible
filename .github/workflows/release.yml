@@ -39,6 +39,13 @@ jobs:
       - name: Build and publish collection to Galaxy
         run: ansible-galaxy collection publish --api-key ${{ secrets.GALAXY_API_KEY }} quantumsheep-scaleway-${{ github.ref_name }}.tar.gz
 
+      - name: Create a release with the collection artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            quantumsheep-scaleway-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
+
       - name: Create a PR to update changelog
         uses: peter-evans/create-pull-request@v4
         with:
