@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - v*
+      - "*"
 
 jobs:
   publish:
@@ -37,4 +37,15 @@ jobs:
         run: ansible-galaxy collection build
 
       - name: Build and publish collection to Galaxy
-        run: ansible-galaxy collection publish --api-key ${{ secrets.GALAXY_API_KEY }} quantumsheep-scaleway-${{ github.ref }}.tar.gz
+        run: ansible-galaxy collection publish --api-key ${{ secrets.GALAXY_API_KEY }} quantumsheep-scaleway-${{ github.ref_name }}.tar.gz
+
+      - name: Create a PR to update changelog
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs: update changelog for ${{ github.ref_name }}"
+          title: "docs: update changelog for ${{ github.ref_name }}"
+          body: |
+            Update changelog for ${{ github.ref_name }}
+          branch: docs/update-changelog-${{ github.ref_name }}
+          delete-branch: true
