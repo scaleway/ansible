@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c), Ansible Project
+# Copyright: (c), Nathanael Demacon (@quantumsheep)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,11 +15,12 @@ author:
 short_description: Scaleway inventory source
 version_added: "1.0.0"
 requirements:
-  - scaleway >= 0.4.0
+  - scaleway >= 0.6.0
 description:
   - Scaleway inventory plugin.
   - Uses configuration file that ends with '(scaleway|scw).(yaml|yml)'.
 extends_documentation_fragment:
+  - quantumsheep.scaleway.scaleway
   - constructed
   - inventory_cache
 options:
@@ -27,48 +29,6 @@ options:
       - The name of the Scaleway Inventory Plugin, this should always be C(quantumsheep.scaleway.scaleway).
     required: true
     choices: ['quantumsheep.scaleway.scaleway']
-  profile:
-    description:
-      - The Scaleway profile to load. Leave empty to disable.
-    type: str
-    required: false
-  config_file:
-    description:
-      - Path to the Scaleway configuration file. Leave empty to use the default path.
-    type: str
-    required: false
-    env:
-      - name: SCW_config_file
-  access_key:
-    description:
-      - Scaleway API access key.
-    type: str
-    required: false
-    env:
-      - name: SCW_ACCESS_KEY
-  secret_key:
-    description:
-      - Scaleway API secret key.
-    type: str
-    required: false
-    env:
-      - name: SCW_SECRET_KEY
-  api_url:
-    description:
-      - Scaleway API URL.
-    type: str
-    default: https://api.scaleway.com
-    env:
-      - name: SCW_API_URL
-  api_allow_insecure:
-    description:
-      - Allow insecure connection to Scaleway API.
-    type: bool
-    default: false
-  user_agent:
-    description:
-      - User agent used by the Scaleway API client.
-    type: str
   zones:
     description:
       - List of zones to filter on.
