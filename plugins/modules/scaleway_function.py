@@ -4,10 +4,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_function
+short_description: Manage Scaleway function's function
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway function's function.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -31,6 +31,31 @@ options:
     namespace_id:
         type: str
         required: true
+    runtime:
+        type: str
+        required: true
+        choices:
+            - unknown_runtime
+            - golang
+            - python
+            - python3
+            - node8
+            - node10
+            - node14
+            - node16
+            - node17
+            - python37
+            - python38
+            - python39
+            - python310
+            - go113
+            - go117
+            - go118
+            - node18
+            - rust165
+            - go119
+            - python311
+            - php82
     privacy:
         type: str
         required: true
@@ -38,13 +63,6 @@ options:
             - unknown_privacy
             - public
             - private
-    protocol:
-        type: str
-        required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
     http_option:
         type: str
         required: true
@@ -77,17 +95,11 @@ options:
     timeout:
         type: str
         required: false
+    handler:
+        type: str
+        required: false
     description:
         type: str
-        required: false
-    registry_image:
-        type: str
-        required: false
-    max_concurrency:
-        type: int
-        required: false
-    port:
-        type: int
         required: false
     secret_environment_variables:
         type: list
@@ -96,8 +108,8 @@ options:
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+function:
+    description: The function information
     returned: when I(state=present)
     type: dict
     sample:
@@ -110,22 +122,21 @@ container:
             cccccc: dddddd
         min_scale: 3
         max_scale: 3
+        runtime: golang
         memory_limit: 3
         cpu_limit: 3
         timeout: "aaaaaa"
+        handler: "aaaaaa"
         error_message: "aaaaaa"
         privacy: public
         description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
         domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
         secret_environment_variables:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
         region: fr-par
+        http_option: enabled
+        runtime_message: "aaaaaa"
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -138,15 +149,15 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 )
 
 from scaleway import Client, ScalewayException
-from scaleway.container.v1beta1 import ContainerV1Beta1API
+from scaleway.function.v1beta1 import FunctionV1Beta1API
 
 
 def create(module: AnsibleModule, client: Client) -> None:
-    api = ContainerV1Beta1API(client)
+    api = FunctionV1Beta1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_function(function_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -156,37 +167,37 @@ def create(module: AnsibleModule, client: Client) -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    resource = api.create_container(**module.params)
-    resource = api.wait_for_container(container_id=resource.id)
+    resource = api.create_function(**module.params)
+    resource = api.wait_for_function(function_id=resource.id)
 
     module.exit_json(changed=True, data=resource)
 
 
 def delete(module: AnsibleModule, client: Client) -> None:
-    api = ContainerV1Beta1API(client)
+    api = FunctionV1Beta1API(client)
 
     id = module.params["id"]
     name = module.params["name"]
 
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_function(function_id=id)
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id)
+    api.delete_function(function_id=resource.id)
 
     try:
-        api.wait_for_container(container_id=resource.id)
+        api.wait_for_function(function_id=resource.id)
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"function's function {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -211,11 +222,35 @@ def main() -> None:
         state=dict(type="str", default="present", choices=["absent", "present"]),
         id=dict(type="str"),
         namespace_id=dict(type="str", required=True),
+        runtime=dict(
+            type="str",
+            required=True,
+            choices=[
+                "unknown_runtime",
+                "golang",
+                "python",
+                "python3",
+                "node8",
+                "node10",
+                "node14",
+                "node16",
+                "node17",
+                "python37",
+                "python38",
+                "python39",
+                "python310",
+                "go113",
+                "go117",
+                "go118",
+                "node18",
+                "rust165",
+                "go119",
+                "python311",
+                "php82",
+            ],
+        ),
         privacy=dict(
             type="str", required=True, choices=["unknown_privacy", "public", "private"]
-        ),
-        protocol=dict(
-            type="str", required=True, choices=["unknown_protocol", "http1", "h2c"]
         ),
         http_option=dict(
             type="str",
@@ -229,10 +264,8 @@ def main() -> None:
         max_scale=dict(type="int", required=False),
         memory_limit=dict(type="int", required=False),
         timeout=dict(type="str", required=False),
+        handler=dict(type="str", required=False),
         description=dict(type="str", required=False),
-        registry_image=dict(type="str", required=False),
-        max_concurrency=dict(type="int", required=False),
-        port=dict(type="int", required=False),
         secret_environment_variables=dict(type="list", required=False),
     )
 

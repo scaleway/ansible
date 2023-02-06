@@ -4,10 +4,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_k8s_pool
+short_description: Manage Scaleway k8s's pool
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway k8s's pool.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -28,30 +28,36 @@ options:
     id:
         required: false
         type: str
-    namespace_id:
+    cluster_id:
         type: str
         required: true
-    privacy:
+    node_type:
         type: str
         required: true
-        choices:
-            - unknown_privacy
-            - public
-            - private
-    protocol:
-        type: str
+    autoscaling:
+        type: bool
         required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
-    http_option:
+    size:
+        type: int
+        required: true
+    container_runtime:
         type: str
         required: true
         choices:
-            - unknown_http_option
-            - enabled
-            - redirected
+            - unknown_runtime
+            - docker
+            - containerd
+            - crio
+    autohealing:
+        type: bool
+        required: true
+    root_volume_type:
+        type: str
+        required: true
+        choices:
+            - default_volume_type
+            - l_ssd
+            - b_ssd
     region:
         type: str
         required: false
@@ -62,69 +68,66 @@ options:
     name:
         type: str
         required: false
-    environment_variables:
+    placement_group_id:
+        type: str
+        required: false
+    min_size:
+        type: int
+        required: false
+    max_size:
+        type: int
+        required: false
+    tags:
+        type: list
+        required: false
+    kubelet_args:
         type: dict
         required: false
-    min_scale:
-        type: int
+    upgrade_policy:
+        type: dict
         required: false
-    max_scale:
-        type: int
-        required: false
-    memory_limit:
-        type: int
-        required: false
-    timeout:
+    zone:
         type: str
         required: false
-    description:
-        type: str
-        required: false
-    registry_image:
-        type: str
-        required: false
-    max_concurrency:
+    root_volume_size:
         type: int
-        required: false
-    port:
-        type: int
-        required: false
-    secret_environment_variables:
-        type: list
         required: false
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+pool:
+    description: The pool information
     returned: when I(state=present)
     type: dict
     sample:
         id: 00000000-0000-0000-0000-000000000000
+        cluster_id: 00000000-0000-0000-0000-000000000000
+        created_at: "aaaaaa"
+        updated_at: "aaaaaa"
         name: "aaaaaa"
-        namespace_id: 00000000-0000-0000-0000-000000000000
         status: ready
-        environment_variables:
-            aaaaaa: bbbbbb
-            cccccc: dddddd
-        min_scale: 3
-        max_scale: 3
-        memory_limit: 3
-        cpu_limit: 3
-        timeout: "aaaaaa"
-        error_message: "aaaaaa"
-        privacy: public
-        description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
-        domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
-        secret_environment_variables:
+        version: "aaaaaa"
+        node_type: "aaaaaa"
+        autoscaling: true
+        size: 3
+        min_size: 3
+        max_size: 3
+        container_runtime: docker
+        autohealing: true
+        tags:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
+        placement_group_id: 00000000-0000-0000-0000-000000000000
+        kubelet_args:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        upgrade_policy:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        zone: "aaaaaa"
+        root_volume_type: default_volume_type
+        root_volume_size: 3
         region: fr-par
 """
 
@@ -138,15 +141,15 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 )
 
 from scaleway import Client, ScalewayException
-from scaleway.container.v1beta1 import ContainerV1Beta1API
+from scaleway.k8s.v1 import K8SV1API
 
 
 def create(module: AnsibleModule, client: Client) -> None:
-    api = ContainerV1Beta1API(client)
+    api = K8SV1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_pool(pool_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -156,37 +159,37 @@ def create(module: AnsibleModule, client: Client) -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    resource = api.create_container(**module.params)
-    resource = api.wait_for_container(container_id=resource.id)
+    resource = api.create_pool(**module.params)
+    resource = api.wait_for_pool(pool_id=resource.id)
 
     module.exit_json(changed=True, data=resource)
 
 
 def delete(module: AnsibleModule, client: Client) -> None:
-    api = ContainerV1Beta1API(client)
+    api = K8SV1API(client)
 
     id = module.params["id"]
     name = module.params["name"]
 
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_pool(pool_id=id)
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id)
+    api.delete_pool(pool_id=resource.id)
 
     try:
-        api.wait_for_container(container_id=resource.id)
+        api.wait_for_pool(pool_id=resource.id)
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"k8s's pool {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -210,30 +213,29 @@ def main() -> None:
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
         id=dict(type="str"),
-        namespace_id=dict(type="str", required=True),
-        privacy=dict(
-            type="str", required=True, choices=["unknown_privacy", "public", "private"]
-        ),
-        protocol=dict(
-            type="str", required=True, choices=["unknown_protocol", "http1", "h2c"]
-        ),
-        http_option=dict(
+        cluster_id=dict(type="str", required=True),
+        node_type=dict(type="str", required=True),
+        autoscaling=dict(type="bool", required=True),
+        size=dict(type="int", required=True),
+        container_runtime=dict(
             type="str",
             required=True,
-            choices=["unknown_http_option", "enabled", "redirected"],
+            choices=["unknown_runtime", "docker", "containerd", "crio"],
+        ),
+        autohealing=dict(type="bool", required=True),
+        root_volume_type=dict(
+            type="str", required=True, choices=["default_volume_type", "l_ssd", "b_ssd"]
         ),
         region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
         name=dict(type="str", required=False),
-        environment_variables=dict(type="dict", required=False),
-        min_scale=dict(type="int", required=False),
-        max_scale=dict(type="int", required=False),
-        memory_limit=dict(type="int", required=False),
-        timeout=dict(type="str", required=False),
-        description=dict(type="str", required=False),
-        registry_image=dict(type="str", required=False),
-        max_concurrency=dict(type="int", required=False),
-        port=dict(type="int", required=False),
-        secret_environment_variables=dict(type="list", required=False),
+        placement_group_id=dict(type="str", required=False),
+        min_size=dict(type="int", required=False),
+        max_size=dict(type="int", required=False),
+        tags=dict(type="list", required=False),
+        kubelet_args=dict(type="dict", required=False),
+        upgrade_policy=dict(type="dict", required=False),
+        zone=dict(type="str", required=False),
+        root_volume_size=dict(type="int", required=False),
     )
 
     module = AnsibleModule(

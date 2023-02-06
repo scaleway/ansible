@@ -4,10 +4,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_rdb_instance
+short_description: Manage Scaleway rdb's instance
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway rdb's instance.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -28,30 +28,36 @@ options:
     id:
         required: false
         type: str
-    namespace_id:
+    engine:
         type: str
         required: true
-    privacy:
+    user_name:
+        type: str
+        required: true
+    password:
+        type: str
+        required: true
+    node_type:
+        type: str
+        required: true
+    is_ha_cluster:
+        type: bool
+        required: true
+    disable_backup:
+        type: bool
+        required: true
+    volume_type:
         type: str
         required: true
         choices:
-            - unknown_privacy
-            - public
-            - private
-    protocol:
-        type: str
+            - lssd
+            - bssd
+    volume_size:
+        type: int
         required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
-    http_option:
-        type: str
+    backup_same_region:
+        type: bool
         required: true
-        choices:
-            - unknown_http_option
-            - enabled
-            - redirected
     region:
         type: str
         required: false
@@ -59,73 +65,77 @@ options:
             - fr-par
             - nl-ams
             - pl-waw
+    organization_id:
+        type: str
+        required: false
+    project_id:
+        type: str
+        required: false
     name:
         type: str
         required: false
-    environment_variables:
-        type: dict
+    tags:
+        type: list
         required: false
-    min_scale:
-        type: int
+    init_settings:
+        type: list
         required: false
-    max_scale:
-        type: int
-        required: false
-    memory_limit:
-        type: int
-        required: false
-    timeout:
-        type: str
-        required: false
-    description:
-        type: str
-        required: false
-    registry_image:
-        type: str
-        required: false
-    max_concurrency:
-        type: int
-        required: false
-    port:
-        type: int
-        required: false
-    secret_environment_variables:
+    init_endpoints:
         type: list
         required: false
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+instance:
+    description: The instance information
     returned: when I(state=present)
     type: dict
     sample:
-        id: 00000000-0000-0000-0000-000000000000
-        name: "aaaaaa"
-        namespace_id: 00000000-0000-0000-0000-000000000000
-        status: ready
-        environment_variables:
+        created_at: "aaaaaa"
+        volume:
             aaaaaa: bbbbbb
             cccccc: dddddd
-        min_scale: 3
-        max_scale: 3
-        memory_limit: 3
-        cpu_limit: 3
-        timeout: "aaaaaa"
-        error_message: "aaaaaa"
-        privacy: public
-        description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
-        domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
-        secret_environment_variables:
+        region: fr-par
+        id: 00000000-0000-0000-0000-000000000000
+        name: "aaaaaa"
+        organization_id: 00000000-0000-0000-0000-000000000000
+        project_id: 00000000-0000-0000-0000-000000000000
+        status: ready
+        engine: "aaaaaa"
+        upgradable_version:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
-        region: fr-par
+        endpoint:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        tags:
+            - aaaaaa
+            - bbbbbb
+        settings:
+            - aaaaaa
+            - bbbbbb
+        backup_schedule:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        is_ha_cluster: true
+        read_replicas:
+            - aaaaaa
+            - bbbbbb
+        node_type: "aaaaaa"
+        init_settings:
+            - aaaaaa
+            - bbbbbb
+        endpoints:
+            - aaaaaa
+            - bbbbbb
+        logs_policy:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        backup_same_region: true
+        maintenances:
+            - aaaaaa
+            - bbbbbb
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -138,15 +148,15 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 )
 
 from scaleway import Client, ScalewayException
-from scaleway.container.v1beta1 import ContainerV1Beta1API
+from scaleway.rdb.v1 import RdbV1API
 
 
 def create(module: AnsibleModule, client: Client) -> None:
-    api = ContainerV1Beta1API(client)
+    api = RdbV1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_instance(instance_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -156,37 +166,37 @@ def create(module: AnsibleModule, client: Client) -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    resource = api.create_container(**module.params)
-    resource = api.wait_for_container(container_id=resource.id)
+    resource = api.create_instance(**module.params)
+    resource = api.wait_for_instance(instance_id=resource.id)
 
     module.exit_json(changed=True, data=resource)
 
 
 def delete(module: AnsibleModule, client: Client) -> None:
-    api = ContainerV1Beta1API(client)
+    api = RdbV1API(client)
 
     id = module.params["id"]
     name = module.params["name"]
 
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_instance(instance_id=id)
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id)
+    api.delete_instance(instance_id=resource.id)
 
     try:
-        api.wait_for_container(container_id=resource.id)
+        api.wait_for_instance(instance_id=resource.id)
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"rdb's instance {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -210,30 +220,22 @@ def main() -> None:
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
         id=dict(type="str"),
-        namespace_id=dict(type="str", required=True),
-        privacy=dict(
-            type="str", required=True, choices=["unknown_privacy", "public", "private"]
-        ),
-        protocol=dict(
-            type="str", required=True, choices=["unknown_protocol", "http1", "h2c"]
-        ),
-        http_option=dict(
-            type="str",
-            required=True,
-            choices=["unknown_http_option", "enabled", "redirected"],
-        ),
+        engine=dict(type="str", required=True),
+        user_name=dict(type="str", required=True),
+        password=dict(type="str", required=True),
+        node_type=dict(type="str", required=True),
+        is_ha_cluster=dict(type="bool", required=True),
+        disable_backup=dict(type="bool", required=True),
+        volume_type=dict(type="str", required=True, choices=["lssd", "bssd"]),
+        volume_size=dict(type="int", required=True),
+        backup_same_region=dict(type="bool", required=True),
         region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
+        organization_id=dict(type="str", required=False),
+        project_id=dict(type="str", required=False),
         name=dict(type="str", required=False),
-        environment_variables=dict(type="dict", required=False),
-        min_scale=dict(type="int", required=False),
-        max_scale=dict(type="int", required=False),
-        memory_limit=dict(type="int", required=False),
-        timeout=dict(type="str", required=False),
-        description=dict(type="str", required=False),
-        registry_image=dict(type="str", required=False),
-        max_concurrency=dict(type="int", required=False),
-        port=dict(type="int", required=False),
-        secret_environment_variables=dict(type="list", required=False),
+        tags=dict(type="list", required=False),
+        init_settings=dict(type="list", required=False),
+        init_endpoints=dict(type="list", required=False),
     )
 
     module = AnsibleModule(

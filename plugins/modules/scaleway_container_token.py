@@ -4,10 +4,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_container_token
+short_description: Manage Scaleway container's token
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway container's token.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -28,30 +28,6 @@ options:
     id:
         required: false
         type: str
-    namespace_id:
-        type: str
-        required: true
-    privacy:
-        type: str
-        required: true
-        choices:
-            - unknown_privacy
-            - public
-            - private
-    protocol:
-        type: str
-        required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
-    http_option:
-        type: str
-        required: true
-        choices:
-            - unknown_http_option
-            - enabled
-            - redirected
     region:
         type: str
         required: false
@@ -59,73 +35,35 @@ options:
             - fr-par
             - nl-ams
             - pl-waw
-    name:
+    container_id:
         type: str
         required: false
-    environment_variables:
-        type: dict
-        required: false
-    min_scale:
-        type: int
-        required: false
-    max_scale:
-        type: int
-        required: false
-    memory_limit:
-        type: int
-        required: false
-    timeout:
+    namespace_id:
         type: str
         required: false
     description:
         type: str
         required: false
-    registry_image:
+    expires_at:
         type: str
-        required: false
-    max_concurrency:
-        type: int
-        required: false
-    port:
-        type: int
-        required: false
-    secret_environment_variables:
-        type: list
         required: false
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+token:
+    description: The token information
     returned: when I(state=present)
     type: dict
     sample:
         id: 00000000-0000-0000-0000-000000000000
-        name: "aaaaaa"
+        token: "aaaaaa"
+        container_id: 00000000-0000-0000-0000-000000000000
         namespace_id: 00000000-0000-0000-0000-000000000000
+        public_key: "aaaaaa"
         status: ready
-        environment_variables:
-            aaaaaa: bbbbbb
-            cccccc: dddddd
-        min_scale: 3
-        max_scale: 3
-        memory_limit: 3
-        cpu_limit: 3
-        timeout: "aaaaaa"
-        error_message: "aaaaaa"
-        privacy: public
         description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
-        domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
-        secret_environment_variables:
-            - aaaaaa
-            - bbbbbb
-        http_option: enabled
-        region: fr-par
+        expires_at: "aaaaaa"
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -146,7 +84,7 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_token(token_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -156,8 +94,8 @@ def create(module: AnsibleModule, client: Client) -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    resource = api.create_container(**module.params)
-    resource = api.wait_for_container(container_id=resource.id)
+    resource = api.create_token(**module.params)
+    resource = api.wait_for_token(token_id=resource.id)
 
     module.exit_json(changed=True, data=resource)
 
@@ -169,24 +107,24 @@ def delete(module: AnsibleModule, client: Client) -> None:
     name = module.params["name"]
 
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_token(token_id=id)
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id)
+    api.delete_token(token_id=resource.id)
 
     try:
-        api.wait_for_container(container_id=resource.id)
+        api.wait_for_token(token_id=resource.id)
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"container's token {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -210,35 +148,15 @@ def main() -> None:
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
         id=dict(type="str"),
-        namespace_id=dict(type="str", required=True),
-        privacy=dict(
-            type="str", required=True, choices=["unknown_privacy", "public", "private"]
-        ),
-        protocol=dict(
-            type="str", required=True, choices=["unknown_protocol", "http1", "h2c"]
-        ),
-        http_option=dict(
-            type="str",
-            required=True,
-            choices=["unknown_http_option", "enabled", "redirected"],
-        ),
         region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
-        name=dict(type="str", required=False),
-        environment_variables=dict(type="dict", required=False),
-        min_scale=dict(type="int", required=False),
-        max_scale=dict(type="int", required=False),
-        memory_limit=dict(type="int", required=False),
-        timeout=dict(type="str", required=False),
+        container_id=dict(type="str", required=False),
+        namespace_id=dict(type="str", required=False),
         description=dict(type="str", required=False),
-        registry_image=dict(type="str", required=False),
-        max_concurrency=dict(type="int", required=False),
-        port=dict(type="int", required=False),
-        secret_environment_variables=dict(type="list", required=False),
+        expires_at=dict(type="str", required=False),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 
