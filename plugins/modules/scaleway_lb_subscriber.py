@@ -26,8 +26,8 @@ options:
         choices: ["present", "absent", "]
         type: str
     id:
-        required: false
         type: str
+        required: false
     name:
         type: str
         required: true
@@ -110,15 +110,8 @@ def delete(module: AnsibleModule, client: Client) -> None:
 
     if id is not None:
         resource = api.get_subscriber(subscriber_id=id)
-    elif name is not None:
-        resources = api.list_subscribers_all(
-            namespace_id=module.params["namespace_id"],
-            name=name,
-        )
-        if len(resources) == 0:
-            module.exit_json(changed=False, msg="subscriber not found")
-
-        resource = resources[0]
+    else:
+        module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -147,7 +140,6 @@ def core(module: AnsibleModule) -> None:
 def main() -> None:
     argument_spec = scaleway_argument_spec()
     argument_spec.update(scaleway_waitable_resource_argument_spec())
-    # From DOCUMENTATION
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
         id=dict(type="str"),

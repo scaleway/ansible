@@ -26,8 +26,8 @@ options:
         choices: ["present", "absent", "]
         type: str
     id:
-        required: false
         type: str
+        required: false
     subnet:
         type: str
         required: true
@@ -97,9 +97,7 @@ dhcp:
         rebind_timer: "aaaaaa"
         push_default_route: true
         push_dns_server: true
-        dns_servers_override:
-            - aaaaaa
-            - bbbbbb
+        dns_servers_override: 00000000-0000-0000-0000-000000000000
         dns_search:
             - aaaaaa
             - bbbbbb
@@ -178,7 +176,6 @@ def core(module: AnsibleModule) -> None:
 def main() -> None:
     argument_spec = scaleway_argument_spec()
     argument_spec.update(scaleway_waitable_resource_argument_spec())
-    # From DOCUMENTATION
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
         id=dict(type="str"),
@@ -201,6 +198,7 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

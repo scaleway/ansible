@@ -26,8 +26,8 @@ options:
         choices: ["present", "absent", "]
         type: str
     id:
-        required: false
         type: str
+        required: false
     volume_type:
         type: str
         required: true
@@ -144,7 +144,6 @@ def core(module: AnsibleModule) -> None:
 def main() -> None:
     argument_spec = scaleway_argument_spec()
     argument_spec.update(scaleway_waitable_resource_argument_spec())
-    # From DOCUMENTATION
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
         id=dict(type="str"),

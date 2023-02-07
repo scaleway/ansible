@@ -26,8 +26,8 @@ options:
         choices: ["present", "absent", "]
         type: str
     id:
-        required: false
         type: str
+        required: false
     description:
         type: str
         required: true
@@ -52,12 +52,8 @@ group:
         organization_id: 00000000-0000-0000-0000-000000000000
         name: "aaaaaa"
         description: "aaaaaa"
-        user_ids:
-            - aaaaaa
-            - bbbbbb
-        application_ids:
-            - aaaaaa
-            - bbbbbb
+        user_ids: 00000000-0000-0000-0000-000000000000
+        application_ids: 00000000-0000-0000-0000-000000000000
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -131,7 +127,6 @@ def core(module: AnsibleModule) -> None:
 def main() -> None:
     argument_spec = scaleway_argument_spec()
     argument_spec.update(scaleway_waitable_resource_argument_spec())
-    # From DOCUMENTATION
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
         id=dict(type="str"),
