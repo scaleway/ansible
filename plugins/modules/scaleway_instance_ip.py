@@ -75,7 +75,7 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_ip(ip_id=id)
+        resource = api.get_ip(ip=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -93,22 +93,21 @@ def create(module: AnsibleModule, client: Client) -> None:
 def delete(module: AnsibleModule, client: Client) -> None:
     api = InstanceV1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    ip = module.params["ip"]
 
-    if id is not None:
-        resource = api.get_ip(ip_id=id)
+    if ip is not None:
+        resource = api.get_ip(ip=ip)
     else:
-        module.fail_json(msg="id is required")
+        module.fail_json(msg="ip is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_ip(ip_id=resource.id)
+    api.delete_ip(ip=resource.ip)
 
     module.exit_json(
         changed=True,
-        msg=f"instance's ip {resource.name} ({resource.id}) deleted",
+        msg=f"instance's ip {resource.ip} deleted",
     )
 
 
@@ -140,7 +139,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

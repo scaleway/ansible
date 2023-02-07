@@ -101,7 +101,7 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_security_group_rule(security_group_rule_id=id)
+        resource = api.get_security_group_rule(security_group_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -119,22 +119,21 @@ def create(module: AnsibleModule, client: Client) -> None:
 def delete(module: AnsibleModule, client: Client) -> None:
     api = InstanceV1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    rule = module.params["rule"]
 
-    if id is not None:
-        resource = api.get_security_group_rule(security_group_rule_id=id)
+    if rule is not None:
+        resource = api.get_security_group_rule(security_group_id=rule)
     else:
-        module.fail_json(msg="id is required")
+        module.fail_json(msg="rule is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_security_group_rule(security_group_rule_id=resource.id)
+    api.delete_security_group_rule(security_group_id=resource.rule)
 
     module.exit_json(
         changed=True,
-        msg=f"instance's security_group_rule {resource.name} ({resource.id}) deleted",
+        msg=f"instance's security_group_rule {resource.rule} deleted",
     )
 
 
@@ -171,7 +170,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

@@ -113,22 +113,21 @@ def create(module: AnsibleModule, client: Client) -> None:
 def delete(module: AnsibleModule, client: Client) -> None:
     api = InstanceV1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    snapshot = module.params["snapshot"]
 
-    if id is not None:
-        resource = api.get_snapshot(snapshot_id=id)
+    if snapshot is not None:
+        resource = api.get_snapshot(snapshot_id=snapshot)
     else:
-        module.fail_json(msg="id is required")
+        module.fail_json(msg="snapshot is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_snapshot(snapshot_id=resource.id)
+    api.delete_snapshot(snapshot_id=resource.snapshot)
 
     module.exit_json(
         changed=True,
-        msg=f"instance's snapshot {resource.name} ({resource.id}) deleted",
+        msg=f"instance's snapshot {resource.snapshot} deleted",
     )
 
 
@@ -169,7 +168,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

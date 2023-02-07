@@ -120,22 +120,21 @@ def create(module: AnsibleModule, client: Client) -> None:
 def delete(module: AnsibleModule, client: Client) -> None:
     api = InstanceV1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    security_group = module.params["security_group"]
 
-    if id is not None:
-        resource = api.get_security_group(security_group_id=id)
+    if security_group is not None:
+        resource = api.get_security_group(security_group_id=security_group)
     else:
-        module.fail_json(msg="id is required")
+        module.fail_json(msg="security_group is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_security_group(security_group_id=resource.id)
+    api.delete_security_group(security_group_id=resource.security_group)
 
     module.exit_json(
         changed=True,
-        msg=f"instance's security_group {resource.name} ({resource.id}) deleted",
+        msg=f"instance's security_group {resource.security_group} deleted",
     )
 
 
@@ -178,7 +177,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

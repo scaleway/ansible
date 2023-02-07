@@ -106,7 +106,6 @@ def delete(module: AnsibleModule, client: Client) -> None:
     api = FunctionV1Beta1API(client)
 
     id = module.params["id"]
-    name = module.params["name"]
 
     if id is not None:
         resource = api.get_trigger_input(trigger_input_id=id)
@@ -126,7 +125,7 @@ def delete(module: AnsibleModule, client: Client) -> None:
 
     module.exit_json(
         changed=True,
-        msg=f"function's trigger_input {resource.name} ({resource.id}) deleted",
+        msg=f"function's trigger_input {resource.id} deleted",
     )
 
 
@@ -158,7 +157,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

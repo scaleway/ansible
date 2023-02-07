@@ -72,7 +72,7 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_ssl_certificate(ssl_certificate_id=id)
+        resource = api.get_ssl_certificate(dns_zone=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -83,7 +83,7 @@ def create(module: AnsibleModule, client: Client) -> None:
         module.exit_json(changed=True)
 
     resource = api.create_ssl_certificate(**module.params)
-    resource = api.wait_for_ssl_certificate(ssl_certificate_id=resource.id)
+    resource = api.wait_for_ssl_certificate(dns_zone=resource.dns_zone)
 
     module.exit_json(changed=True, data=resource)
 
@@ -91,28 +91,27 @@ def create(module: AnsibleModule, client: Client) -> None:
 def delete(module: AnsibleModule, client: Client) -> None:
     api = DomainV2Beta1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    dns_zone = module.params["dns_zone"]
 
-    if id is not None:
-        resource = api.get_ssl_certificate(ssl_certificate_id=id)
+    if dns_zone is not None:
+        resource = api.get_ssl_certificate(dns_zone=dns_zone)
     else:
-        module.fail_json(msg="id is required")
+        module.fail_json(msg="dns_zone is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_ssl_certificate(ssl_certificate_id=resource.id)
+    api.delete_ssl_certificate(dns_zone=resource.dns_zone)
 
     try:
-        api.wait_for_ssl_certificate(ssl_certificate_id=resource.id)
+        api.wait_for_ssl_certificate(dns_zone=resource.dns_zone)
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"domain's ssl_certificate {resource.name} ({resource.id}) deleted",
+        msg=f"domain's ssl_certificate {resource.dns_zone} deleted",
     )
 
 
@@ -141,7 +140,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

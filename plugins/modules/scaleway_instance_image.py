@@ -111,22 +111,21 @@ def create(module: AnsibleModule, client: Client) -> None:
 def delete(module: AnsibleModule, client: Client) -> None:
     api = InstanceV1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    image = module.params["image"]
 
-    if id is not None:
-        resource = api.get_image(image_id=id)
+    if image is not None:
+        resource = api.get_image(image_id=image)
     else:
-        module.fail_json(msg="id is required")
+        module.fail_json(msg="image is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_image(image_id=resource.id)
+    api.delete_image(image_id=resource.image)
 
     module.exit_json(
         changed=True,
-        msg=f"instance's image {resource.name} ({resource.id}) deleted",
+        msg=f"instance's image {resource.image} deleted",
     )
 
 
@@ -163,7 +162,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

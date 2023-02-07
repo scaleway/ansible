@@ -69,7 +69,7 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_private_nic(private_nic_id=id)
+        resource = api.get_private_nic(server_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -87,22 +87,21 @@ def create(module: AnsibleModule, client: Client) -> None:
 def delete(module: AnsibleModule, client: Client) -> None:
     api = InstanceV1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    private_nic = module.params["private_nic"]
 
-    if id is not None:
-        resource = api.get_private_nic(private_nic_id=id)
+    if private_nic is not None:
+        resource = api.get_private_nic(server_id=private_nic)
     else:
-        module.fail_json(msg="id is required")
+        module.fail_json(msg="private_nic is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_private_nic(private_nic_id=resource.id)
+    api.delete_private_nic(server_id=resource.private_nic)
 
     module.exit_json(
         changed=True,
-        msg=f"instance's private_nic {resource.name} ({resource.id}) deleted",
+        msg=f"instance's private_nic {resource.private_nic} deleted",
     )
 
 
@@ -132,7 +131,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

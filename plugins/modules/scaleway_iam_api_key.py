@@ -83,7 +83,7 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_api_key(api_key_id=id)
+        resource = api.get_api_key(access_key=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -101,22 +101,21 @@ def create(module: AnsibleModule, client: Client) -> None:
 def delete(module: AnsibleModule, client: Client) -> None:
     api = IamV1Alpha1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    access_key = module.params["access_key"]
 
-    if id is not None:
-        resource = api.get_api_key(api_key_id=id)
+    if access_key is not None:
+        resource = api.get_api_key(access_key=access_key)
     else:
-        module.fail_json(msg="id is required")
+        module.fail_json(msg="access_key is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_api_key(api_key_id=resource.id)
+    api.delete_api_key(access_key=resource.access_key)
 
     module.exit_json(
         changed=True,
-        msg=f"iam's api_key {resource.name} ({resource.id}) deleted",
+        msg=f"iam's api_key {resource.access_key} deleted",
     )
 
 
@@ -148,7 +147,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 

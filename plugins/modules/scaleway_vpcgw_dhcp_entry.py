@@ -97,7 +97,6 @@ def delete(module: AnsibleModule, client: Client) -> None:
     api = VpcgwV1API(client)
 
     id = module.params["id"]
-    name = module.params["name"]
 
     if id is not None:
         resource = api.get_dhcp_entry(dhcp_entry_id=id)
@@ -111,7 +110,7 @@ def delete(module: AnsibleModule, client: Client) -> None:
 
     module.exit_json(
         changed=True,
-        msg=f"vpcgw's dhcp_entry {resource.name} ({resource.id}) deleted",
+        msg=f"vpcgw's dhcp_entry {resource.id} deleted",
     )
 
 
@@ -142,7 +141,6 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
 
