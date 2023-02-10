@@ -15,20 +15,24 @@
       - scw_secret_key | length == 0
 
   - name: Create lb_frontend
-    community.general.scaleway_lb_frontend:
+    quantumsheep.scaleway.scaleway_lb_frontend:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       lb_id: "{{ resource_lb_id }}"
       inbound_port: "{{ resource_inbound_port }}"
       backend_id: "{{ resource_backend_id }}"
       enable_http3: "{{ resource_enable_http3 }}"
-    register: integration_container_namespace
+    register: integration_lb_frontend_creation
 
-  - name: Create a container (Check)
+  - name: Create a lb_frontend (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_lb_frontend:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       lb_id: "{{ resource_lb_id }}"
       inbound_port: "{{ resource_inbound_port }}"
       backend_id: "{{ resource_backend_id }}"
       enable_http3: "{{ resource_enable_http3 }}"
-    register: cn_creation_check_task
+    register: integration_lb_frontend_creation_check

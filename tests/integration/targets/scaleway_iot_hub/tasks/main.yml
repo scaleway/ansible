@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create iot_hub
-    community.general.scaleway_iot_hub:
+    quantumsheep.scaleway.scaleway_iot_hub:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       product_plan: "{{ resource_product_plan }}"
-    register: integration_container_namespace
+    register: integration_iot_hub_creation
 
-  - name: Create a container (Check)
+  - name: Create a iot_hub (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_iot_hub:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       product_plan: "{{ resource_product_plan }}"
-    register: cn_creation_check_task
+    register: integration_iot_hub_creation_check

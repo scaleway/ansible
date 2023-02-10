@@ -15,12 +15,16 @@
       - scw_secret_key | length == 0
 
   - name: Create vpc_private_network
-    community.general.scaleway_vpc_private_network:
+    quantumsheep.scaleway.scaleway_vpc_private_network:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
-    register: integration_container_namespace
+    register: integration_vpc_private_network_creation
 
-  - name: Create a container (Check)
+  - name: Create a vpc_private_network (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_vpc_private_network:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
-    register: cn_creation_check_task
+    register: integration_vpc_private_network_creation_check

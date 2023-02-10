@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create mnq_credential
-    community.general.scaleway_mnq_credential:
+    quantumsheep.scaleway.scaleway_mnq_credential:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       namespace_id: "{{ resource_namespace_id }}"
-    register: integration_container_namespace
+    register: integration_mnq_credential_creation
 
-  - name: Create a container (Check)
+  - name: Create a mnq_credential (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_mnq_credential:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       namespace_id: "{{ resource_namespace_id }}"
-    register: cn_creation_check_task
+    register: integration_mnq_credential_creation_check

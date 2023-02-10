@@ -15,7 +15,9 @@
       - scw_secret_key | length == 0
 
   - name: Create k8s_pool
-    community.general.scaleway_k8s_pool:
+    quantumsheep.scaleway.scaleway_k8s_pool:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       cluster_id: "{{ resource_cluster_id }}"
       node_type: "{{ resource_node_type }}"
@@ -24,11 +26,13 @@
       container_runtime: "{{ resource_container_runtime }}"
       autohealing: "{{ resource_autohealing }}"
       root_volume_type: "{{ resource_root_volume_type }}"
-    register: integration_container_namespace
+    register: integration_k8s_pool_creation
 
-  - name: Create a container (Check)
+  - name: Create a k8s_pool (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_k8s_pool:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       cluster_id: "{{ resource_cluster_id }}"
       node_type: "{{ resource_node_type }}"
@@ -37,4 +41,4 @@
       container_runtime: "{{ resource_container_runtime }}"
       autohealing: "{{ resource_autohealing }}"
       root_volume_type: "{{ resource_root_volume_type }}"
-    register: cn_creation_check_task
+    register: integration_k8s_pool_creation_check

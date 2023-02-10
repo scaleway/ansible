@@ -15,20 +15,24 @@
       - scw_secret_key | length == 0
 
   - name: Create container
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_container:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       namespace_id: "{{ resource_namespace_id }}"
       privacy: "{{ resource_privacy }}"
       protocol: "{{ resource_protocol }}"
       http_option: "{{ resource_http_option }}"
-    register: integration_container_namespace
+    register: integration_container_creation
 
   - name: Create a container (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_container:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       namespace_id: "{{ resource_namespace_id }}"
       privacy: "{{ resource_privacy }}"
       protocol: "{{ resource_protocol }}"
       http_option: "{{ resource_http_option }}"
-    register: cn_creation_check_task
+    register: integration_container_creation_check

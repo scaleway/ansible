@@ -15,22 +15,26 @@
       - scw_secret_key | length == 0
 
   - name: Create lb_acl
-    community.general.scaleway_lb_acl:
+    quantumsheep.scaleway.scaleway_lb_acl:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       frontend_id: "{{ resource_frontend_id }}"
       action: "{{ resource_action }}"
       match: "{{ resource_match }}"
       index: "{{ resource_index }}"
       description: "{{ resource_description }}"
-    register: integration_container_namespace
+    register: integration_lb_acl_creation
 
-  - name: Create a container (Check)
+  - name: Create a lb_acl (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_lb_acl:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       frontend_id: "{{ resource_frontend_id }}"
       action: "{{ resource_action }}"
       match: "{{ resource_match }}"
       index: "{{ resource_index }}"
       description: "{{ resource_description }}"
-    register: cn_creation_check_task
+    register: integration_lb_acl_creation_check

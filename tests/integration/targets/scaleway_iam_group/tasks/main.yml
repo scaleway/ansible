@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create iam_group
-    community.general.scaleway_iam_group:
+    quantumsheep.scaleway.scaleway_iam_group:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       description: "{{ resource_description }}"
-    register: integration_container_namespace
+    register: integration_iam_group_creation
 
-  - name: Create a container (Check)
+  - name: Create a iam_group (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_iam_group:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       description: "{{ resource_description }}"
-    register: cn_creation_check_task
+    register: integration_iam_group_creation_check

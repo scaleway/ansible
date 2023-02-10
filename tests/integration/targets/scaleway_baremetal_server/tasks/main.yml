@@ -15,18 +15,22 @@
       - scw_secret_key | length == 0
 
   - name: Create baremetal_server
-    community.general.scaleway_baremetal_server:
+    quantumsheep.scaleway.scaleway_baremetal_server:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       offer_id: "{{ resource_offer_id }}"
       name: "{{ resource_name }}"
       description: "{{ resource_description }}"
-    register: integration_container_namespace
+    register: integration_baremetal_server_creation
 
-  - name: Create a container (Check)
+  - name: Create a baremetal_server (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_baremetal_server:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       offer_id: "{{ resource_offer_id }}"
       name: "{{ resource_name }}"
       description: "{{ resource_description }}"
-    register: cn_creation_check_task
+    register: integration_baremetal_server_creation_check

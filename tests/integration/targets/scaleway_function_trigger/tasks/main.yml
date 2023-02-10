@@ -15,20 +15,24 @@
       - scw_secret_key | length == 0
 
   - name: Create function_trigger
-    community.general.scaleway_function_trigger:
+    quantumsheep.scaleway.scaleway_function_trigger:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       name: "{{ resource_name }}"
       description: "{{ resource_description }}"
       function_id: "{{ resource_function_id }}"
       type_: "{{ resource_type_ }}"
-    register: integration_container_namespace
+    register: integration_function_trigger_creation
 
-  - name: Create a container (Check)
+  - name: Create a function_trigger (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_function_trigger:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       name: "{{ resource_name }}"
       description: "{{ resource_description }}"
       function_id: "{{ resource_function_id }}"
       type_: "{{ resource_type_ }}"
-    register: cn_creation_check_task
+    register: integration_function_trigger_creation_check

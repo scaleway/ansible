@@ -15,16 +15,20 @@
       - scw_secret_key | length == 0
 
   - name: Create instance_private_nic
-    community.general.scaleway_instance_private_nic:
+    quantumsheep.scaleway.scaleway_instance_private_nic:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       server_id: "{{ resource_server_id }}"
       private_network_id: "{{ resource_private_network_id }}"
-    register: integration_container_namespace
+    register: integration_instance_private_nic_creation
 
-  - name: Create a container (Check)
+  - name: Create a instance_private_nic (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_instance_private_nic:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       server_id: "{{ resource_server_id }}"
       private_network_id: "{{ resource_private_network_id }}"
-    register: cn_creation_check_task
+    register: integration_instance_private_nic_creation_check

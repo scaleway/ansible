@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create lb_certificate
-    community.general.scaleway_lb_certificate:
+    quantumsheep.scaleway.scaleway_lb_certificate:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       lb_id: "{{ resource_lb_id }}"
-    register: integration_container_namespace
+    register: integration_lb_certificate_creation
 
-  - name: Create a container (Check)
+  - name: Create a lb_certificate (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_lb_certificate:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       lb_id: "{{ resource_lb_id }}"
-    register: cn_creation_check_task
+    register: integration_lb_certificate_creation_check

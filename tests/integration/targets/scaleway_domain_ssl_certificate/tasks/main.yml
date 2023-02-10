@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create domain_ssl_certificate
-    community.general.scaleway_domain_ssl_certificate:
+    quantumsheep.scaleway.scaleway_domain_ssl_certificate:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       dns_zone: "{{ resource_dns_zone }}"
-    register: integration_container_namespace
+    register: integration_domain_ssl_certificate_creation
 
-  - name: Create a container (Check)
+  - name: Create a domain_ssl_certificate (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_domain_ssl_certificate:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       dns_zone: "{{ resource_dns_zone }}"
-    register: cn_creation_check_task
+    register: integration_domain_ssl_certificate_creation_check

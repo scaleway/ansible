@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create rdb_endpoint
-    community.general.scaleway_rdb_endpoint:
+    quantumsheep.scaleway.scaleway_rdb_endpoint:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       instance_id: "{{ resource_instance_id }}"
-    register: integration_container_namespace
+    register: integration_rdb_endpoint_creation
 
-  - name: Create a container (Check)
+  - name: Create a rdb_endpoint (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_rdb_endpoint:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       instance_id: "{{ resource_instance_id }}"
-    register: cn_creation_check_task
+    register: integration_rdb_endpoint_creation_check

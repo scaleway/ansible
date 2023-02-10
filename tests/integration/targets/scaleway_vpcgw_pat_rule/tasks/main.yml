@@ -15,22 +15,26 @@
       - scw_secret_key | length == 0
 
   - name: Create vpcgw_pat_rule
-    community.general.scaleway_vpcgw_pat_rule:
+    quantumsheep.scaleway.scaleway_vpcgw_pat_rule:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       gateway_id: "{{ resource_gateway_id }}"
       public_port: "{{ resource_public_port }}"
       private_ip: "{{ resource_private_ip }}"
       private_port: "{{ resource_private_port }}"
       protocol: "{{ resource_protocol }}"
-    register: integration_container_namespace
+    register: integration_vpcgw_pat_rule_creation
 
-  - name: Create a container (Check)
+  - name: Create a vpcgw_pat_rule (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_vpcgw_pat_rule:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       gateway_id: "{{ resource_gateway_id }}"
       public_port: "{{ resource_public_port }}"
       private_ip: "{{ resource_private_ip }}"
       private_port: "{{ resource_private_port }}"
       protocol: "{{ resource_protocol }}"
-    register: cn_creation_check_task
+    register: integration_vpcgw_pat_rule_creation_check

@@ -15,20 +15,24 @@
       - scw_secret_key | length == 0
 
   - name: Create function
-    community.general.scaleway_function:
+    quantumsheep.scaleway.scaleway_function:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       namespace_id: "{{ resource_namespace_id }}"
       runtime: "{{ resource_runtime }}"
       privacy: "{{ resource_privacy }}"
       http_option: "{{ resource_http_option }}"
-    register: integration_container_namespace
+    register: integration_function_creation
 
-  - name: Create a container (Check)
+  - name: Create a function (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_function:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       namespace_id: "{{ resource_namespace_id }}"
       runtime: "{{ resource_runtime }}"
       privacy: "{{ resource_privacy }}"
       http_option: "{{ resource_http_option }}"
-    register: cn_creation_check_task
+    register: integration_function_creation_check

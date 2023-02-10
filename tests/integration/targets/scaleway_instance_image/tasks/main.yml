@@ -15,16 +15,20 @@
       - scw_secret_key | length == 0
 
   - name: Create instance_image
-    community.general.scaleway_instance_image:
+    quantumsheep.scaleway.scaleway_instance_image:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       root_volume: "{{ resource_root_volume }}"
       arch: "{{ resource_arch }}"
-    register: integration_container_namespace
+    register: integration_instance_image_creation
 
-  - name: Create a container (Check)
+  - name: Create a instance_image (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_instance_image:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       root_volume: "{{ resource_root_volume }}"
       arch: "{{ resource_arch }}"
-    register: cn_creation_check_task
+    register: integration_instance_image_creation_check

@@ -15,16 +15,20 @@
       - scw_secret_key | length == 0
 
   - name: Create lb_route
-    community.general.scaleway_lb_route:
+    quantumsheep.scaleway.scaleway_lb_route:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       frontend_id: "{{ resource_frontend_id }}"
       backend_id: "{{ resource_backend_id }}"
-    register: integration_container_namespace
+    register: integration_lb_route_creation
 
-  - name: Create a container (Check)
+  - name: Create a lb_route (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_lb_route:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       frontend_id: "{{ resource_frontend_id }}"
       backend_id: "{{ resource_backend_id }}"
-    register: cn_creation_check_task
+    register: integration_lb_route_creation_check

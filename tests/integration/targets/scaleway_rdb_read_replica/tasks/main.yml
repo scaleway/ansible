@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create rdb_read_replica
-    community.general.scaleway_rdb_read_replica:
+    quantumsheep.scaleway.scaleway_rdb_read_replica:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       instance_id: "{{ resource_instance_id }}"
-    register: integration_container_namespace
+    register: integration_rdb_read_replica_creation
 
-  - name: Create a container (Check)
+  - name: Create a rdb_read_replica (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_rdb_read_replica:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       instance_id: "{{ resource_instance_id }}"
-    register: cn_creation_check_task
+    register: integration_rdb_read_replica_creation_check

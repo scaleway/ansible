@@ -15,18 +15,22 @@
       - scw_secret_key | length == 0
 
   - name: Create vpcgw_dhcp_entry
-    community.general.scaleway_vpcgw_dhcp_entry:
+    quantumsheep.scaleway.scaleway_vpcgw_dhcp_entry:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       gateway_network_id: "{{ resource_gateway_network_id }}"
       mac_address: "{{ resource_mac_address }}"
       ip_address: "{{ resource_ip_address }}"
-    register: integration_container_namespace
+    register: integration_vpcgw_dhcp_entry_creation
 
-  - name: Create a container (Check)
+  - name: Create a vpcgw_dhcp_entry (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_vpcgw_dhcp_entry:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       gateway_network_id: "{{ resource_gateway_network_id }}"
       mac_address: "{{ resource_mac_address }}"
       ip_address: "{{ resource_ip_address }}"
-    register: cn_creation_check_task
+    register: integration_vpcgw_dhcp_entry_creation_check

@@ -15,12 +15,16 @@
       - scw_secret_key | length == 0
 
   - name: Create container_namespace
-    community.general.scaleway_container_namespace:
+    quantumsheep.scaleway.scaleway_container_namespace:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
-    register: integration_container_namespace
+    register: integration_container_namespace_creation
 
-  - name: Create a container (Check)
+  - name: Create a container_namespace (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_container_namespace:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
-    register: cn_creation_check_task
+    register: integration_container_namespace_creation_check

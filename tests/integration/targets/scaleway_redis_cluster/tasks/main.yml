@@ -15,22 +15,26 @@
       - scw_secret_key | length == 0
 
   - name: Create redis_cluster
-    community.general.scaleway_redis_cluster:
+    quantumsheep.scaleway.scaleway_redis_cluster:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       version: "{{ resource_version }}"
       node_type: "{{ resource_node_type }}"
       user_name: "{{ resource_user_name }}"
       password: "{{ resource_password }}"
       tls_enabled: "{{ resource_tls_enabled }}"
-    register: integration_container_namespace
+    register: integration_redis_cluster_creation
 
-  - name: Create a container (Check)
+  - name: Create a redis_cluster (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_redis_cluster:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       version: "{{ resource_version }}"
       node_type: "{{ resource_node_type }}"
       user_name: "{{ resource_user_name }}"
       password: "{{ resource_password }}"
       tls_enabled: "{{ resource_tls_enabled }}"
-    register: cn_creation_check_task
+    register: integration_redis_cluster_creation_check

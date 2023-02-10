@@ -15,16 +15,20 @@
       - scw_secret_key | length == 0
 
   - name: Create container_cron
-    community.general.scaleway_container_cron:
+    quantumsheep.scaleway.scaleway_container_cron:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       container_id: "{{ resource_container_id }}"
       schedule: "{{ resource_schedule }}"
-    register: integration_container_namespace
+    register: integration_container_cron_creation
 
-  - name: Create a container (Check)
+  - name: Create a container_cron (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_container_cron:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       container_id: "{{ resource_container_id }}"
       schedule: "{{ resource_schedule }}"
-    register: cn_creation_check_task
+    register: integration_container_cron_creation_check

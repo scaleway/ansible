@@ -15,7 +15,9 @@
       - scw_secret_key | length == 0
 
   - name: Create rdb_instance
-    community.general.scaleway_rdb_instance:
+    quantumsheep.scaleway.scaleway_rdb_instance:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       engine: "{{ resource_engine }}"
       user_name: "{{ resource_user_name }}"
@@ -26,11 +28,13 @@
       volume_type: "{{ resource_volume_type }}"
       volume_size: "{{ resource_volume_size }}"
       backup_same_region: "{{ resource_backup_same_region }}"
-    register: integration_container_namespace
+    register: integration_rdb_instance_creation
 
-  - name: Create a container (Check)
+  - name: Create a rdb_instance (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_rdb_instance:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       engine: "{{ resource_engine }}"
       user_name: "{{ resource_user_name }}"
@@ -41,4 +45,4 @@
       volume_type: "{{ resource_volume_type }}"
       volume_size: "{{ resource_volume_size }}"
       backup_same_region: "{{ resource_backup_same_region }}"
-    register: cn_creation_check_task
+    register: integration_rdb_instance_creation_check

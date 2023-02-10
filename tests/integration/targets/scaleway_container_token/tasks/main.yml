@@ -15,12 +15,16 @@
       - scw_secret_key | length == 0
 
   - name: Create container_token
-    community.general.scaleway_container_token:
+    quantumsheep.scaleway.scaleway_container_token:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
-    register: integration_container_namespace
+    register: integration_container_token_creation
 
-  - name: Create a container (Check)
+  - name: Create a container_token (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_container_token:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
-    register: cn_creation_check_task
+    register: integration_container_token_creation_check

@@ -15,12 +15,16 @@
       - scw_secret_key | length == 0
 
   - name: Create instance_ip
-    community.general.scaleway_instance_ip:
+    quantumsheep.scaleway.scaleway_instance_ip:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
-    register: integration_container_namespace
+    register: integration_instance_ip_creation
 
-  - name: Create a container (Check)
+  - name: Create a instance_ip (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_instance_ip:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
-    register: cn_creation_check_task
+    register: integration_instance_ip_creation_check

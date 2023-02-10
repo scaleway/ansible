@@ -15,7 +15,9 @@
       - scw_secret_key | length == 0
 
   - name: Create lb_backend
-    community.general.scaleway_lb_backend:
+    quantumsheep.scaleway.scaleway_lb_backend:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       lb_id: "{{ resource_lb_id }}"
       forward_port: "{{ resource_forward_port }}"
@@ -27,11 +29,13 @@
       forward_protocol: "{{ resource_forward_protocol }}"
       forward_port_algorithm: "{{ resource_forward_port_algorithm }}"
       sticky_sessions: "{{ resource_sticky_sessions }}"
-    register: integration_container_namespace
+    register: integration_lb_backend_creation
 
-  - name: Create a container (Check)
+  - name: Create a lb_backend (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_lb_backend:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       lb_id: "{{ resource_lb_id }}"
       forward_port: "{{ resource_forward_port }}"
@@ -43,4 +47,4 @@
       forward_protocol: "{{ resource_forward_protocol }}"
       forward_port_algorithm: "{{ resource_forward_port_algorithm }}"
       sticky_sessions: "{{ resource_sticky_sessions }}"
-    register: cn_creation_check_task
+    register: integration_lb_backend_creation_check

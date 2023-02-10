@@ -15,18 +15,22 @@
       - scw_secret_key | length == 0
 
   - name: Create vpcgw_gateway
-    community.general.scaleway_vpcgw_gateway:
+    quantumsheep.scaleway.scaleway_vpcgw_gateway:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       type_: "{{ resource_type_ }}"
       enable_smtp: "{{ resource_enable_smtp }}"
       enable_bastion: "{{ resource_enable_bastion }}"
-    register: integration_container_namespace
+    register: integration_vpcgw_gateway_creation
 
-  - name: Create a container (Check)
+  - name: Create a vpcgw_gateway (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_vpcgw_gateway:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       type_: "{{ resource_type_ }}"
       enable_smtp: "{{ resource_enable_smtp }}"
       enable_bastion: "{{ resource_enable_bastion }}"
-    register: cn_creation_check_task
+    register: integration_vpcgw_gateway_creation_check

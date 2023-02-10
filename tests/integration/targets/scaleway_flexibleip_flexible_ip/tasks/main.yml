@@ -15,16 +15,20 @@
       - scw_secret_key | length == 0
 
   - name: Create flexibleip_flexible_ip
-    community.general.scaleway_flexibleip_flexible_ip:
+    quantumsheep.scaleway.scaleway_flexibleip_flexible_ip:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       description: "{{ resource_description }}"
       is_ipv6: "{{ resource_is_ipv6 }}"
-    register: integration_container_namespace
+    register: integration_flexibleip_flexible_ip_creation
 
-  - name: Create a container (Check)
+  - name: Create a flexibleip_flexible_ip (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_flexibleip_flexible_ip:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       description: "{{ resource_description }}"
       is_ipv6: "{{ resource_is_ipv6 }}"
-    register: cn_creation_check_task
+    register: integration_flexibleip_flexible_ip_creation_check

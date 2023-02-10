@@ -15,7 +15,9 @@
       - scw_secret_key | length == 0
 
   - name: Create instance_security_group_rule
-    community.general.scaleway_instance_security_group_rule:
+    quantumsheep.scaleway.scaleway_instance_security_group_rule:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       security_group_id: "{{ resource_security_group_id }}"
       ip_range: "{{ resource_ip_range }}"
@@ -24,11 +26,13 @@
       protocol: "{{ resource_protocol }}"
       direction: "{{ resource_direction }}"
       action: "{{ resource_action }}"
-    register: integration_container_namespace
+    register: integration_instance_security_group_rule_creation
 
-  - name: Create a container (Check)
+  - name: Create a instance_security_group_rule (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_instance_security_group_rule:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       security_group_id: "{{ resource_security_group_id }}"
       ip_range: "{{ resource_ip_range }}"
@@ -37,4 +41,4 @@
       protocol: "{{ resource_protocol }}"
       direction: "{{ resource_direction }}"
       action: "{{ resource_action }}"
-    register: cn_creation_check_task
+    register: integration_instance_security_group_rule_creation_check

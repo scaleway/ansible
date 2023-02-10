@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create instance_snapshot
-    community.general.scaleway_instance_snapshot:
+    quantumsheep.scaleway.scaleway_instance_snapshot:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       volume_type: "{{ resource_volume_type }}"
-    register: integration_container_namespace
+    register: integration_instance_snapshot_creation
 
-  - name: Create a container (Check)
+  - name: Create a instance_snapshot (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_instance_snapshot:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       volume_type: "{{ resource_volume_type }}"
-    register: cn_creation_check_task
+    register: integration_instance_snapshot_creation_check

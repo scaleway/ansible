@@ -15,16 +15,20 @@
       - scw_secret_key | length == 0
 
   - name: Create function_domain
-    community.general.scaleway_function_domain:
+    quantumsheep.scaleway.scaleway_function_domain:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       hostname: "{{ resource_hostname }}"
       function_id: "{{ resource_function_id }}"
-    register: integration_container_namespace
+    register: integration_function_domain_creation
 
-  - name: Create a container (Check)
+  - name: Create a function_domain (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_function_domain:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       hostname: "{{ resource_hostname }}"
       function_id: "{{ resource_function_id }}"
-    register: cn_creation_check_task
+    register: integration_function_domain_creation_check

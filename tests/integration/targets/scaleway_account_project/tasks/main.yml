@@ -15,14 +15,18 @@
       - scw_secret_key | length == 0
 
   - name: Create account_project
-    community.general.scaleway_account_project:
+    quantumsheep.scaleway.scaleway_account_project:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       name: "{{ resource_name }}"
-    register: integration_container_namespace
+    register: integration_account_project_creation
 
-  - name: Create a container (Check)
+  - name: Create a account_project (Check)
     check_mode: yes
-    community.general.scaleway_container:
+    quantumsheep.scaleway.scaleway_account_project:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
       state: present
       name: "{{ resource_name }}"
-    register: cn_creation_check_task
+    register: integration_account_project_creation_check
