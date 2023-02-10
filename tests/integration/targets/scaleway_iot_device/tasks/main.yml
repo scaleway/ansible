@@ -1,0 +1,32 @@
+---
+- block:
+  - name: Ensure Access Key is provided
+    ansible.builtin.fail:
+      msg: scw_access_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_access_key is not defined
+      - scw_access_key | length == 0
+
+  - name: Ensure Secret Key is provided
+    ansible.builtin.fail:
+      msg: scw_secret_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_secret_key is not defined
+      - scw_secret_key | length == 0
+
+  - name: Create iot_device
+    community.general.scaleway_iot_device:
+      state: present
+      hub_id: "{{ resource_hub_id }}"
+      allow_insecure: "{{ resource_allow_insecure }}"
+      allow_multiple_connections: "{{ resource_allow_multiple_connections }}"
+    register: integration_container_namespace
+
+  - name: Create a container (Check)
+    check_mode: yes
+    community.general.scaleway_container:
+      state: present
+      hub_id: "{{ resource_hub_id }}"
+      allow_insecure: "{{ resource_allow_insecure }}"
+      allow_multiple_connections: "{{ resource_allow_multiple_connections }}"
+    register: cn_creation_check_task

@@ -1,0 +1,34 @@
+---
+- block:
+  - name: Ensure Access Key is provided
+    ansible.builtin.fail:
+      msg: scw_access_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_access_key is not defined
+      - scw_access_key | length == 0
+
+  - name: Ensure Secret Key is provided
+    ansible.builtin.fail:
+      msg: scw_secret_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_secret_key is not defined
+      - scw_secret_key | length == 0
+
+  - name: Create function_trigger
+    community.general.scaleway_function_trigger:
+      state: present
+      name: "{{ resource_name }}"
+      description: "{{ resource_description }}"
+      function_id: "{{ resource_function_id }}"
+      type_: "{{ resource_type_ }}"
+    register: integration_container_namespace
+
+  - name: Create a container (Check)
+    check_mode: yes
+    community.general.scaleway_container:
+      state: present
+      name: "{{ resource_name }}"
+      description: "{{ resource_description }}"
+      function_id: "{{ resource_function_id }}"
+      type_: "{{ resource_type_ }}"
+    register: cn_creation_check_task

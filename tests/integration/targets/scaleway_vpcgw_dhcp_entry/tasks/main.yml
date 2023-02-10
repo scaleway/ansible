@@ -1,0 +1,32 @@
+---
+- block:
+  - name: Ensure Access Key is provided
+    ansible.builtin.fail:
+      msg: scw_access_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_access_key is not defined
+      - scw_access_key | length == 0
+
+  - name: Ensure Secret Key is provided
+    ansible.builtin.fail:
+      msg: scw_secret_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_secret_key is not defined
+      - scw_secret_key | length == 0
+
+  - name: Create vpcgw_dhcp_entry
+    community.general.scaleway_vpcgw_dhcp_entry:
+      state: present
+      gateway_network_id: "{{ resource_gateway_network_id }}"
+      mac_address: "{{ resource_mac_address }}"
+      ip_address: "{{ resource_ip_address }}"
+    register: integration_container_namespace
+
+  - name: Create a container (Check)
+    check_mode: yes
+    community.general.scaleway_container:
+      state: present
+      gateway_network_id: "{{ resource_gateway_network_id }}"
+      mac_address: "{{ resource_mac_address }}"
+      ip_address: "{{ resource_ip_address }}"
+    register: cn_creation_check_task

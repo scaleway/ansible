@@ -1,0 +1,40 @@
+---
+- block:
+  - name: Ensure Access Key is provided
+    ansible.builtin.fail:
+      msg: scw_access_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_access_key is not defined
+      - scw_access_key | length == 0
+
+  - name: Ensure Secret Key is provided
+    ansible.builtin.fail:
+      msg: scw_secret_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_secret_key is not defined
+      - scw_secret_key | length == 0
+
+  - name: Create instance_security_group_rule
+    community.general.scaleway_instance_security_group_rule:
+      state: present
+      security_group_id: "{{ resource_security_group_id }}"
+      ip_range: "{{ resource_ip_range }}"
+      position: "{{ resource_position }}"
+      editable: "{{ resource_editable }}"
+      protocol: "{{ resource_protocol }}"
+      direction: "{{ resource_direction }}"
+      action: "{{ resource_action }}"
+    register: integration_container_namespace
+
+  - name: Create a container (Check)
+    check_mode: yes
+    community.general.scaleway_container:
+      state: present
+      security_group_id: "{{ resource_security_group_id }}"
+      ip_range: "{{ resource_ip_range }}"
+      position: "{{ resource_position }}"
+      editable: "{{ resource_editable }}"
+      protocol: "{{ resource_protocol }}"
+      direction: "{{ resource_direction }}"
+      action: "{{ resource_action }}"
+    register: cn_creation_check_task

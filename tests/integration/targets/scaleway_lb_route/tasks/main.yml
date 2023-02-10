@@ -1,0 +1,30 @@
+---
+- block:
+  - name: Ensure Access Key is provided
+    ansible.builtin.fail:
+      msg: scw_access_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_access_key is not defined
+      - scw_access_key | length == 0
+
+  - name: Ensure Secret Key is provided
+    ansible.builtin.fail:
+      msg: scw_secret_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_secret_key is not defined
+      - scw_secret_key | length == 0
+
+  - name: Create lb_route
+    community.general.scaleway_lb_route:
+      state: present
+      frontend_id: "{{ resource_frontend_id }}"
+      backend_id: "{{ resource_backend_id }}"
+    register: integration_container_namespace
+
+  - name: Create a container (Check)
+    check_mode: yes
+    community.general.scaleway_container:
+      state: present
+      frontend_id: "{{ resource_frontend_id }}"
+      backend_id: "{{ resource_backend_id }}"
+    register: cn_creation_check_task
