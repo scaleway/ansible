@@ -93,7 +93,10 @@ hub:
             cccccc: dddddd
 """
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import (
+    AnsibleModule,
+    missing_required_lib,
+)
 from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway import (
     scaleway_argument_spec,
     scaleway_waitable_resource_argument_spec,
@@ -102,7 +105,13 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
     scaleway_pop_waitable_resource_params,
 )
 
-from scaleway import Client, ScalewayException
+try:
+    from scaleway import Client, ScalewayException
+
+    HAS_SCALEWAY_SDK = True
+except ImportError:
+    HAS_SCALEWAY_SDK = False
+
 from scaleway.iot.v1 import IotV1API
 
 
@@ -192,6 +201,9 @@ def main() -> None:
         required_one_of=(["id", "name"],),
         supports_check_mode=True,
     )
+
+    if not HAS_SCALEWAY_SDK:
+        module.fail_json(msg=missing_required_lib("scaleway"))
 
     core(module)
 

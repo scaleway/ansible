@@ -77,7 +77,10 @@ volume:
             cccccc: dddddd
 """
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import (
+    AnsibleModule,
+    missing_required_lib,
+)
 from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway import (
     scaleway_argument_spec,
     scaleway_waitable_resource_argument_spec,
@@ -86,7 +89,13 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
     scaleway_pop_waitable_resource_params,
 )
 
-from scaleway import Client, ScalewayException
+try:
+    from scaleway import Client, ScalewayException
+
+    HAS_SCALEWAY_SDK = True
+except ImportError:
+    HAS_SCALEWAY_SDK = False
+
 from scaleway.instance.v1 import InstanceV1API
 
 
@@ -167,6 +176,9 @@ def main() -> None:
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if not HAS_SCALEWAY_SDK:
+        module.fail_json(msg=missing_required_lib("scaleway"))
 
     core(module)
 
