@@ -90,7 +90,7 @@ jobs:
             eval
             "echo \"$(cat "tests/integration/integration_config.yml.template")\""
             > tests/integration/integration_config.yml
-          origin-python-version: 3.8
+          origin-python-version: 3.9
           target: ${{ matrix.module }}
-          target-python-version: 3.8
+          target-python-version: 3.9
           testing-type: integration
