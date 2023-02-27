@@ -79,14 +79,20 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
-from scaleway import Client, ScalewayException
-from scaleway.instance.v1 import InstanceV1API, ServerState, Server as InstanceServer
-from scaleway.baremetal.v1 import BaremetalV1API, IPVersion, Server as BaremetalServer
-from scaleway.applesilicon.v1alpha1 import (
-    ApplesiliconV1Alpha1API,
-    Server as ApplesiliconServer,
-)
-from scaleway_core.bridge import Zone
+
+try:
+    from scaleway import Client, ScalewayException
+    from scaleway.instance.v1 import InstanceV1API, ServerState, Server as InstanceServer
+    from scaleway.baremetal.v1 import BaremetalV1API, IPVersion, Server as BaremetalServer
+    from scaleway.applesilicon.v1alpha1 import (
+        ApplesiliconV1Alpha1API,
+        Server as ApplesiliconServer,
+    )
+    from scaleway_core.bridge import Zone
+
+    HAS_SCALEWAY_SDK = True
+except ImportError:
+    HAS_SCALEWAY_SDK = False
 
 _ALLOWED_FILE_NAME_SUFFIXES = (
     "scaleway.yaml",
