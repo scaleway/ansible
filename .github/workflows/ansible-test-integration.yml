@@ -85,6 +85,7 @@ jobs:
           pre-test-cmd: >-
             SCW_ACCESS_KEY=${{ secrets.SCW_ACCESS_KEY }}
             SCW_SECRET_KEY=${{ secrets.SCW_SECRET_KEY }}
+            SCW_DEFAULT_PROJECT_ID=${{ secrets.SCW_DEFAULT_PROJECT_ID }}
             eval
             "echo \"$(cat "tests/integration/integration_config.yml.template")\""
             > tests/integration/integration_config.yml
