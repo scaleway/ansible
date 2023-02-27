@@ -1,0 +1,4 @@
+---
+dependencies:
+  python: requirements-scaleway.txt
+version: 1
