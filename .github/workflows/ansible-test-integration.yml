@@ -80,11 +80,6 @@ jobs:
           # - scaleway_vpcgw_pat_rule
 
     steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.8' 
-      - name: Install requirements
-        run: pip install -U scaleway
       - name: Perform testing
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
@@ -98,3 +93,5 @@ jobs:
           target: ${{ matrix.module }}
           target-python-version: 3.9
           testing-type: integration
+          test-deps: >-
+            scaleway
