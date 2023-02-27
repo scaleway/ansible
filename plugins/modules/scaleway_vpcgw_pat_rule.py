@@ -89,12 +89,11 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 
 try:
     from scaleway import Client, ScalewayException
+    from scaleway.vpcgw.v1 import VpcgwV1API
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
     HAS_SCALEWAY_SDK = False
-
-from scaleway.vpcgw.v1 import VpcgwV1API
 
 
 def create(module: AnsibleModule, client: Client) -> None:
