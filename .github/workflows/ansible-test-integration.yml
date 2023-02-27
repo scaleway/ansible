@@ -83,7 +83,6 @@ jobs:
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
           pre-test-cmd: >-
-            python -m pip install 'scaleway>=0.6.0' --disable-pip-version-check --user &&
             SCW_ACCESS_KEY=${{ secrets.SCW_ACCESS_KEY }}
             SCW_SECRET_KEY=${{ secrets.SCW_SECRET_KEY }}
             eval

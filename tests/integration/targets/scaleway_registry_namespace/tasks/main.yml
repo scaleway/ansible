@@ -16,6 +16,7 @@
 
   - name: Create registry_namespace
     quantumsheep.scaleway.scaleway_registry_namespace:
+      name: "{{ resource_name }}"
       access_key: "{{ scw_access_key }}"
       secret_key: "{{ scw_secret_key }}"
       state: present
@@ -26,6 +27,7 @@
   - name: Create a registry_namespace (Check)
     check_mode: yes
     quantumsheep.scaleway.scaleway_registry_namespace:
+      name: "{{ resource_name }}"
       access_key: "{{ scw_access_key }}"
       secret_key: "{{ scw_secret_key }}"
       state: present

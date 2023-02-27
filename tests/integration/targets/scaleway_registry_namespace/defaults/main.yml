@@ -1,2 +1,3 @@
+resource_name: "ansible-test-registry"
 resource_description: "Ansible Scaleway Registry Namespace integration tests"
 resource_is_public: false
