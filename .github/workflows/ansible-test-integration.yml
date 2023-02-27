@@ -84,14 +84,13 @@ jobs:
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
           pre-test-cmd: >-
+            pip install -U scaleway &&
             SCW_ACCESS_KEY=${{ secrets.SCW_ACCESS_KEY }}
             SCW_SECRET_KEY=${{ secrets.SCW_SECRET_KEY }}
             eval
             "echo \"$(cat "tests/integration/integration_config.yml.template")\""
             > tests/integration/integration_config.yml
-          origin-python-version: 3.9
+          origin-python-version: 3.8
           target: ${{ matrix.module }}
-          target-python-version: 3.9
+          target-python-version: 3.8
           testing-type: integration
-          test-deps: >-
-            scaleway
