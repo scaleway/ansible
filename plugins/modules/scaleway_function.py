@@ -1,3 +1,7 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2023, Scaleway
+
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
@@ -56,6 +60,8 @@ options:
             - go119
             - python311
             - php82
+            - node19
+            - go120
     privacy:
         type: str
         required: true
@@ -246,6 +252,8 @@ def main() -> None:
                 "go119",
                 "python311",
                 "php82",
+                "node19",
+                "go120",
             ],
         ),
         privacy=dict(

@@ -1,3 +1,7 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2023, Scaleway
+
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
@@ -34,9 +38,6 @@ options:
     action:
         type: dict
         required: true
-    match:
-        type: dict
-        required: true
     index:
         type: int
         required: true
@@ -52,6 +53,9 @@ options:
             - pl-waw
     name:
         type: str
+        required: false
+    match:
+        type: dict
         required: false
 """
 
@@ -155,11 +159,11 @@ def main() -> None:
         id=dict(type="str"),
         frontend_id=dict(type="str", required=True),
         action=dict(type="dict", required=True),
-        match=dict(type="dict", required=True),
         index=dict(type="int", required=True),
         description=dict(type="str", required=True),
         region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
         name=dict(type="str", required=False),
+        match=dict(type="dict", required=False),
     )
 
     module = AnsibleModule(

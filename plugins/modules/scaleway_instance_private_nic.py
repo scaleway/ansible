@@ -1,3 +1,7 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2023, Scaleway
+
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
@@ -36,6 +40,9 @@ options:
         required: true
     zone:
         type: str
+        required: false
+    tags:
+        type: list
         required: false
 """
 
@@ -127,6 +134,7 @@ def main() -> None:
         server_id=dict(type="str", required=True),
         private_network_id=dict(type="str", required=True),
         zone=dict(type="str", required=False),
+        tags=dict(type="list", required=False),
     )
 
     module = AnsibleModule(

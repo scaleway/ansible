@@ -1,3 +1,7 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2023, Scaleway
+
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
@@ -37,13 +41,6 @@ options:
     function_id:
         type: str
         required: true
-    type_:
-        type: str
-        required: true
-        choices:
-            - unknown_trigger_type
-            - nats
-            - sqs
     region:
         type: str
         required: false
@@ -51,10 +48,13 @@ options:
             - fr-par
             - nl-ams
             - pl-waw
-    nats_failure_handling_policy:
+    scw_sqs_config:
         type: dict
         required: false
-    sqs_failure_handling_policy:
+    sqs_config:
+        type: dict
+        required: false
+    scw_nats_config:
         type: dict
         required: false
 """
@@ -69,14 +69,17 @@ trigger:
         id: 00000000-0000-0000-0000-000000000000
         name: "aaaaaa"
         description: "aaaaaa"
-        type_: nats
+        input_type: sqs
         status: ready
         error_message: "aaaaaa"
         function_id: 00000000-0000-0000-0000-000000000000
-        nats_failure_handling_policy:
+        scw_sqs_config:
             aaaaaa: bbbbbb
             cccccc: dddddd
-        sqs_failure_handling_policy:
+        sqs_config:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        scw_nats_config:
             aaaaaa: bbbbbb
             cccccc: dddddd
 """
@@ -165,12 +168,10 @@ def main() -> None:
         name=dict(type="str", required=True),
         description=dict(type="str", required=True),
         function_id=dict(type="str", required=True),
-        type_=dict(
-            type="str", required=True, choices=["unknown_trigger_type", "nats", "sqs"]
-        ),
         region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
-        nats_failure_handling_policy=dict(type="dict", required=False),
-        sqs_failure_handling_policy=dict(type="dict", required=False),
+        scw_sqs_config=dict(type="dict", required=False),
+        sqs_config=dict(type="dict", required=False),
+        scw_nats_config=dict(type="dict", required=False),
     )
 
     module = AnsibleModule(

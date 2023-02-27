@@ -18,7 +18,6 @@ action_groups:
     - scaleway_function_namespace
     - scaleway_function_token
     - scaleway_function_trigger
-    - scaleway_function_trigger_input
     - scaleway_iam_api_key
     - scaleway_iam_application
     - scaleway_iam_group
