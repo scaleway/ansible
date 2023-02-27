@@ -14,10 +14,18 @@
       - scw_secret_key is not defined
       - scw_secret_key | length == 0
 
+  - name: Ensure Default Project ID is provided
+    ansible.builtin.fail:
+      msg: scw_default_project_id should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_default_project_id is not defined
+      - scw_default_project_id | length == 0
+
   - name: Create registry_namespace
     quantumsheep.scaleway.scaleway_registry_namespace:
       name: "{{ resource_name }}"
       region: "{{ resource_region }}"
+      project_id: "{{ scw_default_project_id }}"
       access_key: "{{ scw_access_key }}"
       secret_key: "{{ scw_secret_key }}"
       state: present
@@ -30,6 +38,7 @@
     quantumsheep.scaleway.scaleway_registry_namespace:
       name: "{{ resource_name }}"
       region: "{{ resource_region }}"
+      project_id: "{{ scw_default_project_id }}"
       access_key: "{{ scw_access_key }}"
       secret_key: "{{ scw_secret_key }}"
       state: present
