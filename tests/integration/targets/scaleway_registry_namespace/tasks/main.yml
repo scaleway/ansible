@@ -33,6 +33,18 @@
       is_public: "{{ resource_is_public }}"
     register: integration_registry_namespace_creation
 
+  - name: Delete registry_namespace
+    quantumsheep.scaleway.scaleway_registry_namespace:
+      name: "{{ resource_name }}"
+      region: "{{ resource_region }}"
+      project_id: "{{ scw_default_project_id }}"
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      state: absent
+      description: "{{ resource_description }}"
+      is_public: "{{ resource_is_public }}"
+    register: integration_registry_namespace_deletion
+
   - name: Create a registry_namespace (Check)
     check_mode: yes
     quantumsheep.scaleway.scaleway_registry_namespace:
