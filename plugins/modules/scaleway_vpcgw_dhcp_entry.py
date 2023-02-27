@@ -103,14 +103,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
     id = module.params["id"]
 
     if id is not None:
-        resource = api.get_dhcp_entry(dhcp_entry_id=id)
+        resource = api.get_dhcp_entry(dhcp_entry_id=id, region=module.params["region"])
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_dhcp_entry(dhcp_entry_id=resource.id)
+    api.delete_dhcp_entry(dhcp_entry_id=resource.id, region=module.params["region"])
 
     module.exit_json(
         changed=True,

@@ -112,14 +112,18 @@ def delete(module: AnsibleModule, client: Client) -> None:
     placement_group = module.params["placement_group"]
 
     if placement_group is not None:
-        resource = api.get_placement_group(placement_group_id=placement_group)
+        resource = api.get_placement_group(
+            placement_group_id=placement_group, region=module.params["region"]
+        )
     else:
         module.fail_json(msg="placement_group is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_placement_group(placement_group_id=resource.placement_group)
+    api.delete_placement_group(
+        placement_group_id=resource.placement_group, region=module.params["region"]
+    )
 
     module.exit_json(
         changed=True,

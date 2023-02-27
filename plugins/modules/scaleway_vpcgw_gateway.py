@@ -130,7 +130,9 @@ def create(module: AnsibleModule, client: Client) -> None:
         module.exit_json(changed=True)
 
     resource = api.create_gateway(**module.params)
-    resource = api.wait_for_gateway(gateway_id=resource.id)
+    resource = api.wait_for_gateway(
+        gateway_id=resource.id, region=module.params["region"]
+    )
 
     module.exit_json(changed=True, data=resource)
 
@@ -142,17 +144,17 @@ def delete(module: AnsibleModule, client: Client) -> None:
     name = module.params["name"]
 
     if id is not None:
-        resource = api.get_gateway(gateway_id=id)
+        resource = api.get_gateway(gateway_id=id, region=module.params["region"])
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_gateway(gateway_id=resource.id)
+    api.delete_gateway(gateway_id=resource.id, region=module.params["region"])
 
     try:
-        api.wait_for_gateway(gateway_id=resource.id)
+        api.wait_for_gateway(gateway_id=resource.id, region=module.params["region"])
     except ScalewayException as e:
         if e.status_code != 404:
             raise e

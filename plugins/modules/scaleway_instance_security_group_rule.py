@@ -126,14 +126,18 @@ def delete(module: AnsibleModule, client: Client) -> None:
     rule = module.params["rule"]
 
     if rule is not None:
-        resource = api.get_security_group_rule(security_group_id=rule)
+        resource = api.get_security_group_rule(
+            security_group_id=rule, region=module.params["region"]
+        )
     else:
         module.fail_json(msg="rule is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_security_group_rule(security_group_id=resource.rule)
+    api.delete_security_group_rule(
+        security_group_id=resource.rule, region=module.params["region"]
+    )
 
     module.exit_json(
         changed=True,

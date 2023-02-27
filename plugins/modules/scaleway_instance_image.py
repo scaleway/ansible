@@ -118,14 +118,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
     image = module.params["image"]
 
     if image is not None:
-        resource = api.get_image(image_id=image)
+        resource = api.get_image(image_id=image, region=module.params["region"])
     else:
         module.fail_json(msg="image is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_image(image_id=resource.image)
+    api.delete_image(image_id=resource.image, region=module.params["region"])
 
     module.exit_json(
         changed=True,

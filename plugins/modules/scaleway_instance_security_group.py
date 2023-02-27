@@ -127,14 +127,18 @@ def delete(module: AnsibleModule, client: Client) -> None:
     security_group = module.params["security_group"]
 
     if security_group is not None:
-        resource = api.get_security_group(security_group_id=security_group)
+        resource = api.get_security_group(
+            security_group_id=security_group, region=module.params["region"]
+        )
     else:
         module.fail_json(msg="security_group is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_security_group(security_group_id=resource.security_group)
+    api.delete_security_group(
+        security_group_id=resource.security_group, region=module.params["region"]
+    )
 
     module.exit_json(
         changed=True,

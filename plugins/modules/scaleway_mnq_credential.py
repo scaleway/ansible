@@ -109,14 +109,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
     name = module.params["name"]
 
     if id is not None:
-        resource = api.get_credential(credential_id=id)
+        resource = api.get_credential(credential_id=id, region=module.params["region"])
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_credential(credential_id=resource.id)
+    api.delete_credential(credential_id=resource.id, region=module.params["region"])
 
     module.exit_json(
         changed=True,

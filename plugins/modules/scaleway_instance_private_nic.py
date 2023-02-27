@@ -97,14 +97,18 @@ def delete(module: AnsibleModule, client: Client) -> None:
     private_nic = module.params["private_nic"]
 
     if private_nic is not None:
-        resource = api.get_private_nic(server_id=private_nic)
+        resource = api.get_private_nic(
+            server_id=private_nic, region=module.params["region"]
+        )
     else:
         module.fail_json(msg="private_nic is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_private_nic(server_id=resource.private_nic)
+    api.delete_private_nic(
+        server_id=resource.private_nic, region=module.params["region"]
+    )
 
     module.exit_json(
         changed=True,

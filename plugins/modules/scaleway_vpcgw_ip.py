@@ -103,14 +103,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
     id = module.params["id"]
 
     if id is not None:
-        resource = api.get_ip(ip_id=id)
+        resource = api.get_ip(ip_id=id, region=module.params["region"])
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_ip(ip_id=resource.id)
+    api.delete_ip(ip_id=resource.id, region=module.params["region"])
 
     module.exit_json(
         changed=True,

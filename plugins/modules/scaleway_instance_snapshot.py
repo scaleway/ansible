@@ -120,14 +120,16 @@ def delete(module: AnsibleModule, client: Client) -> None:
     snapshot = module.params["snapshot"]
 
     if snapshot is not None:
-        resource = api.get_snapshot(snapshot_id=snapshot)
+        resource = api.get_snapshot(
+            snapshot_id=snapshot, region=module.params["region"]
+        )
     else:
         module.fail_json(msg="snapshot is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_snapshot(snapshot_id=resource.snapshot)
+    api.delete_snapshot(snapshot_id=resource.snapshot, region=module.params["region"])
 
     module.exit_json(
         changed=True,

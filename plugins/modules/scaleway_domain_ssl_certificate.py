@@ -87,7 +87,9 @@ def create(module: AnsibleModule, client: Client) -> None:
         module.exit_json(changed=True)
 
     resource = api.create_ssl_certificate(**module.params)
-    resource = api.wait_for_ssl_certificate(dns_zone=resource.dns_zone)
+    resource = api.wait_for_ssl_certificate(
+        dns_zone=resource.dns_zone, region=module.params["region"]
+    )
 
     module.exit_json(changed=True, data=resource)
 
@@ -98,17 +100,23 @@ def delete(module: AnsibleModule, client: Client) -> None:
     dns_zone = module.params["dns_zone"]
 
     if dns_zone is not None:
-        resource = api.get_ssl_certificate(dns_zone=dns_zone)
+        resource = api.get_ssl_certificate(
+            dns_zone=dns_zone, region=module.params["region"]
+        )
     else:
         module.fail_json(msg="dns_zone is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_ssl_certificate(dns_zone=resource.dns_zone)
+    api.delete_ssl_certificate(
+        dns_zone=resource.dns_zone, region=module.params["region"]
+    )
 
     try:
-        api.wait_for_ssl_certificate(dns_zone=resource.dns_zone)
+        api.wait_for_ssl_certificate(
+            dns_zone=resource.dns_zone, region=module.params["region"]
+        )
     except ScalewayException as e:
         if e.status_code != 404:
             raise e

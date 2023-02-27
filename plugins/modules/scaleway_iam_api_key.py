@@ -108,14 +108,16 @@ def delete(module: AnsibleModule, client: Client) -> None:
     access_key = module.params["access_key"]
 
     if access_key is not None:
-        resource = api.get_api_key(access_key=access_key)
+        resource = api.get_api_key(
+            access_key=access_key, region=module.params["region"]
+        )
     else:
         module.fail_json(msg="access_key is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_api_key(access_key=resource.access_key)
+    api.delete_api_key(access_key=resource.access_key, region=module.params["region"])
 
     module.exit_json(
         changed=True,
