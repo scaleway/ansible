@@ -75,19 +75,22 @@ tags:
 """
 
 
+import sys
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from ansible.module_utils.basic import missing_required_lib
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
 
 try:
     from scaleway import Client, ScalewayException
-    from scaleway.instance.v1 import InstanceV1API, ServerState, Server as InstanceServer
-    from scaleway.baremetal.v1 import BaremetalV1API, IPVersion, Server as BaremetalServer
-    from scaleway.applesilicon.v1alpha1 import (
-        ApplesiliconV1Alpha1API,
-        Server as ApplesiliconServer,
-    )
+    from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API
+    from scaleway.applesilicon.v1alpha1 import Server as ApplesiliconServer
+    from scaleway.baremetal.v1 import BaremetalV1API, IPVersion
+    from scaleway.baremetal.v1 import Server as BaremetalServer
+    from scaleway.instance.v1 import InstanceV1API
+    from scaleway.instance.v1 import Server as InstanceServer
+    from scaleway.instance.v1 import ServerState
     from scaleway_core.bridge import Zone
 
     HAS_SCALEWAY_SDK = True
@@ -144,6 +147,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         self.load_cache_plugin()
         cache_key = self.get_cache_key(path)
+
+        if not HAS_SCALEWAY_SDK:
+            self.display.error(missing_required_lib("scaleway"))
+            sys.exit(1)
 
         user_cache_setting = self.get_option("cache")
 
