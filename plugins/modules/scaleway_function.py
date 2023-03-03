@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,15 +28,18 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    function_id:
+        description: function_id
         type: str
         required: false
     namespace_id:
+        description: namespace_id
         type: str
         required: true
     runtime:
+        description: runtime
         type: str
         required: true
         choices:
@@ -63,6 +67,7 @@ options:
             - node19
             - go120
     privacy:
+        description: privacy
         type: str
         required: true
         choices:
@@ -70,6 +75,7 @@ options:
             - public
             - private
     http_option:
+        description: http_option
         type: str
         required: true
         choices:
@@ -77,6 +83,7 @@ options:
             - enabled
             - redirected
     region:
+        description: region
         type: str
         required: false
         choices:
@@ -84,32 +91,53 @@ options:
             - nl-ams
             - pl-waw
     name:
+        description: name
         type: str
         required: false
     environment_variables:
+        description: environment_variables
         type: dict
         required: false
     min_scale:
+        description: min_scale
         type: int
         required: false
     max_scale:
+        description: max_scale
         type: int
         required: false
     memory_limit:
+        description: memory_limit
         type: int
         required: false
     timeout:
+        description: timeout
         type: str
         required: false
     handler:
+        description: handler
         type: str
         required: false
     description:
+        description: description
         type: str
         required: false
     secret_environment_variables:
+        description: secret_environment_variables
         type: list
+        elements: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a function
+  quantumsheep.scaleway.scaleway_function:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    namespace_id: "aaaaaa"
+    runtime: "aaaaaa"
+    privacy: "aaaaaa"
+    http_option: "aaaaaa"
 """
 
 RETURN = r"""
@@ -166,7 +194,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = FunctionV1Beta1API(client)
 
     id = module.params.pop("id", None)
@@ -186,10 +214,10 @@ def create(module: AnsibleModule, client: Client) -> None:
         function_id=resource.id, region=module.params["region"]
     )
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = FunctionV1Beta1API(client)
 
     id = module.params["id"]
@@ -197,6 +225,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
 
     if id is not None:
         resource = api.get_function(function_id=id, region=module.params["region"])
+    elif name is not None:
+        resources = api.list_functions_all(name=name, region=module.params["region"])
+        if len(resources) == 0:
+            module.exit_json(msg="No function found with name {name}")
+        elif len(resources) > 1:
+            module.exit_json(msg="More than one function found with name {name}")
+        else:
+            resource = resources[0]
     else:
         module.fail_json(msg="id is required")
 
@@ -235,8 +271,11 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        namespace_id=dict(type="str", required=True),
+        function_id=dict(type="str"),
+        namespace_id=dict(
+            type="str",
+            required=True,
+        ),
         runtime=dict(
             type="str",
             required=True,
@@ -267,28 +306,63 @@ def main() -> None:
             ],
         ),
         privacy=dict(
-            type="str", required=True, choices=["unknown_privacy", "public", "private"]
+            type="str",
+            required=True,
+            choices=["unknown_privacy", "public", "private"],
         ),
         http_option=dict(
             type="str",
             required=True,
             choices=["unknown_http_option", "enabled", "redirected"],
         ),
-        region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
-        name=dict(type="str", required=False),
-        environment_variables=dict(type="dict", required=False),
-        min_scale=dict(type="int", required=False),
-        max_scale=dict(type="int", required=False),
-        memory_limit=dict(type="int", required=False),
-        timeout=dict(type="str", required=False),
-        handler=dict(type="str", required=False),
-        description=dict(type="str", required=False),
-        secret_environment_variables=dict(type="list", required=False),
+        region=dict(
+            type="str",
+            required=False,
+            choices=["fr-par", "nl-ams", "pl-waw"],
+        ),
+        name=dict(
+            type="str",
+            required=False,
+        ),
+        environment_variables=dict(
+            type="dict",
+            required=False,
+        ),
+        min_scale=dict(
+            type="int",
+            required=False,
+        ),
+        max_scale=dict(
+            type="int",
+            required=False,
+        ),
+        memory_limit=dict(
+            type="int",
+            required=False,
+        ),
+        timeout=dict(
+            type="str",
+            required=False,
+        ),
+        handler=dict(
+            type="str",
+            required=False,
+        ),
+        description=dict(
+            type="str",
+            required=False,
+        ),
+        secret_environment_variables=dict(
+            type="list",
+            required=False,
+            elements="str",
+            no_log=True,
+        ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
+        required_one_of=(["function_id", "name"],),
         supports_check_mode=True,
     )
 

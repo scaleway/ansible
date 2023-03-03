@@ -23,31 +23,21 @@ options:
       - Path to the Scaleway configuration file. Leave empty to use the default path.
     type: str
     required: false
-    env:
-      - name: SCW_config_file
   access_key:
     description:
       - Scaleway API access key.
     type: str
     required: false
-    env:
-      - name: SCW_ACCESS_KEY
-    no_log: true
   secret_key:
     description:
       - Scaleway API secret key.
     type: str
     required: false
-    env:
-      - name: SCW_SECRET_KEY
-    no_log: true
   api_url:
     description:
       - Scaleway API URL.
     type: str
     default: https://api.scaleway.com
-    env:
-      - name: SCW_API_URL
   api_allow_insecure:
     description:
       - Allow insecure connection to Scaleway API.

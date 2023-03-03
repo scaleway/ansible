@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,20 +28,32 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    ip_id:
+        description: ip_id
         type: str
         required: false
     zone:
+        description: zone
         type: str
         required: false
     project_id:
+        description: project_id
         type: str
         required: false
     tags:
+        description: tags
         type: list
+        elements: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a ip
+  quantumsheep.scaleway.scaleway_vpcgw_ip:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
 """
 
 RETURN = r"""
@@ -85,7 +98,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = VpcgwV1API(client)
 
     id = module.params.pop("id", None)
@@ -102,10 +115,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_ip(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = VpcgwV1API(client)
 
     id = module.params["id"]
@@ -144,10 +157,20 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        zone=dict(type="str", required=False),
-        project_id=dict(type="str", required=False),
-        tags=dict(type="list", required=False),
+        ip_id=dict(type="str"),
+        zone=dict(
+            type="str",
+            required=False,
+        ),
+        project_id=dict(
+            type="str",
+            required=False,
+        ),
+        tags=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
     )
 
     module = AnsibleModule(

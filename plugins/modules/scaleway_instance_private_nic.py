@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,23 +28,34 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
-        type: str
-        required: false
     server_id:
+        description: server_id
         type: str
         required: true
     private_network_id:
+        description: private_network_id
         type: str
         required: true
     zone:
+        description: zone
         type: str
         required: false
     tags:
+        description: tags
         type: list
+        elements: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a private_nic
+  quantumsheep.scaleway.scaleway_instance_private_nic:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    server_id: "aaaaaa"
+    private_network_id: "aaaaaa"
 """
 
 RETURN = r"""
@@ -79,7 +91,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
     id = module.params.pop("id", None)
@@ -96,10 +108,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_private_nic(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
     private_nic = module.params["private_nic"]
@@ -142,11 +154,23 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        server_id=dict(type="str", required=True),
-        private_network_id=dict(type="str", required=True),
-        zone=dict(type="str", required=False),
-        tags=dict(type="list", required=False),
+        server_id=dict(
+            type="str",
+            required=True,
+        ),
+        private_network_id=dict(
+            type="str",
+            required=True,
+        ),
+        zone=dict(
+            type="str",
+            required=False,
+        ),
+        tags=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
     )
 
     module = AnsibleModule(

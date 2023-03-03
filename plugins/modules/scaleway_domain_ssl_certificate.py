@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,17 +28,25 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
-        type: str
-        required: false
     dns_zone:
+        description: dns_zone
         type: str
         required: true
     alternative_dns_zones:
+        description: alternative_dns_zones
         type: list
+        elements: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a ssl_certificate
+  quantumsheep.scaleway.scaleway_domain_ssl_certificate:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    dns_zone: "aaaaaa"
 """
 
 RETURN = r"""
@@ -79,7 +88,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = DomainV2Beta1API(client)
 
     id = module.params.pop("id", None)
@@ -99,10 +108,10 @@ def create(module: AnsibleModule, client: Client) -> None:
         dns_zone=resource.dns_zone, region=module.params["region"]
     )
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = DomainV2Beta1API(client)
 
     dns_zone = module.params["dns_zone"]
@@ -153,9 +162,15 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        dns_zone=dict(type="str", required=True),
-        alternative_dns_zones=dict(type="list", required=False),
+        dns_zone=dict(
+            type="str",
+            required=True,
+        ),
+        alternative_dns_zones=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
     )
 
     module = AnsibleModule(

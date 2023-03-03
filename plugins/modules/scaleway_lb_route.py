@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,18 +28,22 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    route_id:
+        description: route_id
         type: str
         required: false
     frontend_id:
+        description: frontend_id
         type: str
         required: true
     backend_id:
+        description: backend_id
         type: str
         required: true
     region:
+        description: region
         type: str
         required: false
         choices:
@@ -46,8 +51,18 @@ options:
             - nl-ams
             - pl-waw
     match:
+        description: match
         type: dict
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a route
+  quantumsheep.scaleway.scaleway_lb_route:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    frontend_id: "aaaaaa"
+    backend_id: "aaaaaa"
 """
 
 RETURN = r"""
@@ -88,7 +103,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = LbV1API(client)
 
     id = module.params.pop("id", None)
@@ -105,10 +120,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_route(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = LbV1API(client)
 
     id = module.params["id"]
@@ -147,11 +162,24 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        frontend_id=dict(type="str", required=True),
-        backend_id=dict(type="str", required=True),
-        region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
-        match=dict(type="dict", required=False),
+        route_id=dict(type="str"),
+        frontend_id=dict(
+            type="str",
+            required=True,
+        ),
+        backend_id=dict(
+            type="str",
+            required=True,
+        ),
+        region=dict(
+            type="str",
+            required=False,
+            choices=["fr-par", "nl-ams", "pl-waw"],
+        ),
+        match=dict(
+            type="dict",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,18 +28,22 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    cron_id:
+        description: cron_id
         type: str
         required: false
     function_id:
+        description: function_id
         type: str
         required: true
     schedule:
+        description: schedule
         type: str
         required: true
     region:
+        description: region
         type: str
         required: false
         choices:
@@ -46,11 +51,22 @@ options:
             - nl-ams
             - pl-waw
     args:
+        description: args
         type: dict
         required: false
     name:
+        description: name
         type: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a cron
+  quantumsheep.scaleway.scaleway_function_cron:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    function_id: "aaaaaa"
+    schedule: "aaaaaa"
 """
 
 RETURN = r"""
@@ -91,7 +107,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = FunctionV1Beta1API(client)
 
     id = module.params.pop("id", None)
@@ -109,10 +125,10 @@ def create(module: AnsibleModule, client: Client) -> None:
     resource = api.create_cron(**module.params)
     resource = api.wait_for_cron(cron_id=resource.id, region=module.params["region"])
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = FunctionV1Beta1API(client)
 
     id = module.params["id"]
@@ -120,6 +136,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
 
     if id is not None:
         resource = api.get_cron(cron_id=id, region=module.params["region"])
+    elif name is not None:
+        resources = api.list_crons_all(name=name, region=module.params["region"])
+        if len(resources) == 0:
+            module.exit_json(msg="No cron found with name {name}")
+        elif len(resources) > 1:
+            module.exit_json(msg="More than one cron found with name {name}")
+        else:
+            resource = resources[0]
     else:
         module.fail_json(msg="id is required")
 
@@ -158,17 +182,33 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        function_id=dict(type="str", required=True),
-        schedule=dict(type="str", required=True),
-        region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
-        args=dict(type="dict", required=False),
-        name=dict(type="str", required=False),
+        cron_id=dict(type="str"),
+        function_id=dict(
+            type="str",
+            required=True,
+        ),
+        schedule=dict(
+            type="str",
+            required=True,
+        ),
+        region=dict(
+            type="str",
+            required=False,
+            choices=["fr-par", "nl-ams", "pl-waw"],
+        ),
+        args=dict(
+            type="dict",
+            required=False,
+        ),
+        name=dict(
+            type="str",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
+        required_one_of=(["cron_id", "name"],),
         supports_check_mode=True,
     )
 

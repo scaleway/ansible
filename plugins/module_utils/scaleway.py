@@ -25,6 +25,11 @@ try:
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
+    ENV_KEY_SCW_CONFIG_PATH = "SCW_CONFIG_PATH"
+    ENV_KEY_SCW_ACCESS_KEY = "SCW_ACCESS_KEY"
+    ENV_KEY_SCW_SECRET_KEY = "SCW_SECRET_KEY"  # nosec B105
+    ENV_KEY_SCW_API_URL = "SCW_API_URL"
+
 
 def scaleway_argument_spec() -> Dict[str, Dict[str, Any]]:
     return dict(

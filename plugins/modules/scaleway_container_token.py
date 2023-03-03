@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,12 +28,14 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    token_id:
+        description: token_id
         type: str
         required: false
     region:
+        description: region
         type: str
         required: false
         choices:
@@ -40,17 +43,28 @@ options:
             - nl-ams
             - pl-waw
     container_id:
+        description: container_id
         type: str
         required: false
     namespace_id:
+        description: namespace_id
         type: str
         required: false
     description:
+        description: description
         type: str
         required: false
     expires_at:
+        description: expires_at
         type: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a token
+  quantumsheep.scaleway.scaleway_container_token:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
 """
 
 RETURN = r"""
@@ -91,7 +105,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = ContainerV1Beta1API(client)
 
     id = module.params.pop("id", None)
@@ -109,10 +123,10 @@ def create(module: AnsibleModule, client: Client) -> None:
     resource = api.create_token(**module.params)
     resource = api.wait_for_token(token_id=resource.id, region=module.params["region"])
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = ContainerV1Beta1API(client)
 
     id = module.params["id"]
@@ -157,12 +171,28 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
-        container_id=dict(type="str", required=False),
-        namespace_id=dict(type="str", required=False),
-        description=dict(type="str", required=False),
-        expires_at=dict(type="str", required=False),
+        token_id=dict(type="str"),
+        region=dict(
+            type="str",
+            required=False,
+            choices=["fr-par", "nl-ams", "pl-waw"],
+        ),
+        container_id=dict(
+            type="str",
+            required=False,
+        ),
+        namespace_id=dict(
+            type="str",
+            required=False,
+        ),
+        description=dict(
+            type="str",
+            required=False,
+        ),
+        expires_at=dict(
+            type="str",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(

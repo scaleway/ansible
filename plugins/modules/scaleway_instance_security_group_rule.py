@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,27 +28,30 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
-        type: str
-        required: false
     security_group_id:
+        description: security_group_id
         type: str
         required: true
     ip_range:
+        description: ip_range
         type: str
         required: true
     position:
+        description: position
         type: int
         required: true
     editable:
+        description: editable
         type: bool
         required: true
     zone:
+        description: zone
         type: str
         required: false
     protocol:
+        description: protocol
         type: str
         required: true
         choices:
@@ -56,23 +60,41 @@ options:
             - ICMP
             - ANY
     direction:
+        description: direction
         type: str
         required: true
         choices:
             - inbound
             - outbound
     action:
+        description: action
         type: str
         required: true
         choices:
             - accept
             - drop
     dest_port_from:
+        description: dest_port_from
         type: int
         required: false
     dest_port_to:
+        description: dest_port_to
         type: int
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a security_group_rule
+  quantumsheep.scaleway.scaleway_instance_security_group_rule:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    security_group_id: "aaaaaa"
+    ip_range: "aaaaaa"
+    position: "aaaaaa"
+    editable: true
+    protocol: "aaaaaa"
+    direction: "aaaaaa"
+    action: "aaaaaa"
 """
 
 RETURN = r"""
@@ -108,7 +130,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
     id = module.params.pop("id", None)
@@ -125,10 +147,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_security_group_rule(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
     rule = module.params["rule"]
@@ -171,17 +193,49 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        security_group_id=dict(type="str", required=True),
-        ip_range=dict(type="str", required=True),
-        position=dict(type="int", required=True),
-        editable=dict(type="bool", required=True),
-        zone=dict(type="str", required=False),
-        protocol=dict(type="str", required=True, choices=["TCP", "UDP", "ICMP", "ANY"]),
-        direction=dict(type="str", required=True, choices=["inbound", "outbound"]),
-        action=dict(type="str", required=True, choices=["accept", "drop"]),
-        dest_port_from=dict(type="int", required=False),
-        dest_port_to=dict(type="int", required=False),
+        security_group_id=dict(
+            type="str",
+            required=True,
+        ),
+        ip_range=dict(
+            type="str",
+            required=True,
+        ),
+        position=dict(
+            type="int",
+            required=True,
+        ),
+        editable=dict(
+            type="bool",
+            required=True,
+        ),
+        zone=dict(
+            type="str",
+            required=False,
+        ),
+        protocol=dict(
+            type="str",
+            required=True,
+            choices=["TCP", "UDP", "ICMP", "ANY"],
+        ),
+        direction=dict(
+            type="str",
+            required=True,
+            choices=["inbound", "outbound"],
+        ),
+        action=dict(
+            type="str",
+            required=True,
+            choices=["accept", "drop"],
+        ),
+        dest_port_from=dict(
+            type="int",
+            required=False,
+        ),
+        dest_port_to=dict(
+            type="int",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(

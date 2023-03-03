@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,26 +28,41 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    private_network_id:
+        description: private_network_id
         type: str
         required: false
     zone:
+        description: zone
         type: str
         required: false
     name:
+        description: name
         type: str
         required: false
     project_id:
+        description: project_id
         type: str
         required: false
     tags:
+        description: tags
         type: list
+        elements: str
         required: false
     subnets:
+        description: subnets
         type: list
+        elements: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a private_network
+  quantumsheep.scaleway.scaleway_vpc_private_network:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
 """
 
 RETURN = r"""
@@ -92,7 +108,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = VpcV1API(client)
 
     id = module.params.pop("id", None)
@@ -109,10 +125,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_private_network(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = VpcV1API(client)
 
     id = module.params["id"]
@@ -122,6 +138,16 @@ def delete(module: AnsibleModule, client: Client) -> None:
         resource = api.get_private_network(
             private_network_id=id, region=module.params["region"]
         )
+    elif name is not None:
+        resources = api.list_private_networks_all(
+            name=name, region=module.params["region"]
+        )
+        if len(resources) == 0:
+            module.exit_json(msg="No private_network found with name {name}")
+        elif len(resources) > 1:
+            module.exit_json(msg="More than one private_network found with name {name}")
+        else:
+            resource = resources[0]
     else:
         module.fail_json(msg="id is required")
 
@@ -156,17 +182,34 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        zone=dict(type="str", required=False),
-        name=dict(type="str", required=False),
-        project_id=dict(type="str", required=False),
-        tags=dict(type="list", required=False),
-        subnets=dict(type="list", required=False),
+        private_network_id=dict(type="str"),
+        zone=dict(
+            type="str",
+            required=False,
+        ),
+        name=dict(
+            type="str",
+            required=False,
+        ),
+        project_id=dict(
+            type="str",
+            required=False,
+        ),
+        tags=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        subnets=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
+        required_one_of=(["private_network_id", "name"],),
         supports_check_mode=True,
     )
 

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,26 +28,40 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    access_key:
+        description: access_key
         type: str
         required: false
     description:
+        description: description
         type: str
         required: true
     application_id:
+        description: application_id
         type: str
         required: false
     user_id:
+        description: user_id
         type: str
         required: false
     expires_at:
+        description: expires_at
         type: str
         required: false
     default_project_id:
+        description: default_project_id
         type: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a api_key
+  quantumsheep.scaleway.scaleway_iam_api_key:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    description: "aaaaaa"
 """
 
 RETURN = r"""
@@ -90,7 +105,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = IamV1Alpha1API(client)
 
     id = module.params.pop("id", None)
@@ -107,10 +122,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_api_key(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = IamV1Alpha1API(client)
 
     access_key = module.params["access_key"]
@@ -151,12 +166,27 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        description=dict(type="str", required=True),
-        application_id=dict(type="str", required=False),
-        user_id=dict(type="str", required=False),
-        expires_at=dict(type="str", required=False),
-        default_project_id=dict(type="str", required=False),
+        access_key=dict(type="str", no_log=True),
+        description=dict(
+            type="str",
+            required=True,
+        ),
+        application_id=dict(
+            type="str",
+            required=False,
+        ),
+        user_id=dict(
+            type="str",
+            required=False,
+        ),
+        expires_at=dict(
+            type="str",
+            required=False,
+        ),
+        default_project_id=dict(
+            type="str",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(

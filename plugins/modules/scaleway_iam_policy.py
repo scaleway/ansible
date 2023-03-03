@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,35 +28,53 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    policy_id:
+        description: policy_id
         type: str
         required: false
     description:
+        description: description
         type: str
         required: true
     name:
+        description: name
         type: str
         required: false
     organization_id:
+        description: organization_id
         type: str
         required: false
     rules:
+        description: rules
         type: list
+        elements: str
         required: false
     user_id:
+        description: user_id
         type: str
         required: false
     group_id:
+        description: group_id
         type: str
         required: false
     application_id:
+        description: application_id
         type: str
         required: false
     no_principal:
+        description: no_principal
         type: bool
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a policy
+  quantumsheep.scaleway.scaleway_iam_policy:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    description: "aaaaaa"
 """
 
 RETURN = r"""
@@ -102,7 +121,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = IamV1Alpha1API(client)
 
     id = module.params.pop("id", None)
@@ -119,10 +138,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_policy(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = IamV1Alpha1API(client)
 
     id = module.params["id"]
@@ -130,6 +149,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
 
     if id is not None:
         resource = api.get_policy(policy_id=id, region=module.params["region"])
+    elif name is not None:
+        resources = api.list_policys_all(name=name, region=module.params["region"])
+        if len(resources) == 0:
+            module.exit_json(msg="No policy found with name {name}")
+        elif len(resources) > 1:
+            module.exit_json(msg="More than one policy found with name {name}")
+        else:
+            resource = resources[0]
     else:
         module.fail_json(msg="id is required")
 
@@ -162,20 +189,45 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        description=dict(type="str", required=True),
-        name=dict(type="str", required=False),
-        organization_id=dict(type="str", required=False),
-        rules=dict(type="list", required=False),
-        user_id=dict(type="str", required=False),
-        group_id=dict(type="str", required=False),
-        application_id=dict(type="str", required=False),
-        no_principal=dict(type="bool", required=False),
+        policy_id=dict(type="str"),
+        description=dict(
+            type="str",
+            required=True,
+        ),
+        name=dict(
+            type="str",
+            required=False,
+        ),
+        organization_id=dict(
+            type="str",
+            required=False,
+        ),
+        rules=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        user_id=dict(
+            type="str",
+            required=False,
+        ),
+        group_id=dict(
+            type="str",
+            required=False,
+        ),
+        application_id=dict(
+            type="str",
+            required=False,
+        ),
+        no_principal=dict(
+            type="bool",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
+        required_one_of=(["policy_id", "name"],),
         supports_check_mode=True,
     )
 

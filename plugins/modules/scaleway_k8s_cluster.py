@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,21 +28,26 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    cluster_id:
+        description: cluster_id
         type: str
         required: false
     type_:
+        description: type_
         type: str
         required: true
     description:
+        description: description
         type: str
         required: true
     version:
+        description: version
         type: str
         required: true
     region:
+        description: region
         type: str
         required: false
         choices:
@@ -49,18 +55,24 @@ options:
             - nl-ams
             - pl-waw
     organization_id:
+        description: organization_id
         type: str
         required: false
     project_id:
+        description: project_id
         type: str
         required: false
     name:
+        description: name
         type: str
         required: false
     tags:
+        description: tags
         type: list
+        elements: str
         required: false
     cni:
+        description: cni
         type: str
         required: true
         choices:
@@ -71,9 +83,11 @@ options:
             - flannel
             - kilo
     enable_dashboard:
+        description: enable_dashboard
         type: bool
         required: false
     ingress:
+        description: ingress
         type: str
         required: false
         choices:
@@ -83,26 +97,48 @@ options:
             - traefik
             - traefik2
     pools:
+        description: pools
         type: list
+        elements: str
         required: false
     autoscaler_config:
+        description: autoscaler_config
         type: dict
         required: false
     auto_upgrade:
+        description: auto_upgrade
         type: dict
         required: false
     feature_gates:
+        description: feature_gates
         type: list
+        elements: str
         required: false
     admission_plugins:
+        description: admission_plugins
         type: list
+        elements: str
         required: false
     open_id_connect_config:
+        description: open_id_connect_config
         type: dict
         required: false
     apiserver_cert_sans:
+        description: apiserver_cert_sans
         type: list
+        elements: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a cluster
+  quantumsheep.scaleway.scaleway_k8s_cluster:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    type_: "aaaaaa"
+    description: "aaaaaa"
+    version: "aaaaaa"
+    cni: "aaaaaa"
 """
 
 RETURN = r"""
@@ -171,7 +207,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = K8SV1API(client)
 
     id = module.params.pop("id", None)
@@ -191,10 +227,10 @@ def create(module: AnsibleModule, client: Client) -> None:
         cluster_id=resource.id, region=module.params["region"]
     )
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = K8SV1API(client)
 
     id = module.params["id"]
@@ -202,6 +238,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
 
     if id is not None:
         resource = api.get_cluster(cluster_id=id, region=module.params["region"])
+    elif name is not None:
+        resources = api.list_clusters_all(name=name, region=module.params["region"])
+        if len(resources) == 0:
+            module.exit_json(msg="No cluster found with name {name}")
+        elif len(resources) > 1:
+            module.exit_json(msg="More than one cluster found with name {name}")
+        else:
+            resource = resources[0]
     else:
         module.fail_json(msg="id is required")
 
@@ -240,38 +284,92 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        type_=dict(type="str", required=True),
-        description=dict(type="str", required=True),
-        version=dict(type="str", required=True),
-        region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
-        organization_id=dict(type="str", required=False),
-        project_id=dict(type="str", required=False),
-        name=dict(type="str", required=False),
-        tags=dict(type="list", required=False),
+        cluster_id=dict(type="str"),
+        type_=dict(
+            type="str",
+            required=True,
+        ),
+        description=dict(
+            type="str",
+            required=True,
+        ),
+        version=dict(
+            type="str",
+            required=True,
+        ),
+        region=dict(
+            type="str",
+            required=False,
+            choices=["fr-par", "nl-ams", "pl-waw"],
+        ),
+        organization_id=dict(
+            type="str",
+            required=False,
+        ),
+        project_id=dict(
+            type="str",
+            required=False,
+        ),
+        name=dict(
+            type="str",
+            required=False,
+        ),
+        tags=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
         cni=dict(
             type="str",
             required=True,
             choices=["unknown_cni", "cilium", "calico", "weave", "flannel", "kilo"],
         ),
-        enable_dashboard=dict(type="bool", required=False),
+        enable_dashboard=dict(
+            type="bool",
+            required=False,
+        ),
         ingress=dict(
             type="str",
             required=False,
             choices=["unknown_ingress", "none", "nginx", "traefik", "traefik2"],
         ),
-        pools=dict(type="list", required=False),
-        autoscaler_config=dict(type="dict", required=False),
-        auto_upgrade=dict(type="dict", required=False),
-        feature_gates=dict(type="list", required=False),
-        admission_plugins=dict(type="list", required=False),
-        open_id_connect_config=dict(type="dict", required=False),
-        apiserver_cert_sans=dict(type="list", required=False),
+        pools=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        autoscaler_config=dict(
+            type="dict",
+            required=False,
+        ),
+        auto_upgrade=dict(
+            type="dict",
+            required=False,
+        ),
+        feature_gates=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        admission_plugins=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        open_id_connect_config=dict(
+            type="dict",
+            required=False,
+        ),
+        apiserver_cert_sans=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
+        required_one_of=(["cluster_id", "name"],),
         supports_check_mode=True,
     )
 

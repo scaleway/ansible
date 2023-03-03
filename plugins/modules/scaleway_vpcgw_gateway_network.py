@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,32 +28,50 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    gateway_network_id:
+        description: gateway_network_id
         type: str
         required: false
     gateway_id:
+        description: gateway_id
         type: str
         required: true
     private_network_id:
+        description: private_network_id
         type: str
         required: true
     enable_masquerade:
+        description: enable_masquerade
         type: bool
         required: true
     zone:
+        description: zone
         type: str
         required: false
     dhcp_id:
+        description: dhcp_id
         type: str
         required: false
     address:
+        description: address
         type: str
         required: false
     enable_dhcp:
+        description: enable_dhcp
         type: bool
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a gateway_network
+  quantumsheep.scaleway.scaleway_vpcgw_gateway_network:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    gateway_id: "aaaaaa"
+    private_network_id: "aaaaaa"
+    enable_masquerade: true
 """
 
 RETURN = r"""
@@ -99,7 +118,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = VpcgwV1API(client)
 
     id = module.params.pop("id", None)
@@ -119,10 +138,10 @@ def create(module: AnsibleModule, client: Client) -> None:
         gateway_network_id=resource.id, region=module.params["region"]
     )
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = VpcgwV1API(client)
 
     id = module.params["id"]
@@ -173,14 +192,35 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        gateway_id=dict(type="str", required=True),
-        private_network_id=dict(type="str", required=True),
-        enable_masquerade=dict(type="bool", required=True),
-        zone=dict(type="str", required=False),
-        dhcp_id=dict(type="str", required=False),
-        address=dict(type="str", required=False),
-        enable_dhcp=dict(type="bool", required=False),
+        gateway_network_id=dict(type="str"),
+        gateway_id=dict(
+            type="str",
+            required=True,
+        ),
+        private_network_id=dict(
+            type="str",
+            required=True,
+        ),
+        enable_masquerade=dict(
+            type="bool",
+            required=True,
+        ),
+        zone=dict(
+            type="str",
+            required=False,
+        ),
+        dhcp_id=dict(
+            type="str",
+            required=False,
+        ),
+        address=dict(
+            type="str",
+            required=False,
+        ),
+        enable_dhcp=dict(
+            type="bool",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(

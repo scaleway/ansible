@@ -75,14 +75,16 @@ tags:
 """
 
 
-import sys
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from ansible.errors import AnsibleError
 from ansible.module_utils.basic import missing_required_lib
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
 
 try:
+    from scaleway_core.bridge import Zone
+
     from scaleway import Client, ScalewayException
     from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API
     from scaleway.applesilicon.v1alpha1 import Server as ApplesiliconServer
@@ -91,7 +93,6 @@ try:
     from scaleway.instance.v1 import InstanceV1API
     from scaleway.instance.v1 import Server as InstanceServer
     from scaleway.instance.v1 import ServerState
-    from scaleway_core.bridge import Zone
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -116,7 +117,7 @@ class _Host:
     id: str
     hostname: str
     tags: List[str]
-    zone: Zone
+    zone: "Zone"
 
     public_ipv4: Optional[str]
     private_ipv4: Optional[str]
@@ -150,7 +151,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not HAS_SCALEWAY_SDK:
             self.display.error(missing_required_lib("scaleway"))
-            sys.exit(1)
+            raise AnsibleError(missing_required_lib("scaleway"))
 
         user_cache_setting = self.get_option("cache")
 
@@ -194,7 +195,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return instances + elastic_metals
 
-    def _get_instances(self, client: Client, filters: _Filters) -> List[_Host]:
+    def _get_instances(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = InstanceV1API(client)
 
         servers: List[InstanceServer] = []
@@ -210,10 +211,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         results: List[_Host] = []
         for server in servers:
-            if filters.zones and any(
-                [server.zone.startswith(region) for region in filters.zones]
-            ):
-                continue
+            if filters.zones:
+                zones = [server.zone.startswith(region) for region in filters.zones]
+
+                if any(zones):
+                    continue
 
             host = _Host(
                 id=server.id,
@@ -229,7 +231,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return results
 
-    def _get_elastic_metal(self, client: Client, filters: _Filters) -> List[_Host]:
+    def _get_elastic_metal(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = BaremetalV1API(client)
 
         servers: List[BaremetalServer] = []
@@ -267,7 +269,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return results
 
-    def _get_apple_sillicon(self, client: Client, filters: _Filters) -> List[_Host]:
+    def _get_apple_sillicon(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = ApplesiliconV1Alpha1API(client)
 
         servers: List[ApplesiliconServer] = []
@@ -305,7 +307,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if hostname in as_dict and as_dict[hostname]:
                 return as_dict[hostname]
 
-        raise ValueError(f"No hostname found for {host.id} in {hostnames}")
+        raise AnsibleError(f"No hostname found for {host.id} in {hostnames}")
 
     def _get_client(self):
         config_file = self.get_option("config_file")

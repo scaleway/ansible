@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,21 +28,26 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    device_id:
+        description: device_id
         type: str
         required: false
     hub_id:
+        description: hub_id
         type: str
         required: true
     allow_insecure:
+        description: allow_insecure
         type: bool
         required: true
     allow_multiple_connections:
+        description: allow_multiple_connections
         type: bool
         required: true
     region:
+        description: region
         type: str
         required: false
         choices:
@@ -49,14 +55,27 @@ options:
             - nl-ams
             - pl-waw
     name:
+        description: name
         type: str
         required: false
     message_filters:
+        description: message_filters
         type: dict
         required: false
     description:
+        description: description
         type: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a device
+  quantumsheep.scaleway.scaleway_iot_device:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    hub_id: "aaaaaa"
+    allow_insecure: true
+    allow_multiple_connections: true
 """
 
 RETURN = r"""
@@ -104,7 +123,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = IotV1API(client)
 
     id = module.params.pop("id", None)
@@ -121,10 +140,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_device(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = IotV1API(client)
 
     id = module.params["id"]
@@ -132,6 +151,14 @@ def delete(module: AnsibleModule, client: Client) -> None:
 
     if id is not None:
         resource = api.get_device(device_id=id, region=module.params["region"])
+    elif name is not None:
+        resources = api.list_devices_all(name=name, region=module.params["region"])
+        if len(resources) == 0:
+            module.exit_json(msg="No device found with name {name}")
+        elif len(resources) > 1:
+            module.exit_json(msg="More than one device found with name {name}")
+        else:
+            resource = resources[0]
     else:
         module.fail_json(msg="id is required")
 
@@ -164,19 +191,41 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        hub_id=dict(type="str", required=True),
-        allow_insecure=dict(type="bool", required=True),
-        allow_multiple_connections=dict(type="bool", required=True),
-        region=dict(type="str", required=False, choices=["fr-par", "nl-ams", "pl-waw"]),
-        name=dict(type="str", required=False),
-        message_filters=dict(type="dict", required=False),
-        description=dict(type="str", required=False),
+        device_id=dict(type="str"),
+        hub_id=dict(
+            type="str",
+            required=True,
+        ),
+        allow_insecure=dict(
+            type="bool",
+            required=True,
+        ),
+        allow_multiple_connections=dict(
+            type="bool",
+            required=True,
+        ),
+        region=dict(
+            type="str",
+            required=False,
+            choices=["fr-par", "nl-ams", "pl-waw"],
+        ),
+        name=dict(
+            type="str",
+            required=False,
+        ),
+        message_filters=dict(
+            type="dict",
+            required=False,
+        ),
+        description=dict(
+            type="str",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["id", "name"],),
+        required_one_of=(["device_id", "name"],),
         supports_check_mode=True,
     )
 

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -27,56 +28,82 @@ options:
             - C(present) will create the resource.
             - C(absent) will delete the resource, if it exists.
         default: present
-        choices: ["present", "absent", "]
+        choices: ["present", "absent"]
         type: str
-    id:
+    dhcp_id:
+        description: dhcp_id
         type: str
         required: false
     subnet:
+        description: subnet
         type: str
         required: true
     zone:
+        description: zone
         type: str
         required: false
     project_id:
+        description: project_id
         type: str
         required: false
     address:
+        description: address
         type: str
         required: false
     pool_low:
+        description: pool_low
         type: str
         required: false
     pool_high:
+        description: pool_high
         type: str
         required: false
     enable_dynamic:
+        description: enable_dynamic
         type: bool
         required: false
     valid_lifetime:
+        description: valid_lifetime
         type: str
         required: false
     renew_timer:
+        description: renew_timer
         type: str
         required: false
     rebind_timer:
+        description: rebind_timer
         type: str
         required: false
     push_default_route:
+        description: push_default_route
         type: bool
         required: false
     push_dns_server:
+        description: push_dns_server
         type: bool
         required: false
     dns_servers_override:
+        description: dns_servers_override
         type: list
+        elements: str
         required: false
     dns_search:
+        description: dns_search
         type: list
+        elements: str
         required: false
     dns_local_name:
+        description: dns_local_name
         type: str
         required: false
+"""
+
+EXAMPLES = r"""
+- name: Create a dhcp
+  quantumsheep.scaleway.scaleway_vpcgw_dhcp:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    subnet: "aaaaaa"
 """
 
 RETURN = r"""
@@ -130,7 +157,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: Client) -> None:
+def create(module: AnsibleModule, client: "Client") -> None:
     api = VpcgwV1API(client)
 
     id = module.params.pop("id", None)
@@ -147,10 +174,10 @@ def create(module: AnsibleModule, client: Client) -> None:
 
     resource = api.create_dhcp(**module.params)
 
-    module.exit_json(changed=True, data=resource)
+    module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: Client) -> None:
+def delete(module: AnsibleModule, client: "Client") -> None:
     api = VpcgwV1API(client)
 
     id = module.params["id"]
@@ -189,22 +216,69 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        id=dict(type="str"),
-        subnet=dict(type="str", required=True),
-        zone=dict(type="str", required=False),
-        project_id=dict(type="str", required=False),
-        address=dict(type="str", required=False),
-        pool_low=dict(type="str", required=False),
-        pool_high=dict(type="str", required=False),
-        enable_dynamic=dict(type="bool", required=False),
-        valid_lifetime=dict(type="str", required=False),
-        renew_timer=dict(type="str", required=False),
-        rebind_timer=dict(type="str", required=False),
-        push_default_route=dict(type="bool", required=False),
-        push_dns_server=dict(type="bool", required=False),
-        dns_servers_override=dict(type="list", required=False),
-        dns_search=dict(type="list", required=False),
-        dns_local_name=dict(type="str", required=False),
+        dhcp_id=dict(type="str"),
+        subnet=dict(
+            type="str",
+            required=True,
+        ),
+        zone=dict(
+            type="str",
+            required=False,
+        ),
+        project_id=dict(
+            type="str",
+            required=False,
+        ),
+        address=dict(
+            type="str",
+            required=False,
+        ),
+        pool_low=dict(
+            type="str",
+            required=False,
+        ),
+        pool_high=dict(
+            type="str",
+            required=False,
+        ),
+        enable_dynamic=dict(
+            type="bool",
+            required=False,
+        ),
+        valid_lifetime=dict(
+            type="str",
+            required=False,
+        ),
+        renew_timer=dict(
+            type="str",
+            required=False,
+        ),
+        rebind_timer=dict(
+            type="str",
+            required=False,
+        ),
+        push_default_route=dict(
+            type="bool",
+            required=False,
+        ),
+        push_dns_server=dict(
+            type="bool",
+            required=False,
+        ),
+        dns_servers_override=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        dns_search=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        dns_local_name=dict(
+            type="str",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(
