@@ -134,8 +134,8 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = VpcV1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    id = module.params.pop("id", None)
+    name = module.params.pop("name", None)
 
     if id is not None:
         resource = api.get_private_network(

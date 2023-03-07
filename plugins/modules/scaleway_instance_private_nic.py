@@ -117,7 +117,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    private_nic = module.params["private_nic"]
+    private_nic = module.params.pop("private_nic", None)
 
     if private_nic is not None:
         resource = api.get_private_nic(

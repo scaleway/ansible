@@ -142,7 +142,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = VpcgwV1API(client)
 
-    id = module.params["id"]
+    id = module.params.pop("id", None)
 
     if id is not None:
         resource = api.get_pat_rule(pat_rule_id=id, region=module.params["region"])

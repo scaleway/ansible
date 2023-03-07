@@ -117,7 +117,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = DomainV2Beta1API(client)
 
-    dns_zone = module.params["dns_zone"]
+    dns_zone = module.params.pop("dns_zone", None)
 
     if dns_zone is not None:
         resource = api.get_ssl_certificate(

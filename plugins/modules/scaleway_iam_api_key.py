@@ -131,7 +131,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = IamV1Alpha1API(client)
 
-    access_key = module.params["access_key"]
+    access_key = module.params.pop("access_key", None)
 
     if access_key is not None:
         resource = api.get_api_key(

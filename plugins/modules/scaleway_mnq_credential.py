@@ -130,8 +130,8 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = MnqV1Alpha1API(client)
 
-    id = module.params["id"]
-    name = module.params["name"]
+    id = module.params.pop("id", None)
+    name = module.params.pop("name", None)
 
     if id is not None:
         resource = api.get_credential(credential_id=id, region=module.params["region"])

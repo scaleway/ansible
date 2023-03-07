@@ -149,7 +149,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    snapshot = module.params["snapshot"]
+    snapshot = module.params.pop("snapshot", None)
 
     if snapshot is not None:
         resource = api.get_snapshot(

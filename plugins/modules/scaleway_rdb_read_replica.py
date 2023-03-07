@@ -126,7 +126,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = RdbV1API(client)
 
-    id = module.params["id"]
+    id = module.params.pop("id", None)
 
     if id is not None:
         resource = api.get_read_replica(

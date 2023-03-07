@@ -144,7 +144,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    volume = module.params["volume"]
+    volume = module.params.pop("volume", None)
 
     if volume is not None:
         resource = api.get_volume(volume_id=volume, region=module.params["region"])

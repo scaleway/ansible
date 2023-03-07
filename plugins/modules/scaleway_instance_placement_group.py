@@ -139,7 +139,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    placement_group = module.params["placement_group"]
+    placement_group = module.params.pop("placement_group", None)
 
     if placement_group is not None:
         resource = api.get_placement_group(

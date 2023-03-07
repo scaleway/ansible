@@ -156,7 +156,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    rule = module.params["rule"]
+    rule = module.params.pop("rule", None)
 
     if rule is not None:
         resource = api.get_security_group_rule(

@@ -150,7 +150,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = FlexibleipV1Alpha1API(client)
 
-    id = module.params["id"]
+    id = module.params.pop("id", None)
 
     if id is not None:
         resource = api.get_flexible_ip(fip_id=id, region=module.params["region"])

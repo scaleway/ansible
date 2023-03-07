@@ -148,7 +148,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    image = module.params["image"]
+    image = module.params.pop("image", None)
 
     if image is not None:
         resource = api.get_image(image_id=image, region=module.params["region"])

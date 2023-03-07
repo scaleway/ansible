@@ -123,7 +123,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    ip = module.params["ip"]
+    ip = module.params.pop("ip", None)
 
     if ip is not None:
         resource = api.get_ip(ip=ip, region=module.params["region"])
