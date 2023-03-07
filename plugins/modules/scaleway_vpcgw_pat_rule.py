@@ -108,7 +108,7 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 )
 
 try:
-    from scaleway import Client, ScalewayException
+    from scaleway import Client
     from scaleway.vpcgw.v1 import VpcgwV1API
 
     HAS_SCALEWAY_SDK = True

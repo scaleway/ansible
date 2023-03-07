@@ -96,7 +96,7 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 )
 
 try:
-    from scaleway import Client, ScalewayException
+    from scaleway import Client
     from scaleway.rdb.v1 import RdbV1API
 
     HAS_SCALEWAY_SDK = True
