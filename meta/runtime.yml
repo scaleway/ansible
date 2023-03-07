@@ -1,5 +1,5 @@
 ---
-requires_ansible: ">=2.12"
+requires_ansible: ">=2.9.10"
 action_groups:
   all:
     - scaleway_account_project
