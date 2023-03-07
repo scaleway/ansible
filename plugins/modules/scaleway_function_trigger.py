@@ -139,7 +139,10 @@ def create(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    resource = api.create_trigger(**module.params)
+    not_none_params = {
+        key: value for key, value in module.params.items() if value is not None
+    }
+    resource = api.create_trigger(**not_none_params)
     resource = api.wait_for_trigger(
         trigger_id=resource.id, region=module.params["region"]
     )

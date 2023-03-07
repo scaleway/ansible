@@ -128,7 +128,10 @@ def create(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    resource = api.create_database_backup(**module.params)
+    not_none_params = {
+        key: value for key, value in module.params.items() if value is not None
+    }
+    resource = api.create_database_backup(**not_none_params)
     resource = api.wait_for_database_backup(
         database_backup_id=resource.id, region=module.params["region"]
     )

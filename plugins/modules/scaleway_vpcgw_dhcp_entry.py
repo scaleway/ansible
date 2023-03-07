@@ -116,7 +116,10 @@ def create(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    resource = api.create_dhcp_entry(**module.params)
+    not_none_params = {
+        key: value for key, value in module.params.items() if value is not None
+    }
+    resource = api.create_dhcp_entry(**not_none_params)
 
     module.exit_json(changed=True, data=resource.__dict__)
 
