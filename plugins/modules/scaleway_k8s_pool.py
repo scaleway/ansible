@@ -9,10 +9,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_k8s_pool
+short_description: Manage Scaleway k8s's pool
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway k8s's pool.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -30,38 +30,47 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    container_id:
-        description: container_id
+    pool_id:
+        description: pool_id
         type: str
         required: false
-    namespace_id:
-        description: namespace_id
+    cluster_id:
+        description: cluster_id
         type: str
         required: true
-    privacy:
-        description: privacy
+    node_type:
+        description: node_type
         type: str
         required: true
-        choices:
-            - unknown_privacy
-            - public
-            - private
-    protocol:
-        description: protocol
-        type: str
+    autoscaling:
+        description: autoscaling
+        type: bool
         required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
-    http_option:
-        description: http_option
+    size:
+        description: size
+        type: int
+        required: true
+    container_runtime:
+        description: container_runtime
         type: str
         required: true
         choices:
-            - unknown_http_option
-            - enabled
-            - redirected
+            - unknown_runtime
+            - docker
+            - containerd
+            - crio
+    autohealing:
+        description: autohealing
+        type: bool
+        required: true
+    root_volume_type:
+        description: root_volume_type
+        type: str
+        required: true
+        choices:
+            - default_volume_type
+            - l_ssd
+            - b_ssd
     region:
         description: region
         type: str
@@ -74,91 +83,89 @@ options:
         description: name
         type: str
         required: false
-    environment_variables:
-        description: environment_variables
-        type: dict
-        required: false
-    min_scale:
-        description: min_scale
-        type: int
-        required: false
-    max_scale:
-        description: max_scale
-        type: int
-        required: false
-    memory_limit:
-        description: memory_limit
-        type: int
-        required: false
-    timeout:
-        description: timeout
+    placement_group_id:
+        description: placement_group_id
         type: str
         required: false
-    description:
-        description: description
-        type: str
-        required: false
-    registry_image:
-        description: registry_image
-        type: str
-        required: false
-    max_concurrency:
-        description: max_concurrency
+    min_size:
+        description: min_size
         type: int
         required: false
-    port:
-        description: port
+    max_size:
+        description: max_size
         type: int
         required: false
-    secret_environment_variables:
-        description: secret_environment_variables
+    tags:
+        description: tags
         type: list
         elements: str
+        required: false
+    kubelet_args:
+        description: kubelet_args
+        type: dict
+        required: false
+    upgrade_policy:
+        description: upgrade_policy
+        type: dict
+        required: false
+    zone:
+        description: zone
+        type: str
+        required: false
+    root_volume_size:
+        description: root_volume_size
+        type: int
         required: false
 """
 
 EXAMPLES = r"""
-- name: Create a container
-  quantumsheep.scaleway.scaleway_container:
+- name: Create a pool
+  quantumsheep.scaleway.scaleway_k8s_pool:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
-    namespace_id: "aaaaaa"
-    privacy: "aaaaaa"
-    protocol: "aaaaaa"
-    http_option: "aaaaaa"
+    cluster_id: "aaaaaa"
+    node_type: "aaaaaa"
+    autoscaling: true
+    size: "aaaaaa"
+    container_runtime: "aaaaaa"
+    autohealing: true
+    root_volume_type: "aaaaaa"
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+pool:
+    description: The pool information
     returned: when I(state=present)
     type: dict
     sample:
         id: 00000000-0000-0000-0000-000000000000
+        cluster_id: 00000000-0000-0000-0000-000000000000
+        created_at: "aaaaaa"
+        updated_at: "aaaaaa"
         name: "aaaaaa"
-        namespace_id: 00000000-0000-0000-0000-000000000000
         status: ready
-        environment_variables:
-            aaaaaa: bbbbbb
-            cccccc: dddddd
-        min_scale: 3
-        max_scale: 3
-        memory_limit: 3
-        cpu_limit: 3
-        timeout: "aaaaaa"
-        error_message: "aaaaaa"
-        privacy: public
-        description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
-        domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
-        secret_environment_variables:
+        version: "aaaaaa"
+        node_type: "aaaaaa"
+        autoscaling: true
+        size: 3
+        min_size: 3
+        max_size: 3
+        container_runtime: docker
+        autohealing: true
+        tags:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
+        placement_group_id: 00000000-0000-0000-0000-000000000000
+        kubelet_args:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        upgrade_policy:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        zone: "aaaaaa"
+        root_volume_type: default_volume_type
+        root_volume_size: 3
         region: fr-par
 """
 
@@ -176,7 +183,7 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 
 try:
     from scaleway import Client, ScalewayException
-    from scaleway.container.v1beta1 import ContainerV1Beta1API
+    from scaleway.k8s.v1 import K8SV1API
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -184,11 +191,11 @@ except ImportError:
 
 
 def create(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = K8SV1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_pool(pool_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -201,28 +208,26 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    resource = api.create_container(**not_none_params)
-    resource = api.wait_for_container(
-        container_id=resource.id, region=module.params["region"]
-    )
+    resource = api.create_pool(**not_none_params)
+    resource = api.wait_for_pool(pool_id=resource.id, region=module.params["region"])
 
     module.exit_json(changed=True, data=resource.__dict__)
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = K8SV1API(client)
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
 
     if id is not None:
-        resource = api.get_container(container_id=id, region=module.params["region"])
+        resource = api.get_pool(pool_id=id, region=module.params["region"])
     elif name is not None:
-        resources = api.list_containers_all(name=name, region=module.params["region"])
+        resources = api.list_pools_all(name=name, region=module.params["region"])
         if len(resources) == 0:
-            module.exit_json(msg="No container found with name {name}")
+            module.exit_json(msg="No pool found with name {name}")
         elif len(resources) > 1:
-            module.exit_json(msg="More than one container found with name {name}")
+            module.exit_json(msg="More than one pool found with name {name}")
         else:
             resource = resources[0]
     else:
@@ -231,17 +236,17 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id, region=module.params["region"])
+    api.delete_pool(pool_id=resource.id, region=module.params["region"])
 
     try:
-        api.wait_for_container(container_id=resource.id, region=module.params["region"])
+        api.wait_for_pool(pool_id=resource.id, region=module.params["region"])
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"k8s's pool {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -263,25 +268,36 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        container_id=dict(type="str"),
-        namespace_id=dict(
+        pool_id=dict(type="str"),
+        cluster_id=dict(
             type="str",
             required=True,
         ),
-        privacy=dict(
+        node_type=dict(
             type="str",
             required=True,
-            choices=["unknown_privacy", "public", "private"],
         ),
-        protocol=dict(
-            type="str",
+        autoscaling=dict(
+            type="bool",
             required=True,
-            choices=["unknown_protocol", "http1", "h2c"],
         ),
-        http_option=dict(
+        size=dict(
+            type="int",
+            required=True,
+        ),
+        container_runtime=dict(
             type="str",
             required=True,
-            choices=["unknown_http_option", "enabled", "redirected"],
+            choices=["unknown_runtime", "docker", "containerd", "crio"],
+        ),
+        autohealing=dict(
+            type="bool",
+            required=True,
+        ),
+        root_volume_type=dict(
+            type="str",
+            required=True,
+            choices=["default_volume_type", "l_ssd", "b_ssd"],
         ),
         region=dict(
             type="str",
@@ -292,53 +308,44 @@ def main() -> None:
             type="str",
             required=False,
         ),
-        environment_variables=dict(
-            type="dict",
-            required=False,
-        ),
-        min_scale=dict(
-            type="int",
-            required=False,
-        ),
-        max_scale=dict(
-            type="int",
-            required=False,
-        ),
-        memory_limit=dict(
-            type="int",
-            required=False,
-        ),
-        timeout=dict(
+        placement_group_id=dict(
             type="str",
             required=False,
         ),
-        description=dict(
-            type="str",
-            required=False,
-        ),
-        registry_image=dict(
-            type="str",
-            required=False,
-        ),
-        max_concurrency=dict(
+        min_size=dict(
             type="int",
             required=False,
         ),
-        port=dict(
+        max_size=dict(
             type="int",
             required=False,
         ),
-        secret_environment_variables=dict(
+        tags=dict(
             type="list",
             required=False,
             elements="str",
-            no_log=True,
+        ),
+        kubelet_args=dict(
+            type="dict",
+            required=False,
+        ),
+        upgrade_policy=dict(
+            type="dict",
+            required=False,
+        ),
+        zone=dict(
+            type="str",
+            required=False,
+        ),
+        root_volume_size=dict(
+            type="int",
+            required=False,
         ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["container_id", "name"],),
+        required_one_of=(["pool_id", "name"],),
         supports_check_mode=True,
     )
 

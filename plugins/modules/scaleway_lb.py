@@ -9,10 +9,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_lb
+short_description: Manage Scaleway lb's lb
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway lb's lb.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -30,38 +30,27 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    container_id:
-        description: container_id
+    lb_id:
+        description: lb_id
         type: str
         required: false
-    namespace_id:
-        description: namespace_id
+    description:
+        description: description
         type: str
         required: true
-    privacy:
-        description: privacy
+    type_:
+        description: type_
         type: str
         required: true
-        choices:
-            - unknown_privacy
-            - public
-            - private
-    protocol:
-        description: protocol
+    ssl_compatibility_level:
+        description: ssl_compatibility_level
         type: str
         required: true
         choices:
-            - unknown_protocol
-            - http1
-            - h2c
-    http_option:
-        description: http_option
-        type: str
-        required: true
-        choices:
-            - unknown_http_option
-            - enabled
-            - redirected
+            - ssl_compatibility_level_unknown
+            - ssl_compatibility_level_intermediate
+            - ssl_compatibility_level_modern
+            - ssl_compatibility_level_old
     region:
         description: region
         type: str
@@ -70,96 +59,74 @@ options:
             - fr-par
             - nl-ams
             - pl-waw
+    organization_id:
+        description: organization_id
+        type: str
+        required: false
+    project_id:
+        description: project_id
+        type: str
+        required: false
     name:
         description: name
         type: str
         required: false
-    environment_variables:
-        description: environment_variables
-        type: dict
-        required: false
-    min_scale:
-        description: min_scale
-        type: int
-        required: false
-    max_scale:
-        description: max_scale
-        type: int
-        required: false
-    memory_limit:
-        description: memory_limit
-        type: int
-        required: false
-    timeout:
-        description: timeout
+    ip_id:
+        description: ip_id
         type: str
         required: false
-    description:
-        description: description
-        type: str
-        required: false
-    registry_image:
-        description: registry_image
-        type: str
-        required: false
-    max_concurrency:
-        description: max_concurrency
-        type: int
-        required: false
-    port:
-        description: port
-        type: int
-        required: false
-    secret_environment_variables:
-        description: secret_environment_variables
+    tags:
+        description: tags
         type: list
         elements: str
         required: false
 """
 
 EXAMPLES = r"""
-- name: Create a container
-  quantumsheep.scaleway.scaleway_container:
+- name: Create a lb
+  quantumsheep.scaleway.scaleway_lb:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
-    namespace_id: "aaaaaa"
-    privacy: "aaaaaa"
-    protocol: "aaaaaa"
-    http_option: "aaaaaa"
+    description: "aaaaaa"
+    type_: "aaaaaa"
+    ssl_compatibility_level: "aaaaaa"
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+lb:
+    description: The lb information
     returned: when I(state=present)
     type: dict
     sample:
         id: 00000000-0000-0000-0000-000000000000
         name: "aaaaaa"
-        namespace_id: 00000000-0000-0000-0000-000000000000
-        status: ready
-        environment_variables:
-            aaaaaa: bbbbbb
-            cccccc: dddddd
-        min_scale: 3
-        max_scale: 3
-        memory_limit: 3
-        cpu_limit: 3
-        timeout: "aaaaaa"
-        error_message: "aaaaaa"
-        privacy: public
         description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
-        domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
-        secret_environment_variables:
+        status: ready
+        instances:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
+        organization_id: 00000000-0000-0000-0000-000000000000
+        project_id: 00000000-0000-0000-0000-000000000000
+        ip:
+            - aaaaaa
+            - bbbbbb
+        tags:
+            - aaaaaa
+            - bbbbbb
+        frontend_count: 3
+        backend_count: 3
+        type_: "aaaaaa"
+        subscriber:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        ssl_compatibility_level: ssl_compatibility_level_intermediate
+        created_at: "aaaaaa"
+        updated_at: "aaaaaa"
+        private_network_count: 3
+        route_count: 3
         region: fr-par
+        zone: "aaaaaa"
 """
 
 from ansible.module_utils.basic import (
@@ -176,7 +143,7 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 
 try:
     from scaleway import Client, ScalewayException
-    from scaleway.container.v1beta1 import ContainerV1Beta1API
+    from scaleway.lb.v1 import LbV1API
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -184,11 +151,11 @@ except ImportError:
 
 
 def create(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = LbV1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_lb(lb_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -201,28 +168,26 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    resource = api.create_container(**not_none_params)
-    resource = api.wait_for_container(
-        container_id=resource.id, region=module.params["region"]
-    )
+    resource = api.create_lb(**not_none_params)
+    resource = api.wait_for_lb(lb_id=resource.id, region=module.params["region"])
 
     module.exit_json(changed=True, data=resource.__dict__)
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = LbV1API(client)
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
 
     if id is not None:
-        resource = api.get_container(container_id=id, region=module.params["region"])
+        resource = api.get_lb(lb_id=id, region=module.params["region"])
     elif name is not None:
-        resources = api.list_containers_all(name=name, region=module.params["region"])
+        resources = api.list_lbs_all(name=name, region=module.params["region"])
         if len(resources) == 0:
-            module.exit_json(msg="No container found with name {name}")
+            module.exit_json(msg="No lb found with name {name}")
         elif len(resources) > 1:
-            module.exit_json(msg="More than one container found with name {name}")
+            module.exit_json(msg="More than one lb found with name {name}")
         else:
             resource = resources[0]
     else:
@@ -231,17 +196,17 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id, region=module.params["region"])
+    api.delete_lb(lb_id=resource.id, region=module.params["region"])
 
     try:
-        api.wait_for_container(container_id=resource.id, region=module.params["region"])
+        api.wait_for_lb(lb_id=resource.id, region=module.params["region"])
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"lb's lb {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -263,82 +228,56 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        container_id=dict(type="str"),
-        namespace_id=dict(
+        lb_id=dict(type="str"),
+        description=dict(
             type="str",
             required=True,
         ),
-        privacy=dict(
+        type_=dict(
             type="str",
             required=True,
-            choices=["unknown_privacy", "public", "private"],
         ),
-        protocol=dict(
+        ssl_compatibility_level=dict(
             type="str",
             required=True,
-            choices=["unknown_protocol", "http1", "h2c"],
-        ),
-        http_option=dict(
-            type="str",
-            required=True,
-            choices=["unknown_http_option", "enabled", "redirected"],
+            choices=[
+                "ssl_compatibility_level_unknown",
+                "ssl_compatibility_level_intermediate",
+                "ssl_compatibility_level_modern",
+                "ssl_compatibility_level_old",
+            ],
         ),
         region=dict(
             type="str",
             required=False,
             choices=["fr-par", "nl-ams", "pl-waw"],
         ),
+        organization_id=dict(
+            type="str",
+            required=False,
+        ),
+        project_id=dict(
+            type="str",
+            required=False,
+        ),
         name=dict(
             type="str",
             required=False,
         ),
-        environment_variables=dict(
-            type="dict",
-            required=False,
-        ),
-        min_scale=dict(
-            type="int",
-            required=False,
-        ),
-        max_scale=dict(
-            type="int",
-            required=False,
-        ),
-        memory_limit=dict(
-            type="int",
-            required=False,
-        ),
-        timeout=dict(
+        ip_id=dict(
             type="str",
             required=False,
         ),
-        description=dict(
-            type="str",
-            required=False,
-        ),
-        registry_image=dict(
-            type="str",
-            required=False,
-        ),
-        max_concurrency=dict(
-            type="int",
-            required=False,
-        ),
-        port=dict(
-            type="int",
-            required=False,
-        ),
-        secret_environment_variables=dict(
+        tags=dict(
             type="list",
             required=False,
             elements="str",
-            no_log=True,
         ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["container_id", "name"],),
+        required_one_of=(["lb_id", "name"],),
         supports_check_mode=True,
     )
 

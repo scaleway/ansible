@@ -9,10 +9,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_redis_cluster
+short_description: Manage Scaleway redis's cluster
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway redis's cluster.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -30,136 +30,114 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    container_id:
-        description: container_id
+    cluster_id:
+        description: cluster_id
         type: str
         required: false
-    namespace_id:
-        description: namespace_id
+    version:
+        description: version
         type: str
         required: true
-    privacy:
-        description: privacy
+    node_type:
+        description: node_type
         type: str
         required: true
-        choices:
-            - unknown_privacy
-            - public
-            - private
-    protocol:
-        description: protocol
+    user_name:
+        description: user_name
         type: str
         required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
-    http_option:
-        description: http_option
+    password:
+        description: password
         type: str
         required: true
-        choices:
-            - unknown_http_option
-            - enabled
-            - redirected
-    region:
-        description: region
+    tls_enabled:
+        description: tls_enabled
+        type: bool
+        required: true
+    zone:
+        description: zone
         type: str
         required: false
-        choices:
-            - fr-par
-            - nl-ams
-            - pl-waw
+    project_id:
+        description: project_id
+        type: str
+        required: false
     name:
         description: name
         type: str
         required: false
-    environment_variables:
-        description: environment_variables
-        type: dict
+    tags:
+        description: tags
+        type: list
+        elements: str
         required: false
-    min_scale:
-        description: min_scale
+    cluster_size:
+        description: cluster_size
         type: int
         required: false
-    max_scale:
-        description: max_scale
-        type: int
+    acl_rules:
+        description: acl_rules
+        type: list
+        elements: str
         required: false
-    memory_limit:
-        description: memory_limit
-        type: int
+    endpoints:
+        description: endpoints
+        type: list
+        elements: str
         required: false
-    timeout:
-        description: timeout
-        type: str
-        required: false
-    description:
-        description: description
-        type: str
-        required: false
-    registry_image:
-        description: registry_image
-        type: str
-        required: false
-    max_concurrency:
-        description: max_concurrency
-        type: int
-        required: false
-    port:
-        description: port
-        type: int
-        required: false
-    secret_environment_variables:
-        description: secret_environment_variables
+    cluster_settings:
+        description: cluster_settings
         type: list
         elements: str
         required: false
 """
 
 EXAMPLES = r"""
-- name: Create a container
-  quantumsheep.scaleway.scaleway_container:
+- name: Create a cluster
+  quantumsheep.scaleway.scaleway_redis_cluster:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
-    namespace_id: "aaaaaa"
-    privacy: "aaaaaa"
-    protocol: "aaaaaa"
-    http_option: "aaaaaa"
+    version: "aaaaaa"
+    node_type: "aaaaaa"
+    user_name: "aaaaaa"
+    password: "aaaaaa"
+    tls_enabled: true
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+cluster:
+    description: The cluster information
     returned: when I(state=present)
     type: dict
     sample:
         id: 00000000-0000-0000-0000-000000000000
         name: "aaaaaa"
-        namespace_id: 00000000-0000-0000-0000-000000000000
+        project_id: 00000000-0000-0000-0000-000000000000
         status: ready
-        environment_variables:
-            aaaaaa: bbbbbb
-            cccccc: dddddd
-        min_scale: 3
-        max_scale: 3
-        memory_limit: 3
-        cpu_limit: 3
-        timeout: "aaaaaa"
-        error_message: "aaaaaa"
-        privacy: public
-        description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
-        domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
-        secret_environment_variables:
+        version: "aaaaaa"
+        endpoints:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
-        region: fr-par
+        tags:
+            - aaaaaa
+            - bbbbbb
+        node_type: "aaaaaa"
+        created_at: "aaaaaa"
+        updated_at: "aaaaaa"
+        tls_enabled: true
+        cluster_settings:
+            - aaaaaa
+            - bbbbbb
+        acl_rules:
+            - aaaaaa
+            - bbbbbb
+        cluster_size: 3
+        zone: "aaaaaa"
+        user_name: "aaaaaa"
+        upgradable_versions:
+            - aaaaaa
+            - bbbbbb
 """
 
 from ansible.module_utils.basic import (
@@ -176,7 +154,7 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 
 try:
     from scaleway import Client, ScalewayException
-    from scaleway.container.v1beta1 import ContainerV1Beta1API
+    from scaleway.redis.v1 import RedisV1API
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -184,11 +162,11 @@ except ImportError:
 
 
 def create(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = RedisV1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_cluster(cluster_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -201,28 +179,28 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    resource = api.create_container(**not_none_params)
-    resource = api.wait_for_container(
-        container_id=resource.id, region=module.params["region"]
+    resource = api.create_cluster(**not_none_params)
+    resource = api.wait_for_cluster(
+        cluster_id=resource.id, region=module.params["region"]
     )
 
     module.exit_json(changed=True, data=resource.__dict__)
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = RedisV1API(client)
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
 
     if id is not None:
-        resource = api.get_container(container_id=id, region=module.params["region"])
+        resource = api.get_cluster(cluster_id=id, region=module.params["region"])
     elif name is not None:
-        resources = api.list_containers_all(name=name, region=module.params["region"])
+        resources = api.list_clusters_all(name=name, region=module.params["region"])
         if len(resources) == 0:
-            module.exit_json(msg="No container found with name {name}")
+            module.exit_json(msg="No cluster found with name {name}")
         elif len(resources) > 1:
-            module.exit_json(msg="More than one container found with name {name}")
+            module.exit_json(msg="More than one cluster found with name {name}")
         else:
             resource = resources[0]
     else:
@@ -231,17 +209,17 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id, region=module.params["region"])
+    api.delete_cluster(cluster_id=resource.id, region=module.params["region"])
 
     try:
-        api.wait_for_container(container_id=resource.id, region=module.params["region"])
+        api.wait_for_cluster(cluster_id=resource.id, region=module.params["region"])
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"redis's cluster {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -263,82 +241,69 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        container_id=dict(type="str"),
-        namespace_id=dict(
+        cluster_id=dict(type="str"),
+        version=dict(
             type="str",
             required=True,
         ),
-        privacy=dict(
+        node_type=dict(
             type="str",
             required=True,
-            choices=["unknown_privacy", "public", "private"],
         ),
-        protocol=dict(
+        user_name=dict(
             type="str",
             required=True,
-            choices=["unknown_protocol", "http1", "h2c"],
         ),
-        http_option=dict(
+        password=dict(
             type="str",
             required=True,
-            choices=["unknown_http_option", "enabled", "redirected"],
+            no_log=True,
         ),
-        region=dict(
+        tls_enabled=dict(
+            type="bool",
+            required=True,
+        ),
+        zone=dict(
             type="str",
             required=False,
-            choices=["fr-par", "nl-ams", "pl-waw"],
+        ),
+        project_id=dict(
+            type="str",
+            required=False,
         ),
         name=dict(
             type="str",
             required=False,
         ),
-        environment_variables=dict(
-            type="dict",
-            required=False,
-        ),
-        min_scale=dict(
-            type="int",
-            required=False,
-        ),
-        max_scale=dict(
-            type="int",
-            required=False,
-        ),
-        memory_limit=dict(
-            type="int",
-            required=False,
-        ),
-        timeout=dict(
-            type="str",
-            required=False,
-        ),
-        description=dict(
-            type="str",
-            required=False,
-        ),
-        registry_image=dict(
-            type="str",
-            required=False,
-        ),
-        max_concurrency=dict(
-            type="int",
-            required=False,
-        ),
-        port=dict(
-            type="int",
-            required=False,
-        ),
-        secret_environment_variables=dict(
+        tags=dict(
             type="list",
             required=False,
             elements="str",
-            no_log=True,
+        ),
+        cluster_size=dict(
+            type="int",
+            required=False,
+        ),
+        acl_rules=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        endpoints=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        cluster_settings=dict(
+            type="list",
+            required=False,
+            elements="str",
         ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["container_id", "name"],),
+        required_one_of=(["cluster_id", "name"],),
         supports_check_mode=True,
     )
 

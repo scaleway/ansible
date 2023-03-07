@@ -9,10 +9,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_rdb_instance
+short_description: Manage Scaleway rdb's instance
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway rdb's instance.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -30,38 +30,49 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    container_id:
-        description: container_id
+    instance_id:
+        description: instance_id
         type: str
         required: false
-    namespace_id:
-        description: namespace_id
+    engine:
+        description: engine
         type: str
         required: true
-    privacy:
-        description: privacy
+    user_name:
+        description: user_name
+        type: str
+        required: true
+    password:
+        description: password
+        type: str
+        required: true
+    node_type:
+        description: node_type
+        type: str
+        required: true
+    is_ha_cluster:
+        description: is_ha_cluster
+        type: bool
+        required: true
+    disable_backup:
+        description: disable_backup
+        type: bool
+        required: true
+    volume_type:
+        description: volume_type
         type: str
         required: true
         choices:
-            - unknown_privacy
-            - public
-            - private
-    protocol:
-        description: protocol
-        type: str
+            - lssd
+            - bssd
+    volume_size:
+        description: volume_size
+        type: int
         required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
-    http_option:
-        description: http_option
-        type: str
+    backup_same_region:
+        description: backup_same_region
+        type: bool
         required: true
-        choices:
-            - unknown_http_option
-            - enabled
-            - redirected
     region:
         description: region
         type: str
@@ -70,96 +81,102 @@ options:
             - fr-par
             - nl-ams
             - pl-waw
+    organization_id:
+        description: organization_id
+        type: str
+        required: false
+    project_id:
+        description: project_id
+        type: str
+        required: false
     name:
         description: name
         type: str
         required: false
-    environment_variables:
-        description: environment_variables
-        type: dict
+    tags:
+        description: tags
+        type: list
+        elements: str
         required: false
-    min_scale:
-        description: min_scale
-        type: int
+    init_settings:
+        description: init_settings
+        type: list
+        elements: str
         required: false
-    max_scale:
-        description: max_scale
-        type: int
-        required: false
-    memory_limit:
-        description: memory_limit
-        type: int
-        required: false
-    timeout:
-        description: timeout
-        type: str
-        required: false
-    description:
-        description: description
-        type: str
-        required: false
-    registry_image:
-        description: registry_image
-        type: str
-        required: false
-    max_concurrency:
-        description: max_concurrency
-        type: int
-        required: false
-    port:
-        description: port
-        type: int
-        required: false
-    secret_environment_variables:
-        description: secret_environment_variables
+    init_endpoints:
+        description: init_endpoints
         type: list
         elements: str
         required: false
 """
 
 EXAMPLES = r"""
-- name: Create a container
-  quantumsheep.scaleway.scaleway_container:
+- name: Create a instance
+  quantumsheep.scaleway.scaleway_rdb_instance:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
-    namespace_id: "aaaaaa"
-    privacy: "aaaaaa"
-    protocol: "aaaaaa"
-    http_option: "aaaaaa"
+    engine: "aaaaaa"
+    user_name: "aaaaaa"
+    password: "aaaaaa"
+    node_type: "aaaaaa"
+    is_ha_cluster: true
+    disable_backup: true
+    volume_type: "aaaaaa"
+    volume_size: "aaaaaa"
+    backup_same_region: true
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+instance:
+    description: The instance information
     returned: when I(state=present)
     type: dict
     sample:
-        id: 00000000-0000-0000-0000-000000000000
-        name: "aaaaaa"
-        namespace_id: 00000000-0000-0000-0000-000000000000
-        status: ready
-        environment_variables:
+        created_at: "aaaaaa"
+        volume:
             aaaaaa: bbbbbb
             cccccc: dddddd
-        min_scale: 3
-        max_scale: 3
-        memory_limit: 3
-        cpu_limit: 3
-        timeout: "aaaaaa"
-        error_message: "aaaaaa"
-        privacy: public
-        description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
-        domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
-        secret_environment_variables:
+        region: fr-par
+        id: 00000000-0000-0000-0000-000000000000
+        name: "aaaaaa"
+        organization_id: 00000000-0000-0000-0000-000000000000
+        project_id: 00000000-0000-0000-0000-000000000000
+        status: ready
+        engine: "aaaaaa"
+        upgradable_version:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
-        region: fr-par
+        endpoint:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        tags:
+            - aaaaaa
+            - bbbbbb
+        settings:
+            - aaaaaa
+            - bbbbbb
+        backup_schedule:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        is_ha_cluster: true
+        read_replicas:
+            - aaaaaa
+            - bbbbbb
+        node_type: "aaaaaa"
+        init_settings:
+            - aaaaaa
+            - bbbbbb
+        endpoints:
+            - aaaaaa
+            - bbbbbb
+        logs_policy:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        backup_same_region: true
+        maintenances:
+            - aaaaaa
+            - bbbbbb
 """
 
 from ansible.module_utils.basic import (
@@ -176,7 +193,7 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 
 try:
     from scaleway import Client, ScalewayException
-    from scaleway.container.v1beta1 import ContainerV1Beta1API
+    from scaleway.rdb.v1 import RdbV1API
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -184,11 +201,11 @@ except ImportError:
 
 
 def create(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = RdbV1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_instance(instance_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -201,28 +218,28 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    resource = api.create_container(**not_none_params)
-    resource = api.wait_for_container(
-        container_id=resource.id, region=module.params["region"]
+    resource = api.create_instance(**not_none_params)
+    resource = api.wait_for_instance(
+        instance_id=resource.id, region=module.params["region"]
     )
 
     module.exit_json(changed=True, data=resource.__dict__)
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = RdbV1API(client)
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
 
     if id is not None:
-        resource = api.get_container(container_id=id, region=module.params["region"])
+        resource = api.get_instance(instance_id=id, region=module.params["region"])
     elif name is not None:
-        resources = api.list_containers_all(name=name, region=module.params["region"])
+        resources = api.list_instances_all(name=name, region=module.params["region"])
         if len(resources) == 0:
-            module.exit_json(msg="No container found with name {name}")
+            module.exit_json(msg="No instance found with name {name}")
         elif len(resources) > 1:
-            module.exit_json(msg="More than one container found with name {name}")
+            module.exit_json(msg="More than one instance found with name {name}")
         else:
             resource = resources[0]
     else:
@@ -231,17 +248,17 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id, region=module.params["region"])
+    api.delete_instance(instance_id=resource.id, region=module.params["region"])
 
     try:
-        api.wait_for_container(container_id=resource.id, region=module.params["region"])
+        api.wait_for_instance(instance_id=resource.id, region=module.params["region"])
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"rdb's instance {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -263,82 +280,82 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        container_id=dict(type="str"),
-        namespace_id=dict(
+        instance_id=dict(type="str"),
+        engine=dict(
             type="str",
             required=True,
         ),
-        privacy=dict(
+        user_name=dict(
             type="str",
             required=True,
-            choices=["unknown_privacy", "public", "private"],
         ),
-        protocol=dict(
+        password=dict(
             type="str",
             required=True,
-            choices=["unknown_protocol", "http1", "h2c"],
+            no_log=True,
         ),
-        http_option=dict(
+        node_type=dict(
             type="str",
             required=True,
-            choices=["unknown_http_option", "enabled", "redirected"],
+        ),
+        is_ha_cluster=dict(
+            type="bool",
+            required=True,
+        ),
+        disable_backup=dict(
+            type="bool",
+            required=True,
+        ),
+        volume_type=dict(
+            type="str",
+            required=True,
+            choices=["lssd", "bssd"],
+        ),
+        volume_size=dict(
+            type="int",
+            required=True,
+        ),
+        backup_same_region=dict(
+            type="bool",
+            required=True,
         ),
         region=dict(
             type="str",
             required=False,
             choices=["fr-par", "nl-ams", "pl-waw"],
         ),
+        organization_id=dict(
+            type="str",
+            required=False,
+        ),
+        project_id=dict(
+            type="str",
+            required=False,
+        ),
         name=dict(
             type="str",
             required=False,
         ),
-        environment_variables=dict(
-            type="dict",
-            required=False,
-        ),
-        min_scale=dict(
-            type="int",
-            required=False,
-        ),
-        max_scale=dict(
-            type="int",
-            required=False,
-        ),
-        memory_limit=dict(
-            type="int",
-            required=False,
-        ),
-        timeout=dict(
-            type="str",
-            required=False,
-        ),
-        description=dict(
-            type="str",
-            required=False,
-        ),
-        registry_image=dict(
-            type="str",
-            required=False,
-        ),
-        max_concurrency=dict(
-            type="int",
-            required=False,
-        ),
-        port=dict(
-            type="int",
-            required=False,
-        ),
-        secret_environment_variables=dict(
+        tags=dict(
             type="list",
             required=False,
             elements="str",
-            no_log=True,
+        ),
+        init_settings=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        init_endpoints=dict(
+            type="list",
+            required=False,
+            elements="str",
         ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["container_id", "name"],),
+        required_one_of=(["instance_id", "name"],),
         supports_check_mode=True,
     )
 

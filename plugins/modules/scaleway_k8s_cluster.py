@@ -9,10 +9,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_k8s_cluster
+short_description: Manage Scaleway k8s's cluster
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway k8s's cluster.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -30,38 +30,22 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    container_id:
-        description: container_id
+    cluster_id:
+        description: cluster_id
         type: str
         required: false
-    namespace_id:
-        description: namespace_id
+    type_:
+        description: type_
         type: str
         required: true
-    privacy:
-        description: privacy
+    description:
+        description: description
         type: str
         required: true
-        choices:
-            - unknown_privacy
-            - public
-            - private
-    protocol:
-        description: protocol
+    version:
+        description: version
         type: str
         required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
-    http_option:
-        description: http_option
-        type: str
-        required: true
-        choices:
-            - unknown_http_option
-            - enabled
-            - redirected
     region:
         description: region
         type: str
@@ -70,96 +54,136 @@ options:
             - fr-par
             - nl-ams
             - pl-waw
+    organization_id:
+        description: organization_id
+        type: str
+        required: false
+    project_id:
+        description: project_id
+        type: str
+        required: false
     name:
         description: name
         type: str
         required: false
-    environment_variables:
-        description: environment_variables
+    tags:
+        description: tags
+        type: list
+        elements: str
+        required: false
+    cni:
+        description: cni
+        type: str
+        required: true
+        choices:
+            - unknown_cni
+            - cilium
+            - calico
+            - weave
+            - flannel
+            - kilo
+    enable_dashboard:
+        description: enable_dashboard
+        type: bool
+        required: false
+    ingress:
+        description: ingress
+        type: str
+        required: false
+        choices:
+            - unknown_ingress
+            - none
+            - nginx
+            - traefik
+            - traefik2
+    pools:
+        description: pools
+        type: list
+        elements: str
+        required: false
+    autoscaler_config:
+        description: autoscaler_config
         type: dict
         required: false
-    min_scale:
-        description: min_scale
-        type: int
+    auto_upgrade:
+        description: auto_upgrade
+        type: dict
         required: false
-    max_scale:
-        description: max_scale
-        type: int
+    feature_gates:
+        description: feature_gates
+        type: list
+        elements: str
         required: false
-    memory_limit:
-        description: memory_limit
-        type: int
+    admission_plugins:
+        description: admission_plugins
+        type: list
+        elements: str
         required: false
-    timeout:
-        description: timeout
-        type: str
+    open_id_connect_config:
+        description: open_id_connect_config
+        type: dict
         required: false
-    description:
-        description: description
-        type: str
-        required: false
-    registry_image:
-        description: registry_image
-        type: str
-        required: false
-    max_concurrency:
-        description: max_concurrency
-        type: int
-        required: false
-    port:
-        description: port
-        type: int
-        required: false
-    secret_environment_variables:
-        description: secret_environment_variables
+    apiserver_cert_sans:
+        description: apiserver_cert_sans
         type: list
         elements: str
         required: false
 """
 
 EXAMPLES = r"""
-- name: Create a container
-  quantumsheep.scaleway.scaleway_container:
+- name: Create a cluster
+  quantumsheep.scaleway.scaleway_k8s_cluster:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
-    namespace_id: "aaaaaa"
-    privacy: "aaaaaa"
-    protocol: "aaaaaa"
-    http_option: "aaaaaa"
+    type_: "aaaaaa"
+    description: "aaaaaa"
+    version: "aaaaaa"
+    cni: "aaaaaa"
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+cluster:
+    description: The cluster information
     returned: when I(state=present)
     type: dict
     sample:
         id: 00000000-0000-0000-0000-000000000000
+        type_: "aaaaaa"
         name: "aaaaaa"
-        namespace_id: 00000000-0000-0000-0000-000000000000
-        status: ready
-        environment_variables:
-            aaaaaa: bbbbbb
-            cccccc: dddddd
-        min_scale: 3
-        max_scale: 3
-        memory_limit: 3
-        cpu_limit: 3
-        timeout: "aaaaaa"
-        error_message: "aaaaaa"
-        privacy: public
-        description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
-        domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
-        secret_environment_variables:
+        status: creating
+        version: "aaaaaa"
+        region: fr-par
+        organization_id: 00000000-0000-0000-0000-000000000000
+        project_id: 00000000-0000-0000-0000-000000000000
+        tags:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
-        region: fr-par
+        cni: cilium
+        description: "aaaaaa"
+        cluster_url: "aaaaaa"
+        dns_wildcard: "aaaaaa"
+        created_at: "aaaaaa"
+        updated_at: "aaaaaa"
+        autoscaler_config:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        dashboard_enabled: true
+        ingress: none
+        auto_upgrade:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        upgrade_available: true
+        feature_gates:
+            - aaaaaa
+            - bbbbbb
+        admission_plugins:
+            - aaaaaa
+            - bbbbbb
+        open_id_connect_config: 00000000-0000-0000-0000-000000000000
+        apiserver_cert_sans:
+            - aaaaaa
+            - bbbbbb
 """
 
 from ansible.module_utils.basic import (
@@ -176,7 +200,7 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 
 try:
     from scaleway import Client, ScalewayException
-    from scaleway.container.v1beta1 import ContainerV1Beta1API
+    from scaleway.k8s.v1 import K8SV1API
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -184,11 +208,11 @@ except ImportError:
 
 
 def create(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = K8SV1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_cluster(cluster_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -201,28 +225,28 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    resource = api.create_container(**not_none_params)
-    resource = api.wait_for_container(
-        container_id=resource.id, region=module.params["region"]
+    resource = api.create_cluster(**not_none_params)
+    resource = api.wait_for_cluster(
+        cluster_id=resource.id, region=module.params["region"]
     )
 
     module.exit_json(changed=True, data=resource.__dict__)
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = K8SV1API(client)
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
 
     if id is not None:
-        resource = api.get_container(container_id=id, region=module.params["region"])
+        resource = api.get_cluster(cluster_id=id, region=module.params["region"])
     elif name is not None:
-        resources = api.list_containers_all(name=name, region=module.params["region"])
+        resources = api.list_clusters_all(name=name, region=module.params["region"])
         if len(resources) == 0:
-            module.exit_json(msg="No container found with name {name}")
+            module.exit_json(msg="No cluster found with name {name}")
         elif len(resources) > 1:
-            module.exit_json(msg="More than one container found with name {name}")
+            module.exit_json(msg="More than one cluster found with name {name}")
         else:
             resource = resources[0]
     else:
@@ -231,17 +255,17 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id, region=module.params["region"])
+    api.delete_cluster(cluster_id=resource.id, region=module.params["region"])
 
     try:
-        api.wait_for_container(container_id=resource.id, region=module.params["region"])
+        api.wait_for_cluster(cluster_id=resource.id, region=module.params["region"])
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"k8s's cluster {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -263,82 +287,92 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        container_id=dict(type="str"),
-        namespace_id=dict(
+        cluster_id=dict(type="str"),
+        type_=dict(
             type="str",
             required=True,
         ),
-        privacy=dict(
+        description=dict(
             type="str",
             required=True,
-            choices=["unknown_privacy", "public", "private"],
         ),
-        protocol=dict(
+        version=dict(
             type="str",
             required=True,
-            choices=["unknown_protocol", "http1", "h2c"],
-        ),
-        http_option=dict(
-            type="str",
-            required=True,
-            choices=["unknown_http_option", "enabled", "redirected"],
         ),
         region=dict(
             type="str",
             required=False,
             choices=["fr-par", "nl-ams", "pl-waw"],
         ),
+        organization_id=dict(
+            type="str",
+            required=False,
+        ),
+        project_id=dict(
+            type="str",
+            required=False,
+        ),
         name=dict(
             type="str",
             required=False,
         ),
-        environment_variables=dict(
-            type="dict",
-            required=False,
-        ),
-        min_scale=dict(
-            type="int",
-            required=False,
-        ),
-        max_scale=dict(
-            type="int",
-            required=False,
-        ),
-        memory_limit=dict(
-            type="int",
-            required=False,
-        ),
-        timeout=dict(
-            type="str",
-            required=False,
-        ),
-        description=dict(
-            type="str",
-            required=False,
-        ),
-        registry_image=dict(
-            type="str",
-            required=False,
-        ),
-        max_concurrency=dict(
-            type="int",
-            required=False,
-        ),
-        port=dict(
-            type="int",
-            required=False,
-        ),
-        secret_environment_variables=dict(
+        tags=dict(
             type="list",
             required=False,
             elements="str",
-            no_log=True,
+        ),
+        cni=dict(
+            type="str",
+            required=True,
+            choices=["unknown_cni", "cilium", "calico", "weave", "flannel", "kilo"],
+        ),
+        enable_dashboard=dict(
+            type="bool",
+            required=False,
+        ),
+        ingress=dict(
+            type="str",
+            required=False,
+            choices=["unknown_ingress", "none", "nginx", "traefik", "traefik2"],
+        ),
+        pools=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        autoscaler_config=dict(
+            type="dict",
+            required=False,
+        ),
+        auto_upgrade=dict(
+            type="dict",
+            required=False,
+        ),
+        feature_gates=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        admission_plugins=dict(
+            type="list",
+            required=False,
+            elements="str",
+        ),
+        open_id_connect_config=dict(
+            type="dict",
+            required=False,
+        ),
+        apiserver_cert_sans=dict(
+            type="list",
+            required=False,
+            elements="str",
         ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["container_id", "name"],),
+        required_one_of=(["cluster_id", "name"],),
         supports_check_mode=True,
     )
 

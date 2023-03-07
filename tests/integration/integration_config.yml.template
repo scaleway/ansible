@@ -1,0 +1,4 @@
+---
+scw_access_key: ${SCW_ACCESS_KEY}
+scw_secret_key: ${SCW_SECRET_KEY}
+scw_default_project_id: ${SCW_DEFAULT_PROJECT_ID}

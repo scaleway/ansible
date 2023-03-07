@@ -4,20 +4,31 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import absolute_import, division, print_function
-from typing import Any, Dict
 
-from scaleway import Client
+from typing import Any, Dict
 
 __metaclass__ = type
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
-from scaleway_core.profile.env import (
-    ENV_KEY_SCW_CONFIG_PATH,
-    ENV_KEY_SCW_ACCESS_KEY,
-    ENV_KEY_SCW_SECRET_KEY,
-    ENV_KEY_SCW_API_URL,
-)
+from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
+
+try:
+    from scaleway import Client
+
+    from scaleway_core.profile.env import (
+        ENV_KEY_SCW_ACCESS_KEY,
+        ENV_KEY_SCW_API_URL,
+        ENV_KEY_SCW_CONFIG_PATH,
+        ENV_KEY_SCW_SECRET_KEY,
+    )
+
+    HAS_SCALEWAY_SDK = True
+except ImportError:
+    HAS_SCALEWAY_SDK = False
+
+    ENV_KEY_SCW_CONFIG_PATH = "SCW_CONFIG_PATH"
+    ENV_KEY_SCW_ACCESS_KEY = "SCW_ACCESS_KEY"
+    ENV_KEY_SCW_SECRET_KEY = "SCW_SECRET_KEY"  # nosec B105
+    ENV_KEY_SCW_API_URL = "SCW_API_URL"
 
 
 def scaleway_argument_spec() -> Dict[str, Dict[str, Any]]:
@@ -55,6 +66,9 @@ def scaleway_waitable_resource_argument_spec() -> Dict[str, Dict[str, Any]]:
 
 
 def scaleway_get_client_from_module(module: AnsibleModule):
+    if not HAS_SCALEWAY_SDK:
+        module.fail_json(missing_required_lib("scaleway"))
+
     config_file = module.params["config_file"]
     profile = module.params["profile"]
     access_key = module.params["access_key"]

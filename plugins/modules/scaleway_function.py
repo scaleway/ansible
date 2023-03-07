@@ -9,10 +9,10 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_container
-short_description: Manage Scaleway container's container
+module: scaleway_function
+short_description: Manage Scaleway function's function
 description:
-    - This module can be used to manage Scaleway container's container.
+    - This module can be used to manage Scaleway function's function.
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
@@ -30,14 +30,42 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    container_id:
-        description: container_id
+    function_id:
+        description: function_id
         type: str
         required: false
     namespace_id:
         description: namespace_id
         type: str
         required: true
+    runtime:
+        description: runtime
+        type: str
+        required: true
+        choices:
+            - unknown_runtime
+            - golang
+            - python
+            - python3
+            - node8
+            - node10
+            - node14
+            - node16
+            - node17
+            - python37
+            - python38
+            - python39
+            - python310
+            - go113
+            - go117
+            - go118
+            - node18
+            - rust165
+            - go119
+            - python311
+            - php82
+            - node19
+            - go120
     privacy:
         description: privacy
         type: str
@@ -46,14 +74,6 @@ options:
             - unknown_privacy
             - public
             - private
-    protocol:
-        description: protocol
-        type: str
-        required: true
-        choices:
-            - unknown_protocol
-            - http1
-            - h2c
     http_option:
         description: http_option
         type: str
@@ -94,21 +114,13 @@ options:
         description: timeout
         type: str
         required: false
+    handler:
+        description: handler
+        type: str
+        required: false
     description:
         description: description
         type: str
-        required: false
-    registry_image:
-        description: registry_image
-        type: str
-        required: false
-    max_concurrency:
-        description: max_concurrency
-        type: int
-        required: false
-    port:
-        description: port
-        type: int
         required: false
     secret_environment_variables:
         description: secret_environment_variables
@@ -118,20 +130,20 @@ options:
 """
 
 EXAMPLES = r"""
-- name: Create a container
-  quantumsheep.scaleway.scaleway_container:
+- name: Create a function
+  quantumsheep.scaleway.scaleway_function:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
     namespace_id: "aaaaaa"
+    runtime: "aaaaaa"
     privacy: "aaaaaa"
-    protocol: "aaaaaa"
     http_option: "aaaaaa"
 """
 
 RETURN = r"""
 ---
-container:
-    description: The container information
+function:
+    description: The function information
     returned: when I(state=present)
     type: dict
     sample:
@@ -144,22 +156,21 @@ container:
             cccccc: dddddd
         min_scale: 3
         max_scale: 3
+        runtime: golang
         memory_limit: 3
         cpu_limit: 3
         timeout: "aaaaaa"
+        handler: "aaaaaa"
         error_message: "aaaaaa"
         privacy: public
         description: "aaaaaa"
-        registry_image: "aaaaaa"
-        max_concurrency: 3
         domain_name: "aaaaaa"
-        protocol: http1
-        port: 3
         secret_environment_variables:
             - aaaaaa
             - bbbbbb
-        http_option: enabled
         region: fr-par
+        http_option: enabled
+        runtime_message: "aaaaaa"
 """
 
 from ansible.module_utils.basic import (
@@ -176,7 +187,7 @@ from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway imp
 
 try:
     from scaleway import Client, ScalewayException
-    from scaleway.container.v1beta1 import ContainerV1Beta1API
+    from scaleway.function.v1beta1 import FunctionV1Beta1API
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -184,11 +195,11 @@ except ImportError:
 
 
 def create(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = FunctionV1Beta1API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
-        resource = api.get_container(container_id=id)
+        resource = api.get_function(function_id=id)
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -201,28 +212,28 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    resource = api.create_container(**not_none_params)
-    resource = api.wait_for_container(
-        container_id=resource.id, region=module.params["region"]
+    resource = api.create_function(**not_none_params)
+    resource = api.wait_for_function(
+        function_id=resource.id, region=module.params["region"]
     )
 
     module.exit_json(changed=True, data=resource.__dict__)
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
-    api = ContainerV1Beta1API(client)
+    api = FunctionV1Beta1API(client)
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
 
     if id is not None:
-        resource = api.get_container(container_id=id, region=module.params["region"])
+        resource = api.get_function(function_id=id, region=module.params["region"])
     elif name is not None:
-        resources = api.list_containers_all(name=name, region=module.params["region"])
+        resources = api.list_functions_all(name=name, region=module.params["region"])
         if len(resources) == 0:
-            module.exit_json(msg="No container found with name {name}")
+            module.exit_json(msg="No function found with name {name}")
         elif len(resources) > 1:
-            module.exit_json(msg="More than one container found with name {name}")
+            module.exit_json(msg="More than one function found with name {name}")
         else:
             resource = resources[0]
     else:
@@ -231,17 +242,17 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_container(container_id=resource.id, region=module.params["region"])
+    api.delete_function(function_id=resource.id, region=module.params["region"])
 
     try:
-        api.wait_for_container(container_id=resource.id, region=module.params["region"])
+        api.wait_for_function(function_id=resource.id, region=module.params["region"])
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
 
     module.exit_json(
         changed=True,
-        msg=f"container's container {resource.name} ({resource.id}) deleted",
+        msg=f"function's function {resource.name} ({resource.id}) deleted",
     )
 
 
@@ -263,20 +274,44 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        container_id=dict(type="str"),
+        function_id=dict(type="str"),
         namespace_id=dict(
             type="str",
             required=True,
+        ),
+        runtime=dict(
+            type="str",
+            required=True,
+            choices=[
+                "unknown_runtime",
+                "golang",
+                "python",
+                "python3",
+                "node8",
+                "node10",
+                "node14",
+                "node16",
+                "node17",
+                "python37",
+                "python38",
+                "python39",
+                "python310",
+                "go113",
+                "go117",
+                "go118",
+                "node18",
+                "rust165",
+                "go119",
+                "python311",
+                "php82",
+                "node19",
+                "go120",
+            ],
         ),
         privacy=dict(
             type="str",
             required=True,
             choices=["unknown_privacy", "public", "private"],
-        ),
-        protocol=dict(
-            type="str",
-            required=True,
-            choices=["unknown_protocol", "http1", "h2c"],
         ),
         http_option=dict(
             type="str",
@@ -312,20 +347,12 @@ def main() -> None:
             type="str",
             required=False,
         ),
+        handler=dict(
+            type="str",
+            required=False,
+        ),
         description=dict(
             type="str",
-            required=False,
-        ),
-        registry_image=dict(
-            type="str",
-            required=False,
-        ),
-        max_concurrency=dict(
-            type="int",
-            required=False,
-        ),
-        port=dict(
-            type="int",
             required=False,
         ),
         secret_environment_variables=dict(
@@ -338,7 +365,7 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["container_id", "name"],),
+        required_one_of=(["function_id", "name"],),
         supports_check_mode=True,
     )
 
