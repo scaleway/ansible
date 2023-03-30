@@ -196,3 +196,5 @@ releases:
       name: scaleway_vpcgw_pat_rule
       namespace: ''
     release_date: '2023-03-08'
+  2.2.0:
+    release_date: '2023-03-30'
