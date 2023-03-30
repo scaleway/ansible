@@ -22,7 +22,7 @@
       - scw_default_project_id | length == 0
 
   - name: Create registry_namespace
-    quantumsheep.scaleway.scaleway_registry_namespace:
+    scaleway.scaleway.scaleway_registry_namespace:
       name: "{{ resource_name }}"
       region: "{{ resource_region }}"
       project_id: "{{ scw_default_project_id }}"
@@ -34,7 +34,7 @@
     register: integration_registry_namespace_creation
 
   - name: Delete registry_namespace
-    quantumsheep.scaleway.scaleway_registry_namespace:
+    scaleway.scaleway.scaleway_registry_namespace:
       name: "{{ resource_name }}"
       region: "{{ resource_region }}"
       project_id: "{{ scw_default_project_id }}"
@@ -47,7 +47,7 @@
 
   - name: Create a registry_namespace (Check)
     check_mode: yes
-    quantumsheep.scaleway.scaleway_registry_namespace:
+    scaleway.scaleway.scaleway_registry_namespace:
       name: "{{ resource_name }}"
       region: "{{ resource_region }}"
       project_id: "{{ scw_default_project_id }}"

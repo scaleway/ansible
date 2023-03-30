@@ -17,8 +17,8 @@ version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
 extends_documentation_fragment:
-    - quantumsheep.scaleway.scaleway
-    - quantumsheep.scaleway.scaleway_waitable_resource
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
 requirements:
     - scaleway >= 0.6.0
 options:
@@ -85,7 +85,7 @@ options:
 
 EXAMPLES = r"""
 - name: Create a security_group_rule
-  quantumsheep.scaleway.scaleway_instance_security_group_rule:
+  scaleway.scaleway.scaleway_instance_security_group_rule:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
     security_group_id: "aaaaaa"
@@ -113,7 +113,7 @@ from ansible.module_utils.basic import (
     AnsibleModule,
     missing_required_lib,
 )
-from ansible_collections.quantumsheep.scaleway.plugins.module_utils.scaleway import (
+from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
     scaleway_argument_spec,
     scaleway_waitable_resource_argument_spec,
     scaleway_get_client_from_module,

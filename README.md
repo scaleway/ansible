@@ -9,7 +9,7 @@ You can contact us on our [Slack community](https://slack.scaleway.com/).
 ## Included content
 
 * **Inventory**
-  * quantumsheep.scaleway.scaleway: dynamic inventory plugin for Scaleway's Instances, Elastic Metal and Apple Sillicon
+  * scaleway.scaleway.scaleway: dynamic inventory plugin for Scaleway's Instances, Elastic Metal and Apple Sillicon
 
 ## Using this collection
 
@@ -18,7 +18,7 @@ You can contact us on our [Slack community](https://slack.scaleway.com/).
 Before using the Scaleway collection, you need to install it with the Ansible Galaxy CLI.
 
 ```sh
-ansible-galaxy collection install quantumsheep.scaleway
+ansible-galaxy collection install scaleway.scaleway
 ```
 
 You can also include it in a requirements.yml file and install it via `ansible-galaxy collection install -r requirements.yml`, using the format:
@@ -26,19 +26,19 @@ You can also include it in a requirements.yml file and install it via `ansible-g
 ```yal
 ---
 collections:
-  - name: quantumsheep.scaleway
+  - name: scaleway.scaleway
 ```
 
 Note that if you install the collection from Ansible Galaxy, it will not be upgraded automatically if you upgrade the Ansible package. To upgrade the collection to the latest available version, run the following command:
 
 ```sh
-ansible-galaxy collection install quantumsheep.scaleway --upgrade
+ansible-galaxy collection install scaleway.scaleway --upgrade
 ```
 
 You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax:
 
 ```sh
-ansible-galaxy collection install quantumsheep.scaleway:==1.0.0
+ansible-galaxy collection install scaleway.scaleway:==1.0.0
 ```
 
 ## Useful links

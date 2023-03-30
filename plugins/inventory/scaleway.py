@@ -20,15 +20,15 @@ description:
   - Scaleway inventory plugin.
   - Uses configuration file that ends with '(scaleway|scw).(yaml|yml)'.
 extends_documentation_fragment:
-  - quantumsheep.scaleway.scaleway
+  - scaleway.scaleway.scaleway
   - constructed
   - inventory_cache
 options:
   plugin:
     description:
-      - The name of the Scaleway Inventory Plugin, this should always be C(quantumsheep.scaleway.scaleway).
+      - The name of the Scaleway Inventory Plugin, this should always be C(scaleway.scaleway.scaleway).
     required: true
-    choices: ['quantumsheep.scaleway.scaleway']
+    choices: ['scaleway.scaleway.scaleway']
   zones:
     description:
       - List of zones to filter on.
@@ -63,7 +63,7 @@ options:
 """
 
 EXAMPLES = r"""
-plugin: quantumsheep.scaleway.scaleway
+plugin: scaleway.scaleway.scaleway
 access_key: <your access key>
 secret_key: <your secret key>
 api_url: https://api.scaleway.com
@@ -125,7 +125,7 @@ class _Host:
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
-    NAME = "quantumsheep.scaleway.scaleway"
+    NAME = "scaleway.scaleway.scaleway"
 
     def verify_file(self, path: str):
         if not super(InventoryModule, self).verify_file(path):
