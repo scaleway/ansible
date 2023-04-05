@@ -4,7 +4,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
+import base64
+from scaleway_core.api import ScalewayException
 __metaclass__ = type
 
 DOCUMENTATION = r"""
@@ -113,25 +114,35 @@ except ImportError:
 
 def create(module: AnsibleModule, client: "Client") -> None:
     api = SecretV1Alpha1API(client)
-
+    region = module.params.pop("region", None)
+    project_id = module.params.pop("project_id", None)
+    name = module.params.pop("name", None)
     id = module.params.pop("id", None)
-    if id is not None:
-        resource = api.get_secret(secret_id=id)
-
-        if module.check_mode:
-            module.exit_json(changed=False)
-
-        module.exit_json(changed=False, data=resource)
-
-    if module.check_mode:
-        module.exit_json(changed=True)
-
+    revision = module.params.pop("revision", None)
+    
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    resource = api.create_secret(**not_none_params)
+    if id is not None:
+        secret = api.get_secret(secret_id=id)
+        secret_version = api.create_secret_version(secret_id=id,
+                                                   data=data,
+                                                   disable_previous=disable_previous,
+                                                   region=region)
+        
+        if module.check_mode:
+            module.exit_json(changed=False)
 
-    module.exit_json(changed=True, data=resource.__dict__)
+        module.exit_json(changed=False, data=secret)
+    elif name is not None:
+            secret = api.get_secret_by_name(secret_name =name, region=region)
+    api.enable_secret_version(secret_id=secret.id, region=region,revision=revision)            
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    # resource = api.create_secret(**not_none_params)
+    
+    module.exit_json(changed=True, data=secret.__dict__)
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
@@ -140,20 +151,23 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
     region = module.params.pop("region", None)
+    revision = module.params.pop("revision", None)
 
     if id is not None:
-        resource = api.get_secret(secret_id=id, region=region)
+        secret = api.get_secret(secret_id=id, region=region)
     elif name is not None:
-        resource = api.get_secret_by_name(secret_name=name, region=region)
+        secret = api.get_secret_by_name(secret_name=name, region=region)
+    else:
+        module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_secret(secret_id=resource.id, region=region)
-
+    api.disable_secret_version(secret_id=secret.id, region=region,revision=revision)
+    
     module.exit_json(
         changed=True,
-        msg=f"secret's secret {resource.name} ({resource.id}) deleted",
+        msg=f"secret's secret {secret.name} ({secret.id}) deleted",
     )
 
 
@@ -198,9 +212,18 @@ def main() -> None:
             type="str",
             required=False,
         ),
+        destroy_previous=dict(
+            type='bool',
+            required=False
+        ),
         disable_previous=dict(
-            type="bool",
-            required=False,
+            type='bool',
+            required=False
+        ),
+        data=dict(
+            type='str',
+            required=True,
+            no_log=True
         ),
     )
 
@@ -212,8 +235,12 @@ def main() -> None:
 
     if not HAS_SCALEWAY_SDK:
         module.fail_json(msg=missing_required_lib("scaleway"))
-
-    core(module)
+        
+    if state == "present":
+        create(module, client)
+    elif state == "absent":
+        delete(module, client)
+    
 
 
 if __name__ == "__main__":
