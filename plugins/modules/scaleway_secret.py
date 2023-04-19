@@ -127,7 +127,8 @@ def create(module: AnsibleModule, client: "Client") -> None:
         module.exit_json(changed=True)
 
     not_none_params = {
-        key: value for key, value in module.params.items() if value is not None
+        key: value
+        for key, value in module.params.items() if value is not None
     }
     resource = api.create_secret(**not_none_params)
 
@@ -174,7 +175,9 @@ def main() -> None:
     argument_spec = scaleway_argument_spec()
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
-        state=dict(type="str", default="present", choices=["absent", "present"]),
+        state=dict(type="str",
+                   default="present",
+                   choices=["absent", "present"]),
         secret_id=dict(type="str", no_log=True),
         name=dict(
             type="str",
@@ -206,7 +209,7 @@ def main() -> None:
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["secret_id", "name"],),
+        required_one_of=(["secret_id", "name"], ),
         supports_check_mode=True,
     )
 
