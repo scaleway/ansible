@@ -40,7 +40,7 @@ options:
         type: str
         required: false
     name:
-        description: name
+        description: secret's name
         type: str
         required: true
     region:
@@ -55,6 +55,10 @@ options:
         description: project_id
         type: str
         required: false
+     disable_previous:
+        description: when creating a new version, disable the previous version
+        type: bool
+        required: false   
     tags:
         description: tags
         type: list
@@ -184,8 +188,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 
     module.exit_json(
         changed=True,
-        msg=
-        f"secret {secret.name} ({secret.id}) revision { secret_version.revision }]\
+        msg= f"secret {secret.name} ({secret.id}) revision { secret_version.revision }]\
                            has been created",
         data=secret.__dict__)
 
@@ -214,8 +217,7 @@ def delete(module: AnsibleModule, client: "Client") -> None:
 
     module.exit_json(
         changed=True,
-        msg=
-        f"secret's  {secret.name} ({secret.id}) revision{ revision } has been deleted",
+        msg=f"secret's  {secret.name} ({secret.id}) revision{ revision } has been deleted",
     )
 
 
@@ -264,8 +266,7 @@ def enable(module: AnsibleModule, client: "Client") -> None:
 
     module.exit_json(
         changed=True,
-        msg=
-        f"secret's secret {secret.name} ({secret.id}) revision {revision } has been disabled",
+        msg=f"secret's secret {secret.name} ({secret.id}) revision {revision } has been disabled",
         data=secret.__dict__)
 
 
@@ -293,8 +294,7 @@ def disable(module: AnsibleModule, client: "Client") -> None:
 
     module.exit_json(
         changed=True,
-        msg=
-        f"secret's secret {secret.name} ({secret.id}) revision { revision } has been disabled",
+        msg=f"secret's secret {secret.name} ({secret.id}) revision { revision } has been disabled",
     )
 
 
