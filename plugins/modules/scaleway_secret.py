@@ -127,7 +127,8 @@ def create(module: AnsibleModule, client: "Client") -> None:
         module.exit_json(changed=True)
 
     not_none_params = {
-        key: value for key, value in module.params.items() if value is not None
+        key: value
+        for key, value in module.params.items() if value is not None
     }
     resource = api.create_secret(**not_none_params)
 
@@ -139,24 +140,17 @@ def delete(module: AnsibleModule, client: "Client") -> None:
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
+    region = module.params.pop("region", None)
 
     if id is not None:
-        resource = api.get_secret(secret_id=id, region=module.params["region"])
+        resource = api.get_secret(secret_id=id, region=region)
     elif name is not None:
-        resources = api.list_secrets_all(name=name, region=module.params["region"])
-        if len(resources) == 0:
-            module.exit_json(msg="No secret found with name {name}")
-        elif len(resources) > 1:
-            module.exit_json(msg="More than one secret found with name {name}")
-        else:
-            resource = resources[0]
-    else:
-        module.fail_json(msg="id is required")
+        resource = api.get_secret_by_name(secret_name=name, region=region)
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_secret(secret_id=resource.id, region=module.params["region"])
+    api.delete_secret(secret_id=resource.id, region=region)
 
     module.exit_json(
         changed=True,
@@ -181,7 +175,9 @@ def main() -> None:
     argument_spec = scaleway_argument_spec()
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
-        state=dict(type="str", default="present", choices=["absent", "present"]),
+        state=dict(type="str",
+                   default="present",
+                   choices=["absent", "present"]),
         secret_id=dict(type="str", no_log=True),
         name=dict(
             type="str",
@@ -205,11 +201,15 @@ def main() -> None:
             type="str",
             required=False,
         ),
+        disable_previous=dict(
+            type="bool",
+            required=False,
+        ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["secret_id", "name"],),
+        required_one_of=(["secret_id", "name"], ),
         supports_check_mode=True,
     )
 
