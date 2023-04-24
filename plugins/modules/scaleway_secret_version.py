@@ -5,7 +5,6 @@
 
 from __future__ import absolute_import, division, print_function
 import base64
-from scaleway_core.api import ScalewayException
 
 __metaclass__ = type
 
@@ -33,7 +32,7 @@ options:
             - C(enable) will enable the secret version, if it exists.
             - C(access) will access the secret version, if it exists.
         default: present
-        choices: ["present", "absent"]
+        choices: ["present", "absent", "disable", "enable", "access"]
         type: str
     secret_id:
         description: secret_id
@@ -139,6 +138,7 @@ from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import 
 try:
     from scaleway import Client
     from scaleway.secret.v1alpha1 import SecretV1Alpha1API
+    from scaleway_core.api import ScalewayException
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
