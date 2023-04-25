@@ -4,14 +4,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-import base64
-from scaleway_core.api import ScalewayException
 
 __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_secret
+module: scaleway_secret_version
 short_description: Manage Scaleway secret's secret version
 description:
     - This module can be used to manage Scaleway secret's secret version.
@@ -33,7 +31,7 @@ options:
             - C(enable) will enable the secret version, if it exists.
             - C(access) will access the secret version, if it exists.
         default: present
-        choices: ["present", "absent"]
+        choices: ["present", "absent", "disable", "enable", "access"]
         type: str
     secret_id:
         description: secret_id
@@ -55,10 +53,18 @@ options:
         description: project_id
         type: str
         required: false
-     disable_previous:
+    disable_previous:
         description: when creating a new version, disable the previous version
         type: bool
-        required: false   
+        required: false
+    destroy_previous:
+        description: when creating a new version, destroy the previous version
+        type: bool
+        required: false
+    revision:
+        description: revision
+        type: str
+        required: false
     tags:
         description: tags
         type: list
@@ -76,24 +82,24 @@ options:
 
 EXAMPLES = r"""
 - name: Create a  version of the secret and disable the previous version
-    scaleway.scaleway.scaleway_secret_version:
-      access_key:  "{{ scw_access_key }}"
-      secret_key:  "{{ scw_secret_key }}"
-      project_id: "{{ scw_project_id }}"
-      region: "{{ scw_region }}"
-      name: "aaaaaa"
-      state: "present"
-      disable_previous: true
-      data: "{{ data }}"
+  scaleway.scaleway.scaleway_secret_version:
+    access_key:  "{{ scw_access_key }}"
+    secret_key:  "{{ scw_secret_key }}"
+    project_id: "{{ scw_project_id }}"
+    region: "{{ scw_region }}"
+    name: "aaaaaa"
+    state: "present"
+    disable_previous: true
+    data: "{{ data }}"
 
-  - name: access the latest version of the secret
-    scaleway.scaleway.scaleway_secret_access:
-      access_key:  "{{ scw_access_key }}"
-      secret_key:  "{{ scw_secret_key }}"
-      project_id: "{{ scw_project_id }}"
-      region: "{{ scw_region }}"
-      name: "aaaaaa"
-    register: data
+- name: access the latest version of the secret
+  scaleway.scaleway.scaleway_secret_access:
+    access_key:  "{{ scw_access_key }}"
+    secret_key:  "{{ scw_secret_key }}"
+    project_id: "{{ scw_project_id }}"
+    region: "{{ scw_region }}"
+    name: "aaaaaa"
+  register: data
 """
 
 RETURN = r"""
@@ -124,6 +130,8 @@ secret_data:
         data: "my_secret_data"
 """
 
+import base64
+
 from ansible.module_utils.basic import (
     AnsibleModule,
     missing_required_lib,
@@ -139,6 +147,7 @@ from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import 
 try:
     from scaleway import Client
     from scaleway.secret.v1alpha1 import SecretV1Alpha1API
+    from scaleway_core.api import ScalewayException
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -150,19 +159,24 @@ def create(module: AnsibleModule, client: "Client") -> None:
     region = module.params.pop("region", None)
     project_id = module.params.pop("project_id", None)
     name = module.params.pop("name", None)
-    disable_previous = module.params.pop("disable_previous", None)
     id = module.params.pop("id", None)
-    data = module.params.pop("data", None).encode()
 
+    data = module.params.pop("data", None).encode()
     if data is not None:
         data = base64.b64encode(data).decode()
+
+    not_none_params = {
+        key: value for key, value in module.params.items() if value is not None
+    }
+
     if id is not None:
         secret = api.get_secret(secret_id=id)
         secret_version = api.create_secret_version(
             secret_id=id,
+            region=region,
             data=data,
-            disable_previous=disable_previous,
-            region=region)
+            **not_none_params,
+        )
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -173,24 +187,26 @@ def create(module: AnsibleModule, client: "Client") -> None:
             secret = api.get_secret_by_name(secret_name=name, region=region)
         except ScalewayException as exc:
             if exc.status_code == 404:
-                secret = api.create_secret(name=name,
-                                           project_id=project_id,
-                                           region=region)
+                secret = api.create_secret(
+                    name=name, project_id=project_id, region=region
+                )
             else:
                 raise exc
         secret_version = api.create_secret_version(
             secret_id=secret.id,
+            region=region,
             data=data,
-            disable_previous=disable_previous,
-            region=region)
+            **not_none_params,
+        )
     if module.check_mode:
         module.exit_json(changed=True)
 
     module.exit_json(
         changed=True,
-        msg= f"secret {secret.name} ({secret.id}) revision { secret_version.revision }]\
+        msg=f"secret {secret.name} ({secret.id}) revision { secret_version.revision }]\
                            has been created",
-        data=secret.__dict__)
+        data=secret.__dict__,
+    )
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
@@ -211,9 +227,7 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.destroy_secret_version(secret_id=secret.id,
-                               region=region,
-                               revision=revision)
+    api.destroy_secret_version(secret_id=secret.id, region=region, revision=revision)
 
     module.exit_json(
         changed=True,
@@ -236,10 +250,10 @@ def access(module: AnsibleModule, client: "Client") -> None:
     else:
         secret = api.get_secret_by_name(secret_name=name, region=region)
 
-    revision = 'latest_enabled' if revision is None else revision
-    secret_version = api.access_secret_version(secret_id=secret.id,
-                                               revision=revision,
-                                               region=region)
+    revision = "latest_enabled" if revision is None else revision
+    secret_version = api.access_secret_version(
+        secret_id=secret.id, revision=revision, region=region
+    )
     data = base64.b64decode(secret_version.data)
     if module.check_mode:
         module.exit_json(changed=True)
@@ -258,16 +272,15 @@ def enable(module: AnsibleModule, client: "Client") -> None:
         secret = api.get_secret(secret_id=id)
     elif name is not None:
         secret = api.get_secret_by_name(secret_name=name, region=region)
-    api.enable_secret_version(secret_id=secret.id,
-                              region=region,
-                              revision=revision)
+    api.enable_secret_version(secret_id=secret.id, region=region, revision=revision)
     if module.check_mode:
         module.exit_json(changed=True)
 
     module.exit_json(
         changed=True,
         msg=f"secret's secret {secret.name} ({secret.id}) revision {revision } has been disabled",
-        data=secret.__dict__)
+        data=secret.__dict__,
+    )
 
 
 def disable(module: AnsibleModule, client: "Client") -> None:
@@ -288,9 +301,7 @@ def disable(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.disable_secret_version(secret_id=secret.id,
-                               region=region,
-                               revision=revision)
+    api.disable_secret_version(secret_id=secret.id, region=region, revision=revision)
 
     module.exit_json(
         changed=True,
@@ -324,7 +335,8 @@ def main() -> None:
         state=dict(
             type="str",
             default="present",
-            choices=["absent", "present", "enable", "disable", "access"]),
+            choices=["absent", "present", "enable", "disable", "access"],
+        ),
         secret_id=dict(type="str", no_log=True),
         name=dict(
             type="str",
@@ -348,21 +360,22 @@ def main() -> None:
             type="str",
             required=False,
         ),
-        destroy_previous=dict(type='bool', required=False),
-        disable_previous=dict(type='bool', required=False),
+        destroy_previous=dict(type="bool", required=False),
+        disable_previous=dict(type="bool", required=False),
         data=dict(
-            type='str',
+            type="str",
             required=False,
             #  no_log=True
         ),
         revision=dict(
-            type='str',
+            type="str",
             required=False,
-        ))
+        ),
+    )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["secret_id", "name"], ),
+        required_one_of=(["secret_id", "name"],),
         supports_check_mode=True,
     )
 
