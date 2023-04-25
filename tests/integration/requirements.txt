@@ -1,1 +1,1 @@
-scaleway>=0.6.0
+scaleway>=0.9.0
