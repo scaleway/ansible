@@ -56,7 +56,7 @@ options:
     disable_previous:
         description: when creating a new version, disable the previous version
         type: bool
-        required: false   
+        required: false
     tags:
         description: tags
         type: list
@@ -160,10 +160,8 @@ def create(module: AnsibleModule, client: "Client") -> None:
     if id is not None:
         secret = api.get_secret(secret_id=id)
         secret_version = api.create_secret_version(
-            secret_id=id,
-            data=data,
-            disable_previous=disable_previous,
-            region=region)
+            secret_id=id, data=data, disable_previous=disable_previous, region=region
+        )
 
         if module.check_mode:
             module.exit_json(changed=False)
@@ -174,24 +172,26 @@ def create(module: AnsibleModule, client: "Client") -> None:
             secret = api.get_secret_by_name(secret_name=name, region=region)
         except ScalewayException as exc:
             if exc.status_code == 404:
-                secret = api.create_secret(name=name,
-                                           project_id=project_id,
-                                           region=region)
+                secret = api.create_secret(
+                    name=name, project_id=project_id, region=region
+                )
             else:
                 raise exc
         secret_version = api.create_secret_version(
             secret_id=secret.id,
             data=data,
             disable_previous=disable_previous,
-            region=region)
+            region=region,
+        )
     if module.check_mode:
         module.exit_json(changed=True)
 
     module.exit_json(
         changed=True,
-        msg= f"secret {secret.name} ({secret.id}) revision { secret_version.revision }]\
+        msg=f"secret {secret.name} ({secret.id}) revision { secret_version.revision }]\
                            has been created",
-        data=secret.__dict__)
+        data=secret.__dict__,
+    )
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
@@ -212,9 +212,7 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.destroy_secret_version(secret_id=secret.id,
-                               region=region,
-                               revision=revision)
+    api.destroy_secret_version(secret_id=secret.id, region=region, revision=revision)
 
     module.exit_json(
         changed=True,
@@ -237,10 +235,10 @@ def access(module: AnsibleModule, client: "Client") -> None:
     else:
         secret = api.get_secret_by_name(secret_name=name, region=region)
 
-    revision = 'latest_enabled' if revision is None else revision
-    secret_version = api.access_secret_version(secret_id=secret.id,
-                                               revision=revision,
-                                               region=region)
+    revision = "latest_enabled" if revision is None else revision
+    secret_version = api.access_secret_version(
+        secret_id=secret.id, revision=revision, region=region
+    )
     data = base64.b64decode(secret_version.data)
     if module.check_mode:
         module.exit_json(changed=True)
@@ -259,16 +257,15 @@ def enable(module: AnsibleModule, client: "Client") -> None:
         secret = api.get_secret(secret_id=id)
     elif name is not None:
         secret = api.get_secret_by_name(secret_name=name, region=region)
-    api.enable_secret_version(secret_id=secret.id,
-                              region=region,
-                              revision=revision)
+    api.enable_secret_version(secret_id=secret.id, region=region, revision=revision)
     if module.check_mode:
         module.exit_json(changed=True)
 
     module.exit_json(
         changed=True,
         msg=f"secret's secret {secret.name} ({secret.id}) revision {revision } has been disabled",
-        data=secret.__dict__)
+        data=secret.__dict__,
+    )
 
 
 def disable(module: AnsibleModule, client: "Client") -> None:
@@ -289,9 +286,7 @@ def disable(module: AnsibleModule, client: "Client") -> None:
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.disable_secret_version(secret_id=secret.id,
-                               region=region,
-                               revision=revision)
+    api.disable_secret_version(secret_id=secret.id, region=region, revision=revision)
 
     module.exit_json(
         changed=True,
@@ -325,7 +320,8 @@ def main() -> None:
         state=dict(
             type="str",
             default="present",
-            choices=["absent", "present", "enable", "disable", "access"]),
+            choices=["absent", "present", "enable", "disable", "access"],
+        ),
         secret_id=dict(type="str", no_log=True),
         name=dict(
             type="str",
@@ -349,21 +345,22 @@ def main() -> None:
             type="str",
             required=False,
         ),
-        destroy_previous=dict(type='bool', required=False),
-        disable_previous=dict(type='bool', required=False),
+        destroy_previous=dict(type="bool", required=False),
+        disable_previous=dict(type="bool", required=False),
         data=dict(
-            type='str',
+            type="str",
             required=False,
             #  no_log=True
         ),
         revision=dict(
-            type='str',
+            type="str",
             required=False,
-        ))
+        ),
+    )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=(["secret_id", "name"], ),
+        required_one_of=(["secret_id", "name"],),
         supports_check_mode=True,
     )
 
