@@ -4,7 +4,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-import base64
 
 __metaclass__ = type
 
@@ -54,7 +53,7 @@ options:
         description: project_id
         type: str
         required: false
-     disable_previous:
+    disable_previous:
         description: when creating a new version, disable the previous version
         type: bool
         required: false   
@@ -76,22 +75,22 @@ options:
 EXAMPLES = r"""
 - name: Create a  version of the secret and disable the previous version
     scaleway.scaleway.scaleway_secret_version:
-      access_key:  "{{ scw_access_key }}"
-      secret_key:  "{{ scw_secret_key }}"
-      project_id: "{{ scw_project_id }}"
-      region: "{{ scw_region }}"
-      name: "aaaaaa"
-      state: "present"
-      disable_previous: true
-      data: "{{ data }}"
+        access_key:  "{{ scw_access_key }}"
+        secret_key:  "{{ scw_secret_key }}"
+        project_id: "{{ scw_project_id }}"
+        region: "{{ scw_region }}"
+        name: "aaaaaa"
+        state: "present"
+        disable_previous: true
+        data: "{{ data }}"
 
   - name: access the latest version of the secret
     scaleway.scaleway.scaleway_secret_access:
-      access_key:  "{{ scw_access_key }}"
-      secret_key:  "{{ scw_secret_key }}"
-      project_id: "{{ scw_project_id }}"
-      region: "{{ scw_region }}"
-      name: "aaaaaa"
+        access_key:  "{{ scw_access_key }}"
+        secret_key:  "{{ scw_secret_key }}"
+        project_id: "{{ scw_project_id }}"
+        region: "{{ scw_region }}"
+        name: "aaaaaa"
     register: data
 """
 
@@ -122,6 +121,8 @@ secret_data:
     sample:
         data: "my_secret_data"
 """
+
+import base64
 
 from ansible.module_utils.basic import (
     AnsibleModule,
