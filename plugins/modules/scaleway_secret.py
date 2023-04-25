@@ -201,10 +201,6 @@ def main() -> None:
             type="str",
             required=False,
         ),
-        disable_previous=dict(
-            type="bool",
-            required=False,
-        ),
     )
 
     module = AnsibleModule(
