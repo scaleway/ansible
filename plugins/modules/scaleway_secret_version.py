@@ -9,7 +9,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
 ---
-module: scaleway_secret
+module: scaleway_secret_version
 short_description: Manage Scaleway secret's secret version
 description:
     - This module can be used to manage Scaleway secret's secret version.
@@ -151,16 +151,23 @@ def create(module: AnsibleModule, client: "Client") -> None:
     region = module.params.pop("region", None)
     project_id = module.params.pop("project_id", None)
     name = module.params.pop("name", None)
-    disable_previous = module.params.pop("disable_previous", None)
     id = module.params.pop("id", None)
-    data = module.params.pop("data", None).encode()
 
+    data = module.params.pop("data", None).encode()
     if data is not None:
         data = base64.b64encode(data).decode()
+
+    not_none_params = {
+        key: value for key, value in module.params.items() if value is not None
+    }
+
     if id is not None:
         secret = api.get_secret(secret_id=id)
         secret_version = api.create_secret_version(
-            secret_id=id, data=data, disable_previous=disable_previous, region=region
+            secret_id=id,
+            region=region,
+            data=data,
+            **not_none_params,
         )
 
         if module.check_mode:
@@ -179,9 +186,9 @@ def create(module: AnsibleModule, client: "Client") -> None:
                 raise exc
         secret_version = api.create_secret_version(
             secret_id=secret.id,
-            data=data,
-            disable_previous=disable_previous,
             region=region,
+            data=data,
+            **not_none_params,
         )
     if module.check_mode:
         module.exit_json(changed=True)
