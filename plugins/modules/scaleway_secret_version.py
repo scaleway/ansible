@@ -57,6 +57,14 @@ options:
         description: when creating a new version, disable the previous version
         type: bool
         required: false
+    destroy_previous:
+        description: when creating a new version, destroy the previous version
+        type: bool
+        required: false
+    revision:
+        description: revision
+        type: str
+        required: false
     tags:
         description: tags
         type: list
