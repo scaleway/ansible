@@ -211,12 +211,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         results: List[_Host] = []
         for server in servers:
-            if filters.zones:
-                zones = [server.zone.startswith(region) for region in filters.zones]
-
-                if any(zones):
-                    continue
-
             host = _Host(
                 id=server.id,
                 hostname=server.hostname,
