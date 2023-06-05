@@ -53,6 +53,8 @@ def scaleway_argument_spec() -> Dict[str, Dict[str, Any]]:
             fallback=(env_fallback, [ENV_KEY_SCW_API_URL]),
             default="https://api.scaleway.com",
         ),
+        organization_id=dict(type="str", required=False),
+        project_id=dict(type="str", required=False),
         api_allow_insecure=dict(type="bool", default=False),
         user_agent=dict(type="str", required=False),
     )
@@ -73,6 +75,8 @@ def scaleway_get_client_from_module(module: AnsibleModule):
     profile = module.params["profile"]
     access_key = module.params["access_key"]
     secret_key = module.params["secret_key"]
+    organization_id = module.params["organization_id"]
+    project_id = module.params["project_id"]
     api_url = module.params["api_url"]
     api_allow_insecure = module.params["api_allow_insecure"]
     user_agent = module.params["user_agent"]
@@ -90,6 +94,12 @@ def scaleway_get_client_from_module(module: AnsibleModule):
 
     if secret_key:
         client.secret_key = secret_key
+
+    if organization_id:
+        client.default_organization_id = organization_id
+
+    if project_id:
+        client.default_project_id = project_id
 
     if api_url:
         client.api_url = api_url
@@ -109,6 +119,8 @@ def scaleway_pop_client_params(module: AnsibleModule) -> None:
         "profile",
         "access_key",
         "secret_key",
+        "organization_id",
+        "project_id",
         "api_url",
         "api_allow_insecure",
         "user_agent",

@@ -38,6 +38,16 @@ options:
       - Scaleway API URL.
     type: str
     default: https://api.scaleway.com
+  project_id:
+    description:
+      - Scaleway project ID.
+    type: str
+    required: false
+  organization_id:
+    description:
+      - Scaleway organization ID.
+    type: str
+    required: false
   api_allow_insecure:
     description:
       - Allow insecure connection to Scaleway API.

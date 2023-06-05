@@ -11,55 +11,55 @@ __metaclass__ = type
 DOCUMENTATION = r"""
 name: scaleway
 author:
-  - Nathanael Demacon (@quantumsheep)
+    - Nathanael Demacon (@quantumsheep)
 short_description: Scaleway inventory source
 version_added: "1.0.0"
 requirements:
-  - scaleway >= 0.6.0
+    - scaleway >= 0.6.0
 description:
-  - Scaleway inventory plugin.
-  - Uses configuration file that ends with '(scaleway|scw).(yaml|yml)'.
+    - Scaleway inventory plugin.
+    - Uses configuration file that ends with '(scaleway|scw).(yaml|yml)'.
 extends_documentation_fragment:
-  - scaleway.scaleway.scaleway
-  - constructed
-  - inventory_cache
+    - scaleway.scaleway.scaleway
+    - constructed
+    - inventory_cache
 options:
-  plugin:
-    description:
-      - The name of the Scaleway Inventory Plugin, this should always be C(scaleway.scaleway.scaleway).
-    required: true
-    choices: ['scaleway.scaleway.scaleway']
-  zones:
-    description:
-      - List of zones to filter on.
-    type: list
-    elements: str
-    default:
-      - fr-par-1
-      - fr-par-2
-      - fr-par-3
-      - nl-ams-1
-      - nl-ams-2
-      - pl-waw-1
-      - pl-waw-2
-  tags:
-    description:
-      - List of tags to filter on.
-    type: list
-    elements: str
-    default: []
-  hostnames:
-    description: List of preference about what to use as an hostname.
-    type: list
-    elements: str
-    default:
-        - public_ipv4
-    choices:
-        - public_ipv4
-        - private_ipv4
-        - public_ipv6
-        - hostname
-        - id
+    plugin:
+        description:
+            - The name of the Scaleway Inventory Plugin, this should always be C(scaleway.scaleway.scaleway).
+        required: true
+        choices: ['scaleway.scaleway.scaleway']
+    zones:
+        description:
+            - List of zones to filter on.
+        type: list
+        elements: str
+        default:
+            - fr-par-1
+            - fr-par-2
+            - fr-par-3
+            - nl-ams-1
+            - nl-ams-2
+            - pl-waw-1
+            - pl-waw-2
+    tags:
+        description:
+            - List of tags to filter on.
+        type: list
+        elements: str
+        default: []
+    hostnames:
+        description: List of preference about what to use as an hostname.
+        type: list
+        elements: str
+        default:
+            - public_ipv4
+        choices:
+            - public_ipv4
+            - private_ipv4
+            - public_ipv6
+            - hostname
+            - id
 """
 
 EXAMPLES = r"""
@@ -177,7 +177,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         for result in results:
             groups = self.get_host_groups(result)
-            hostname = self._get_hostname(result, hostnames)
+
+            try:
+                hostname = self._get_hostname(result, hostnames)
+            except AnsibleError as e:
+                self.display.warning(f"Skipping host {result.id}: {e}")
+                continue
 
             for group in groups:
                 self.inventory.add_group(group=group)
@@ -308,6 +313,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         profile = self.get_option("profile")
         access_key = self.get_option("access_key")
         secret_key = self.get_option("secret_key")
+        organization_id = self.get_option("organization_id")
+        project_id = self.get_option("project_id")
         api_url = self.get_option("api_url")
         api_allow_insecure = self.get_option("api_allow_insecure")
         user_agent = self.get_option("user_agent")
@@ -325,6 +332,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if secret_key:
             client.secret_key = secret_key
+
+        if organization_id:
+            client.default_organization_id = organization_id
+
+        if project_id:
+            client.default_project_id = project_id
 
         if api_url:
             client.api_url = api_url
