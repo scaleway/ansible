@@ -62,20 +62,20 @@ options:
             - id
     variables:
         description:
-            - Variables mapping to apply to hosts in the format destination_variable: host_variable.
-            - You can use the following host variables:
-            -  - C(id): The server id.
-            -  - C(tags): The server tags.
-            -  - C(zone): The server zone.
-            -  - C(state): The server state.
-            -  - C(hostname): The server hostname.
-            -  - C(public_ipv4): The server public ipv4.
-            -  - C(private_ipv4): The server private ipv4.
-            -  - C(public_ipv6): The server public ipv6.
-            -  - C(public_dns): The server public dns.
-            -  - C(private_dns): The server private dns.
-            -
-            - If the variable is not found, the host will be ignored.
+            - "Variables mapping to apply to hosts in the format destination_variable: host_variable."
+            - "You can use the following host variables:"
+            - "  - C(id): The server id."
+            - "  - C(tags): The server tags."
+            - "  - C(zone): The server zone."
+            - "  - C(state): The server state."
+            - "  - C(hostname): The server hostname."
+            - "  - C(public_ipv4): The server public ipv4."
+            - "  - C(private_ipv4): The server private ipv4."
+            - "  - C(public_ipv6): The server public ipv6."
+            - "  - C(public_dns): The server public dns."
+            - "  - C(private_dns): The server private dns."
+            - ""
+            - "If the variable is not found, the host will be ignored."
         type: dict
 """
 
