@@ -202,3 +202,5 @@ releases:
     release_date: '2023-05-04'
   2.4.0:
     release_date: '2023-06-05'
+  2.5.0:
+    release_date: '2023-06-06'
