@@ -255,7 +255,7 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        {%- if api.request_id_field not in api.method_create.request_fields %}
+        {%- if not api.method_create.has_request_field(api.request_id_field.name) %}
         {{ api.request_id_field.name }}=dict(type="str"
         {%- if ("password" in api.request_id_field.name) or ("secret" in api.request_id_field.name) or ("key" in api.request_id_field.name) -%}
         , no_log=True

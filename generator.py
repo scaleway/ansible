@@ -311,8 +311,11 @@ def main() -> None:
             module_names.append(descriptor.name)
 
     with open(f"meta/runtime.yml", "w") as f:
-        content = env.get_template("runtime.yml.jinja").render(module_names=module_names)
+        content = env.get_template("runtime.yml.jinja").render(
+            module_names=module_names
+        )
         f.write(content)
+
 
 if __name__ == "__main__":
     main()

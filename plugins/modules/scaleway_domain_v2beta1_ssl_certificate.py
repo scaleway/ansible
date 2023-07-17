@@ -154,7 +154,6 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        dns_zone=dict(type="str"),
         dns_zone=dict(
             type="str",
             required=True,
