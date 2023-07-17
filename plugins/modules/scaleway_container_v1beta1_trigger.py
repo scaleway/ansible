@@ -20,7 +20,7 @@ extends_documentation_fragment:
     - scaleway.scaleway.scaleway
     - scaleway.scaleway.scaleway_waitable_resource
 requirements:
-    - scaleway >= 0.6.0
+    - scaleway >= 0.16.0
 options:
     state:
         description:
