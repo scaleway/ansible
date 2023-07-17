@@ -41,9 +41,10 @@ jobs:
           - stable-2.13
         python:
           - 3.8
-        include:
-          - ansible: devel
-            python: "3.10"
+        # https://github.com/yaml/pyyaml/issues/601
+        # include:
+        #   - ansible: devel
+        #     python: "3.10"
     runs-on: ubuntu-latest
     steps:
       - name: Perform testing
