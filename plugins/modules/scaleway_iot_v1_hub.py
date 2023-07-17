@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    hub_id:
+        description: hub_id
         type: str
         required: false
     region:
@@ -133,7 +133,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = IotV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("hub_id", None)
     if id is not None:
         resource = api.get_hub(hub_id=resource_id)
 

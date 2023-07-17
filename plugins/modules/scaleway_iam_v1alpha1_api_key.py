@@ -30,6 +30,10 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
+    access_key:
+        description: access_key
+        type: str
+        required: false
     description:
         description: description
         type: str
@@ -104,7 +108,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = IamV1Alpha1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("access_key", None)
     if id is not None:
         resource = api.get_api_key(access_key=resource_id)
 

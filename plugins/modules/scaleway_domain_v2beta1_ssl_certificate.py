@@ -91,7 +91,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = DomainV2Beta1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("dns_zone", None)
     if id is not None:
         resource = api.get_ssl_certificate(dns_zone=resource_id)
 

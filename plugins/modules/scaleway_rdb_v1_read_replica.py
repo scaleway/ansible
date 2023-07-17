@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    read_replica_id:
+        description: read_replica_id
         type: str
         required: false
     instance_id:
@@ -105,7 +105,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = RdbV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("read_replica_id", None)
     if id is not None:
         resource = api.get_read_replica(read_replica_id=resource_id)
 

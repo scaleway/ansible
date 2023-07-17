@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    policy_id:
+        description: policy_id
         type: str
         required: false
     description:
@@ -124,7 +124,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = IamV1Alpha1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("policy_id", None)
     if id is not None:
         resource = api.get_policy(policy_id=resource_id)
 

@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    human_id:
+        description: human_id
         type: str
         required: false
     height:
@@ -154,7 +154,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = TestV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("human_id", None)
     if id is not None:
         resource = api.get_human(human_id=resource_id)
 

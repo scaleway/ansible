@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    vpc_id:
+        description: vpc_id
         type: str
         required: false
     default_private_network_name:
@@ -114,7 +114,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = VpcV2API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("vpc_id", None)
     if id is not None:
         resource = api.get_vpc(vpc_id=resource_id)
 

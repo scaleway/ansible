@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    private_nic:
-        description: private_nic
+    private_nic_id:
+        description: private_nic_id
         type: str
         required: false
     server_id:
@@ -103,7 +103,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("private_nic_id", None)
     if id is not None:
         resource = api.get_private_nic(private_nic_id=resource_id)
 

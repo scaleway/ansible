@@ -110,7 +110,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("ip", None)
     if id is not None:
         resource = api.get_ip(ip=resource_id)
 

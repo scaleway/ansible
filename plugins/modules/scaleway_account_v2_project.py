@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    project_id:
+        description: project_id
         type: str
         required: false
     name:
@@ -94,7 +94,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = AccountV2API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("project_id", None)
     if id is not None:
         resource = api.get_project(project_id=resource_id)
 

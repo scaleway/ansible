@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    pool_id:
+        description: pool_id
         type: str
         required: false
     cluster_id:
@@ -193,7 +193,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = K8SV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("pool_id", None)
     if id is not None:
         resource = api.get_pool(pool_id=resource_id)
 

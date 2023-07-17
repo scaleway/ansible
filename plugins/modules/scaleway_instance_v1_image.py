@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    image:
-        description: image
+    image_id:
+        description: image_id
         type: str
         required: false
     root_volume:
@@ -124,7 +124,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("image_id", None)
     if id is not None:
         resource = api.get_image(image_id=resource_id)
 

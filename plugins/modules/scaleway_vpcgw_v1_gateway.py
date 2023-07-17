@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    gateway_id:
+        description: gateway_id
         type: str
         required: false
     type_:
@@ -149,7 +149,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = VpcgwV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("gateway_id", None)
     if id is not None:
         resource = api.get_gateway(gateway_id=resource_id)
 

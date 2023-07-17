@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    volume:
-        description: volume
+    volume_id:
+        description: volume_id
         type: str
         required: false
     volume_type:
@@ -121,7 +121,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = InstanceV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("volume_id", None)
     if id is not None:
         resource = api.get_volume(volume_id=resource_id)
 

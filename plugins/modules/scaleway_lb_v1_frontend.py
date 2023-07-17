@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    frontend_id:
+        description: frontend_id
         type: str
         required: false
     lb_id:
@@ -134,7 +134,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = LbZonedV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("frontend_id", None)
     if id is not None:
         resource = api.get_frontend(frontend_id=resource_id)
 

@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    subscriber_id:
+        description: subscriber_id
         type: str
         required: false
     name:
@@ -109,7 +109,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = LbZonedV1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("subscriber_id", None)
     if id is not None:
         resource = api.get_subscriber(subscriber_id=resource_id)
 

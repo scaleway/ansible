@@ -30,8 +30,8 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    id:
-        description: id
+    token_id:
+        description: token_id
         type: str
         required: false
     region:
@@ -108,7 +108,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = FunctionV1Beta1API(client)
 
-    resource_id = module.params.pop("id", None)
+    resource_id = module.params.pop("token_id", None)
     if id is not None:
         resource = api.get_token(token_id=resource_id)
 
