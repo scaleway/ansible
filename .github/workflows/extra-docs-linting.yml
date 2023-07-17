@@ -25,7 +25,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
+<<<<<<< HEAD
           python-version: '3.10'
+||||||| parent of b6150b7 (ci: set python version 3.9)
+          python-version: '3.11'
+=======
+          python-version: '3.9'
+>>>>>>> b6150b7 (ci: set python version 3.9)
 
       - name: Install antsibull-docs
         run: pip install antsibull-docs --disable-pip-version-check
