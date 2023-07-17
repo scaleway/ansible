@@ -1,0 +1,57 @@
+---
+- block:
+  - name: Ensure Access Key is provided
+    ansible.builtin.fail:
+      msg: scw_access_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_access_key is not defined
+      - scw_access_key | length == 0
+
+  - name: Ensure Secret Key is provided
+    ansible.builtin.fail:
+      msg: scw_secret_key should be defined in tests/integration/integration_config.yml
+    when:
+      - scw_secret_key is not defined
+      - scw_secret_key | length == 0
+
+  - name: Create {{ module_name }}
+    quantumsheep.scaleway.scaleway_{{ module_name }}:
+      access_key: "{{ "{{ scw_access_key }}" }}"
+      secret_key: "{{ "{{ scw_secret_key }}" }}"
+      state: present
+      {%- for name, field in create_request_fields.items() %}
+      {%- if field['required'] %}
+      {%- if name == 'project_id' %}
+      {{ name }}: "{{ "{{ scaleway_project }}" }}"
+      {%- elif name == 'organization_id' %}
+      {{ name }}: "{{ "{{ scaleway_organization }}" }}
+      {%- elif name == 'region' %}
+      {{ name }}: "{{ "{{ scaleway_region }}" }}
+      {%- else %}
+      {{ name }}: "{{ "{{ resource_" }}{{ name }} {{ "}}" }}"
+      {%- endif %}
+      {%- endif %}
+      {%- endfor %}
+    register: integration_{{ module_name }}_creation
+
+  - name: Create a {{ module_name }} (Check)
+    check_mode: yes
+    quantumsheep.scaleway.scaleway_{{ module_name }}:
+      access_key: "{{ "{{ scw_access_key }}" }}"
+      secret_key: "{{ "{{ scw_secret_key }}" }}"
+      state: present
+      {%- for name, field in create_request_fields.items() %}
+      {%- if field['required'] %}
+      {%- if name == 'project_id' %}
+      {{ name }}: "{{ "{{ scaleway_project }}" }}"
+      {%- elif name == 'organization_id' %}
+      {{ name }}: "{{ "{{ scaleway_organization }}" }}
+      {%- elif name == 'region' %}
+      {{ name }}: "{{ "{{ scaleway_region }}" }}
+      {%- else %}
+      {{ name }}: "{{ "{{ resource_" }}{{ name }} {{ "}}" }}"
+      {%- endif %}
+      {%- endif %}
+      {%- endfor %}
+    register: integration_{{ module_name }}_creation_check
+

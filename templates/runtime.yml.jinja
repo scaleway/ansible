@@ -1,0 +1,7 @@
+---
+requires_ansible: ">=2.9.10"
+action_groups:
+  all:
+    {%- for name in module_names %}
+    - scaleway_{{ name }}
+    {%- endfor %}
