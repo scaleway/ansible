@@ -24,3 +24,6 @@ build_ignore:
   - changelogs/.plugin-cache.yaml
   - .DS_Store
   - "*.tar.gz"
+  - generator.py
+  - templates
+  - .github
