@@ -38,7 +38,7 @@ jobs:
           - stable-2.12
           - stable-2.13
         python:
-          - 3.9
+          - 3.8
         include:
           - ansible: devel
             python: "3.10"
