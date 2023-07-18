@@ -267,7 +267,7 @@ def main() -> None:
             type="{{ field.type.name }}",
             required={{ field.required }}{%- if field.type.choices %},
             choices=[{%- for choice in field.type.choices %}"{{ choice }}"{%- if not loop.last %}, {% endif %}{%- endfor %}]{%- endif %},
-            {%- if field.name == "list" %}
+            {%- if field.type.name == "list" %}
             elements="str",
             {%- endif %}
             {%- if ("password" in field.name) or ("secret" in field.name) or ("key" in field.name) %}

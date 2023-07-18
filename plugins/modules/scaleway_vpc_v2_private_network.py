@@ -214,10 +214,12 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         subnets=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         vpc_id=dict(
             type="str",

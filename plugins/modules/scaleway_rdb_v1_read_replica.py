@@ -183,6 +183,7 @@ def main() -> None:
         endpoint_spec=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         same_zone=dict(
             type="bool",

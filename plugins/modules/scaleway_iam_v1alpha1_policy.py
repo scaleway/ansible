@@ -203,6 +203,7 @@ def main() -> None:
         rules=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         user_id=dict(
             type="str",

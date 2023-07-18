@@ -325,6 +325,7 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         cni=dict(
             type="str",
@@ -343,6 +344,7 @@ def main() -> None:
         pools=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         autoscaler_config=dict(
             type="dict",
@@ -355,10 +357,12 @@ def main() -> None:
         feature_gates=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         admission_plugins=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         open_id_connect_config=dict(
             type="dict",
@@ -367,6 +371,7 @@ def main() -> None:
         apiserver_cert_sans=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         private_network_id=dict(
             type="str",

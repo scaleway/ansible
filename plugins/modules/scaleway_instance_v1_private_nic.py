@@ -186,10 +186,12 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         ip_ids=dict(
             type="list",
             required=False,
+            elements="str",
         ),
     )
 

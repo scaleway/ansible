@@ -252,6 +252,7 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         organization_default=dict(
             type="bool",

@@ -225,10 +225,12 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         option_ids=dict(
             type="list",
             required=False,
+            elements="str",
         ),
     )
 

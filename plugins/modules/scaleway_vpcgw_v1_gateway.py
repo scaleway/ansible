@@ -254,10 +254,12 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         upstream_dns_servers=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         ip_id=dict(
             type="str",

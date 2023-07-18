@@ -178,6 +178,7 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
     )
 

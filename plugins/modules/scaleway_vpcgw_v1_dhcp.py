@@ -277,10 +277,12 @@ def main() -> None:
         dns_servers_override=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         dns_search=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         dns_local_name=dict(
             type="str",

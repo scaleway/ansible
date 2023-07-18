@@ -329,6 +329,7 @@ def main() -> None:
         server_ip=dict(
             type="list",
             required=True,
+            elements="str",
         ),
         on_marked_down_action=dict(
             type="str",

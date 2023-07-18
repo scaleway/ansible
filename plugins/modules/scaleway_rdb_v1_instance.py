@@ -338,14 +338,17 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         init_settings=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         init_endpoints=dict(
             type="list",
             required=False,
+            elements="str",
         ),
     )
 

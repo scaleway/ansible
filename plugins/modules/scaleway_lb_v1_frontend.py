@@ -247,6 +247,7 @@ def main() -> None:
         certificate_ids=dict(
             type="list",
             required=False,
+            elements="str",
         ),
     )
 

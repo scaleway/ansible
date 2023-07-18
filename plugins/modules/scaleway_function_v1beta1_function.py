@@ -361,6 +361,7 @@ def main() -> None:
         secret_environment_variables=dict(
             type="list",
             required=False,
+            elements="str",
             no_log=True,
         ),
     )

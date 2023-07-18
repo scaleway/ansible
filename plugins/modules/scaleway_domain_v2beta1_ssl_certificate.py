@@ -161,6 +161,7 @@ def main() -> None:
         alternative_dns_zones=dict(
             type="list",
             required=False,
+            elements="str",
         ),
     )
 

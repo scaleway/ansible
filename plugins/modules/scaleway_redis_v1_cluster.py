@@ -277,6 +277,7 @@ def main() -> None:
         tags=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         cluster_size=dict(
             type="int",
@@ -285,14 +286,17 @@ def main() -> None:
         acl_rules=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         endpoints=dict(
             type="list",
             required=False,
+            elements="str",
         ),
         cluster_settings=dict(
             type="list",
             required=False,
+            elements="str",
         ),
     )
 
