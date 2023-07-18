@@ -338,7 +338,14 @@ def main() -> None:
         proxy_protocol=dict(
             type="str",
             required=True,
-            choices=["proxy_protocol_unknown", "proxy_protocol_none", "proxy_protocol_v1", "proxy_protocol_v2", "proxy_protocol_v2_ssl", "proxy_protocol_v2_ssl_cn"],
+            choices=[
+                "proxy_protocol_unknown",
+                "proxy_protocol_none",
+                "proxy_protocol_v1",
+                "proxy_protocol_v2",
+                "proxy_protocol_v2_ssl",
+                "proxy_protocol_v2_ssl_cn",
+            ],
         ),
         zone=dict(
             type="str",

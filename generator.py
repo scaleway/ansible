@@ -1,10 +1,11 @@
 import importlib
 import inspect
+import pkgutil
+import subprocess
 from dataclasses import fields
 from datetime import datetime
 from enum import Enum
 from inspect import Parameter, isclass
-import pkgutil
 from types import FunctionType, NoneType
 from typing import (
     Dict,
@@ -19,9 +20,8 @@ from typing import (
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from scaleway import ALL_REGIONS, WaitForOptions
-
 import scaleway
+from scaleway import ALL_REGIONS, WaitForOptions
 
 
 class FieldTypeDescriptor:
@@ -309,6 +309,8 @@ def main() -> None:
                 f.write(module_code)
 
             module_names.append(descriptor.name)
+
+    subprocess.run(["black", "plugins/modules"])
 
     with open(f"meta/runtime.yml", "w") as f:
         content = env.get_template("runtime.yml.jinja").render(

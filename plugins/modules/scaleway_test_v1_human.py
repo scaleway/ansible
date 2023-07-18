@@ -249,7 +249,17 @@ def main() -> None:
         eyes_color=dict(
             type="str",
             required=True,
-            choices=["unknown", "amber", "blue", "brown", "gray", "green", "hazel", "red", "violet"],
+            choices=[
+                "unknown",
+                "amber",
+                "blue",
+                "brown",
+                "gray",
+                "green",
+                "hazel",
+                "red",
+                "violet",
+            ],
         ),
         name=dict(
             type="str",

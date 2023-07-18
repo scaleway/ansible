@@ -242,7 +242,12 @@ def main() -> None:
         ssl_compatibility_level=dict(
             type="str",
             required=True,
-            choices=["ssl_compatibility_level_unknown", "ssl_compatibility_level_intermediate", "ssl_compatibility_level_modern", "ssl_compatibility_level_old"],
+            choices=[
+                "ssl_compatibility_level_unknown",
+                "ssl_compatibility_level_intermediate",
+                "ssl_compatibility_level_modern",
+                "ssl_compatibility_level_old",
+            ],
         ),
         zone=dict(
             type="str",

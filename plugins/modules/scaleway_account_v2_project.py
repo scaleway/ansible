@@ -120,8 +120,7 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     resource_id = module.params.pop("id", None)
 
     if resource_id is not None:
-        resource = api.get_project(
-        )
+        resource = api.get_project()
     elif module.params.get("name", None) is not None:
         resources = api.list_projects_all(
             name=module.params["name"],
