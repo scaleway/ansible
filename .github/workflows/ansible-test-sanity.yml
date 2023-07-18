@@ -24,6 +24,9 @@ jobs:
       - name: Perform testing
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
+          pre-test-cmd: |
+            rm generator.py
+            rm -r templates
           ansible-core-version: ${{ matrix.ansible }}
           origin-python-version: ${{ matrix.python }}
           target-python-version: ${{ matrix.python }}
@@ -50,6 +53,9 @@ jobs:
       - name: Perform testing
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
+          pre-test-cmd: |
+            rm generator.py
+            rm -r templates
           ansible-core-version: ${{ matrix.ansible }}
           origin-python-version: ${{ matrix.python }}
           target-python-version: ${{ matrix.python }}
