@@ -1,0 +1,296 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2023, Scaleway
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
+DOCUMENTATION = r"""
+---
+module: scaleway_{{ api.name }}
+short_description: Manage Scaleway {{ api.namespace }}'s {{ api.group }}
+description:
+    - This module can be used to manage Scaleway {{ api.namespace }}'s {{ api.group }}.
+version_added: "2.1.0"
+author:
+    - Nathanael Demacon (@quantumsheep)
+extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+requirements:
+    - scaleway >= 0.16.0
+options:
+    state:
+        description:
+            - Indicate desired state of the target.
+            - C(present) will create the resource.
+            - C(absent) will delete the resource, if it exists.
+        default: present
+        choices: ["present", "absent"]
+        type: str
+    {%- if not api.method_create.has_request_field(api.request_id_field.name) %}
+    {{ api.request_id_field.name }}:
+        description: {{ api.request_id_field.name }}
+        type: str
+        required: false
+    {%- endif %}
+    {%- for field in api.method_create.request_fields %}
+    {{ field.name }}:
+        description: {{ field.name }}
+        type: {{ field.type.name }}
+        {%- if field.type.name == "list" %}
+        elements: str
+        {%- endif %}
+        required: {% if field.required %}true{%- else %}false{%- endif %}
+        {%- if field.type.choices %}
+        choices:
+            {%- for choice in field.type.choices %}
+            - {{ choice }}
+            {%- endfor %}
+        {%- endif %}
+    {%- endfor %}
+"""
+
+EXAMPLES = r"""
+- name: Create a {{ api.group }}
+  scaleway.scaleway.scaleway_{{ api.name }}:
+    access_key: "{{ "{{ scw_access_key }}" }}"
+    secret_key: "{{ "{{ scw_secret_key }}" }}"
+    {%- for field in api.method_create.request_fields -%}
+    {%- if field.required %}
+    {%- if field.type.name == "bool" %}
+    {{ field.name }}: true
+    {%- elif field.type.name == "list" %}
+    {{ field.name }}:
+        - aaaaaa
+        - bbbbbb
+    {%- elif field.type.name == "dict" %}
+    {{ field.name }}:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+    {%- else %}
+    {{ field.name }}: "aaaaaa"
+    {%- endif %}
+    {%- endif %}
+    {%- endfor %}
+"""
+
+RETURN = r"""
+---
+{{ api.group }}:
+    description: The {{ api.group }} information
+    returned: when I(state=present)
+    type: dict
+    sample:
+        {%- for field in api.method_get.response_fields %}
+        {%- if field.type.choices %}
+        {%- for choice in field.type.choices %}
+        {%- if "unknown" not in choice %}
+        {{ field.name }}: {{ choice }}
+        {%- break %}
+        {%- endif %}
+        {%- endfor %}
+        {%- elif "id" in field.name %}
+        {{ field.name }}: 00000000-0000-0000-0000-000000000000
+        {%- elif field.type.name == "str" %}
+        {{ field.name }}: "aaaaaa"
+        {%- elif field.type.name == "int" %}
+        {{ field.name }}: 3
+        {%- elif field.type.name == "float" %}
+        {{ field.name }}: 3.14
+        {%- elif field.type.name == "bool" %}
+        {{ field.name }}: true
+        {%- elif field.type.name == "list" %}
+        {{ field.name }}:
+            - aaaaaa
+            - bbbbbb
+        {%- elif field.type.name == "dict" %}
+        {{ field.name }}:
+            aaaaaa: bbbbbb
+            cccccc: dddddd
+        {%- endif %}
+        {%- endfor %}
+"""
+
+from ansible.module_utils.basic import (
+    AnsibleModule,
+    missing_required_lib,
+)
+from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
+    scaleway_argument_spec,
+    scaleway_waitable_resource_argument_spec,
+    scaleway_get_client_from_module,
+    scaleway_pop_client_params,
+    scaleway_pop_waitable_resource_params,
+)
+
+try:
+    from scaleway import Client
+    from {{ api.class_import_path }} import {{ api.class_name }}
+
+    HAS_SCALEWAY_SDK = True
+except ImportError:
+    HAS_SCALEWAY_SDK = False
+
+
+def create(module: AnsibleModule, client: "Client") -> None:
+    api = {{ api.class_name }}(client)
+
+    resource_id = module.params.pop("{{ api.request_id_field.name }}", None)
+    if id is not None:
+        resource = api.get_{{ api.group }}({{ api.request_id_field.name }}=resource_id)
+
+        if module.check_mode:
+            module.exit_json(changed=False)
+
+        module.exit_json(changed=False, data=resource)
+
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    not_none_params = {
+        key: value for key, value in module.params.items() if value is not None
+    }
+    resource = api.create_{{ api.group }}(**not_none_params)
+    {%- if api.method_wait_for != None %}
+    resource = api.{{ api.method_wait_for.name }}({{ api.request_id_field.name }}=resource.{{ api.response_id_field.name }}, region=module.params["region"])
+    {%- endif %}
+
+    module.exit_json(changed=True, data=resource.__dict__)
+
+
+def delete(module: AnsibleModule, client: "Client") -> None:
+    api = {{ api.class_name }}(client)
+
+    resource_id = module.params.pop("{{ api.response_id_field.name }}", None)
+
+    if resource_id is not None:
+        resource = api.get_{{ api.group }}(
+            {%- for field in api.method_get.required_request_fields %}
+            {%- if field.name == api.request_id_field.name %}
+            {{ field.name }}=resource_id,
+            {%- else %}
+            {{ field.name }}=module.params["{{ field.name }}"],
+            {%- endif %}
+            {%- endfor %}
+            {%- if api.method_get.has_request_field("region") %}
+            region=module.params["region"],
+            {%- endif %}
+            {%- if api.method_get.has_request_field("zone") %}
+            zone=module.params["zone"],
+            {%- endif %}
+        )
+    {%- if api.method_list != None and api.method_list.has_request_field("name") %}
+    elif module.params.get("name", None) is not None:
+        resources = api.{{ api.method_list.name }}(
+            name=module.params["name"],
+            {%- for field in api.method_list.required_request_fields %}
+            {{ field.name }}=module.params.get("{{ field.name }}", None),
+            {%- endfor %}
+            {%- if api.method_get.has_request_field("region") %}
+            region=module.params["region"],
+            {%- endif %}
+            {%- if api.method_get.has_request_field("zone") %}
+            zone=module.params["zone"],
+            {%- endif %}
+        )
+        if len(resources) == 0:
+            module.exit_json(msg="No {{ api.group }} found with name {name}")
+        elif len(resources) > 1:
+            module.exit_json(msg="More than one {{ api.group }} found with name {name}")
+        else:
+            resource = resources[0]
+    {%- endif %}
+    else:
+        module.fail_json(msg="{{ api.response_id_field.name }} is required")
+
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    api.{{ api.method_delete.name }}(
+        {%- for field in api.method_delete.request_fields %}
+        {%- if field.name == api.request_id_field.name %}
+        {{ field.name }}=resource.id,
+        {%- else %}
+        {{ field.name }}=resource.{{ field.name }},
+        {%- endif %}
+        {%- endfor %}
+    )
+    {%- if api.method_wait_for != None %}
+
+    try:
+        api.{{ api.method_wait_for.name }}({{ api.request_id_field.name }}=resource.{{ api.response_id_field.name }}, region=module.params["region"])
+    except ScalewayException as e:
+        if e.status_code != 404:
+            raise e
+    {%- endif %}
+
+    module.exit_json(
+        changed=True,
+        {%- if api.method_get.has_response_field("name") %}
+        msg=f"{{ api.namespace }}'s {{ api.group }} {resource.name} ({resource.{{ api.response_id_field.name }}}) deleted",
+        {%- else %}
+        msg=f"{{ api.namespace }}'s {{ api.group }} {resource.{{ api.response_id_field.name }}} deleted",
+        {%- endif %}
+    )
+
+
+def core(module: AnsibleModule) -> None:
+    client = scaleway_get_client_from_module(module)
+
+    state = module.params.pop("state")
+    scaleway_pop_client_params(module)
+    scaleway_pop_waitable_resource_params(module)
+
+    if state == "present":
+        create(module, client)
+    elif state == "absent":
+        delete(module, client)
+
+
+def main() -> None:
+    argument_spec = scaleway_argument_spec()
+    argument_spec.update(scaleway_waitable_resource_argument_spec())
+    argument_spec.update(
+        state=dict(type="str", default="present", choices=["absent", "present"]),
+        {%- if not api.method_create.has_request_field(api.request_id_field.name) %}
+        {{ api.request_id_field.name }}=dict(type="str"
+        {%- if ("password" in api.request_id_field.name) or ("secret" in api.request_id_field.name) or ("key" in api.request_id_field.name) -%}
+        , no_log=True
+        {%- endif -%}
+        ),
+        {%- endif %}
+        {%- for field in api.method_create.request_fields %}
+        {{ field.name }}=dict(
+            type="{{ field.type.name }}",
+            required={{ field.required }}{%- if field.type.choices %},
+            choices=[{%- for choice in field.type.choices %}"{{ choice }}"{%- if not loop.last %}, {% endif %}{%- endfor %}]{%- endif %},
+            {%- if field.type.name == "list" %}
+            elements="str",
+            {%- endif %}
+            {%- if ("password" in field.name) or ("secret" in field.name) or ("key" in field.name) %}
+            no_log=True,
+            {%- endif %}
+        ),
+        {%- endfor %}
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        {%- if api.method_create.has_request_field("name") %}
+        required_one_of=(["{{ api.request_id_field.name }}", "name"],),
+        {%- endif %}
+        supports_check_mode=True,
+    )
+
+    if not HAS_SCALEWAY_SDK:
+        module.fail_json(msg=missing_required_lib("scaleway"))
+
+    core(module)
+
+
+if __name__ == "__main__":
+    main()
+
