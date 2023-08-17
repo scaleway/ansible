@@ -50,6 +50,7 @@ action_groups:
     - scaleway_rdb_database_backup
     - scaleway_rdb_endpoint
     - scaleway_rdb_instance
+    - scaleway_rdb_privilege
     - scaleway_rdb_read_replica
     - scaleway_rdb_snapshot
     - scaleway_redis_cluster
