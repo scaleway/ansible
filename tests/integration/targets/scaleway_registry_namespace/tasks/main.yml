@@ -25,9 +25,9 @@
     scaleway.scaleway.scaleway_registry_namespace:
       name: "{{ resource_name }}"
       region: "{{ resource_region }}"
-      project_id: "{{ scw_default_project_id }}"
-      access_key: "{{ scw_access_key }}"
-      secret_key: "{{ scw_secret_key }}"
+      project_id: "{{ lookup('env', 'SCW_DEFAULT_PROJECT_ID') }}"
+      access_key: "{{ lookup('env', 'SCW_ACCESS_KEY') }}"
+      secret_key: "{{ lookup('env', 'SCW_SECRET_KEY') }}"
       state: present
       description: "{{ resource_description }}"
       is_public: "{{ resource_is_public }}"
@@ -37,9 +37,9 @@
     scaleway.scaleway.scaleway_registry_namespace:
       name: "{{ resource_name }}"
       region: "{{ resource_region }}"
-      project_id: "{{ scw_default_project_id }}"
-      access_key: "{{ scw_access_key }}"
-      secret_key: "{{ scw_secret_key }}"
+      project_id: "{{ lookup('env', 'SCW_DEFAULT_PROJECT_ID') }}"
+      access_key: "{{ lookup('env', 'SCW_ACCESS_KEY') }}"
+      secret_key: "{{ lookup('env', 'SCW_SECRET_KEY') }}"
       state: absent
       description: "{{ resource_description }}"
       is_public: "{{ resource_is_public }}"
@@ -50,9 +50,9 @@
     scaleway.scaleway.scaleway_registry_namespace:
       name: "{{ resource_name }}"
       region: "{{ resource_region }}"
-      project_id: "{{ scw_default_project_id }}"
-      access_key: "{{ scw_access_key }}"
-      secret_key: "{{ scw_secret_key }}"
+      project_id: "{{ lookup('env', 'SCW_DEFAULT_PROJECT_ID') }}"
+      access_key: "{{ lookup('env', 'SCW_ACCESS_KEY') }}"
+      secret_key: "{{ lookup('env', 'SCW_SECRET_KEY') }}"
       state: present
       description: "{{ resource_description }}"
       is_public: "{{ resource_is_public }}"
