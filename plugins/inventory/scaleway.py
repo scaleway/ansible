@@ -95,7 +95,7 @@ variables:
 
 
 from dataclasses import dataclass, field
-from types import SimpleNamespace
+from types import SimpleNamespace, NoneType
 from typing import List, Optional
 
 from ansible.errors import AnsibleError
@@ -113,6 +113,8 @@ try:
     from scaleway.instance.v1 import InstanceV1API
     from scaleway.instance.v1 import Server as InstanceServer
     from scaleway.instance.v1 import ServerState
+    from scaleway.dedibox.v1 import DediboxV1API
+    from scaleway.dedibox.v1 import ServerSummary as DediboxServer
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -243,8 +245,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         instances = self._get_instances(client, filters)
         elastic_metals = self._get_elastic_metal(client, filters)
         apple_silicon = self._get_apple_sillicon(client, filters)
+        dedibox_servers = self._get_dedibox(client, filters)
 
-        return instances + elastic_metals + apple_silicon
+        return instances + elastic_metals + apple_silicon + dedibox_servers
 
     def _get_instances(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = InstanceV1API(client)
@@ -349,6 +352,44 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             results.append(host)
 
         return results
+
+    def _get_dedibox(self, client: "Client", filters: _Filters) -> List[_Host]:
+        api = DediboxV1API(client)
+
+        servers: List[DediboxServer] = []
+
+        for zone in filters.zones:
+            try:
+                found = api.list_servers_all(
+                    zone=zone,
+                )
+                servers.extend(found)
+            except ScalewayException:
+                pass
+
+        results: List[_Host] = []
+        for server in servers:
+            public_ipv4 = filter(lambda ip: ip.version == IPVersion.IPV4, server.interfaces.ips)
+            public_ipv6 = filter(lambda ip: ip.version == IPVersion.IPV6, server.interfaces.ips)
+
+            public_ipv4 = next(public_ipv4, None)
+            public_ipv6 = next(public_ipv6, None)
+
+            host = _Host(
+                id=server.id,
+                tags=["dedibox", *server.tags],
+                zone=server.zone,
+                state=str(server.status),
+                hostname=server.name,
+                public_ipv4=public_ipv4.address if public_ipv4 else None,
+                private_ipv4= None,
+                public_ipv6=public_ipv6.address if public_ipv6 else None,
+            )
+            results.append(host)
+
+            return results
+
+
 
     def _get_hostname(self, host: _Host, hostnames: List[str]) -> str:
         as_dict = host.__dict__
