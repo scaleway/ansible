@@ -1,12 +1,12 @@
-name: integration
+name: Integration
 
 on:
   pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
-  # schedule:
-  #   - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -18,67 +18,12 @@ jobs:
       max-parallel: 1
       matrix:
         module:
-          # - scaleway_account_project
-          # - scaleway_applesilicon_server
-          # - scaleway_baremetal_server
-          # - scaleway_container
-          # - scaleway_container_cron
-          # - scaleway_container_domain
-          # - scaleway_container_namespace
-          # - scaleway_container_token
-          # - scaleway_domain_ssl_certificate
-          # - scaleway_flexibleip_flexible_ip
-          # - scaleway_function
-          # - scaleway_function_cron
-          # - scaleway_function_domain
-          # - scaleway_function_namespace
-          # - scaleway_function_token
-          # - scaleway_function_trigger
-          # - scaleway_iam_api_key
-          # - scaleway_iam_application
-          # - scaleway_iam_group
-          # - scaleway_iam_policy
-          # - scaleway_iam_ssh_key
-          # - scaleway_instance_image
-          # - scaleway_instance_ip
-          # - scaleway_instance_placement_group
-          # - scaleway_instance_private_nic
-          # - scaleway_instance_security_group
-          # - scaleway_instance_security_group_rule
-          # - scaleway_instance_snapshot
-          # - scaleway_instance_volume
-          # - scaleway_iot_device
-          # - scaleway_iot_hub
-          # - scaleway_iot_network
-          # - scaleway_iot_route
-          # - scaleway_k8s_cluster
-          # - scaleway_k8s_pool
-          # - scaleway_lb
-          # - scaleway_lb_acl
-          # - scaleway_lb_backend
-          # - scaleway_lb_certificate
-          # - scaleway_lb_frontend
-          # - scaleway_lb_route
-          # - scaleway_lb_subscriber
-          # - scaleway_mnq_credential
-          # - scaleway_mnq_namespace
-          # - scaleway_rdb_database_backup
-          # - scaleway_rdb_endpoint
-          # - scaleway_rdb_instance
-          # - scaleway_rdb_read_replica
-          # - scaleway_rdb_snapshot
-          # - scaleway_redis_cluster
           - scaleway_registry_namespace
-          # - scaleway_secret
-          # - scaleway_vpc_private_network
-          # - scaleway_vpcgw_dhcp
-          # - scaleway_vpcgw_dhcp_entry
-          # - scaleway_vpcgw_gateway
-          # - scaleway_vpcgw_gateway_network
-          # - scaleway_vpcgw_ip
-          # - scaleway_vpcgw_pat_rule
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Perform testing
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
