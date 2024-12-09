@@ -1,13 +1,9 @@
-name: integration
+name: Nightly integration tests
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-  # schedule:
-  #   - cron: "0 6 * * *"
-  workflow_dispatch:
+  schedule:
+    # Will run at 00:00 every day
+    - cron: "0 0 * * *"
 
 jobs:
   integration:
