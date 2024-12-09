@@ -1,3 +1,6 @@
+# We only support ansible-core versions that are not EOL
+# https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
+
 name: sanity
 
 on:
