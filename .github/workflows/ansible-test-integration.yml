@@ -89,7 +89,6 @@ jobs:
             eval
             "echo \"$(cat "tests/integration/integration_config.yml.template")\""
             > tests/integration/integration_config.yml
-          target-python-version: 3.11
           controller-python-version: auto
           target: ${{ matrix.module }}
           testing-type: integration
