@@ -371,7 +371,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for server in servers:
             public_ipv4 = filter(lambda ip: ip.version == IPVersion.IPV4, server.interfaces.ips)
             public_ipv6 = filter(lambda ip: ip.version == IPVersion.IPV6, server.interfaces.ips)
-
             public_ipv4 = next(public_ipv4, None)
             public_ipv6 = next(public_ipv6, None)
 
