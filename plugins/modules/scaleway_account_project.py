@@ -85,7 +85,7 @@ from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import 
 
 try:
     from scaleway import Client
-    from scaleway.account.v2 import AccountV2API
+    from scaleway.account.v3 import AccountV3ProjectAPI
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -93,7 +93,7 @@ except ImportError:
 
 
 def create(module: AnsibleModule, client: "Client") -> None:
-    api = AccountV2API(client)
+    api = AccountV3ProjectAPI(client)
 
     id = module.params.pop("id", None)
     if id is not None:
@@ -116,7 +116,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
-    api = AccountV2API(client)
+    api = AccountV3ProjectAPI(client)
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
