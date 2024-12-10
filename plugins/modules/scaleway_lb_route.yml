@@ -1,0 +1,69 @@
+DOCUMENTATION:
+  module: scaleway_lb_route
+  short_description: Manage Scaleway lb's route
+  description:
+    - This module can be used to manage Scaleway lb's route.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    route_id:
+      description: route_id
+      type: str
+      required: false
+    frontend_id:
+      description: frontend_id
+      type: str
+      required: true
+    backend_id:
+      description: backend_id
+      type: str
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    match:
+      description: match
+      type: dict
+      required: false
+
+EXAMPLES:
+  - name: Create a route
+    scaleway.scaleway.scaleway_lb_route:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      frontend_id: "aaaaaa"
+      backend_id: "aaaaaa"
+
+RETURN:
+  route:
+    description: The route information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      frontend_id: 00000000-0000-0000-0000-000000000000
+      backend_id: 00000000-0000-0000-0000-000000000000
+      match:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"

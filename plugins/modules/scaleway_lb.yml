@@ -1,0 +1,117 @@
+DOCUMENTATION:
+  module: scaleway_lb
+  short_description: Manage Scaleway lb's lb
+  description:
+    - This module can be used to manage Scaleway lb's lb.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    lb_id:
+      description: lb_id
+      type: str
+      required: false
+    description:
+      description: description
+      type: str
+      required: true
+    type_:
+      description: type_
+      type: str
+      required: true
+    ssl_compatibility_level:
+      description: ssl_compatibility_level
+      type: str
+      required: true
+      choices:
+        - ssl_compatibility_level_unknown
+        - ssl_compatibility_level_intermediate
+        - ssl_compatibility_level_modern
+        - ssl_compatibility_level_old
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    organization_id:
+      description: organization_id
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+    name:
+      description: name
+      type: str
+      required: false
+    ip_id:
+      description: ip_id
+      type: str
+      required: false
+    tags:
+      description: tags
+      type: list
+      elements: str
+      required: false
+
+
+EXAMPLES:
+  - name: Create a lb
+    scaleway.scaleway.scaleway_lb:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      description: "aaaaaa"
+      type_: "aaaaaa"
+      ssl_compatibility_level: "aaaaaa"
+
+RETURN:
+  lb:
+    description: The lb information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      description: "aaaaaa"
+      status: ready
+      instances:
+        - aaaaaa
+        - bbbbbb
+      organization_id: 00000000-0000-0000-0000-000000000000
+      project_id: 00000000-0000-0000-0000-000000000000
+      ip:
+        - aaaaaa
+        - bbbbbb
+      tags:
+        - aaaaaa
+        - bbbbbb
+      frontend_count: 3
+      backend_count: 3
+      type_: "aaaaaa"
+      subscriber:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      ssl_compatibility_level: ssl_compatibility_level_intermediate
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      private_network_count: 3
+      route_count: 3
+      region: fr-par
+      zone: "aaaaaa"

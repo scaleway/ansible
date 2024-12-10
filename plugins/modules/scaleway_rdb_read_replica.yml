@@ -1,0 +1,63 @@
+DOCUMENTATION:
+  module: scaleway_rdb_read_replica
+  short_description: Manage Scaleway rdb's read_replica
+  description:
+    - This module can be used to manage Scaleway rdb's read_replica.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    read_replica_id:
+      description: read_replica_id
+      type: str
+      required: false
+    instance_id:
+      description: instance_id
+      type: str
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    endpoint_spec:
+      description: endpoint_spec
+      type: list
+      elements: str
+      required: false
+
+EXAMPLES:
+  - name: Create a read_replica
+    scaleway.scaleway.scaleway_rdb_read_replica:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      instance_id: "aaaaaa"
+
+RETURN:
+  read_replica:
+    description: The read_replica information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      endpoints:
+        - aaaaaa
+        - bbbbbb
+      status: provisioning
+      region: fr-par

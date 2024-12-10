@@ -1,0 +1,156 @@
+DOCUMENTATION:
+  module: scaleway_k8s_pool
+  short_description: Manage Scaleway k8s's pool
+  description:
+    - This module can be used to manage Scaleway k8s's pool.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    pool_id:
+      description: pool_id
+      type: str
+      required: false
+    cluster_id:
+      description: cluster_id
+      type: str
+      required: true
+    node_type:
+      description: node_type
+      type: str
+      required: true
+    autoscaling:
+      description: autoscaling
+      type: bool
+      required: true
+    size:
+      description: size
+      type: int
+      required: true
+    container_runtime:
+      description: container_runtime
+      type: str
+      required: true
+      choices:
+        - unknown_runtime
+        - docker
+        - containerd
+        - crio
+    autohealing:
+      description: autohealing
+      type: bool
+      required: true
+    root_volume_type:
+      description: root_volume_type
+      type: str
+      required: true
+      choices:
+        - default_volume_type
+        - l_ssd
+        - b_ssd
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    name:
+      description: name
+      type: str
+      required: false
+    placement_group_id:
+      description: placement_group_id
+      type: str
+      required: false
+    min_size:
+      description: min_size
+      type: int
+      required: false
+    max_size:
+      description: max_size
+      type: int
+      required: false
+    tags:
+      description: tags
+      type: list
+      elements: str
+      required: false
+    kubelet_args:
+      description: kubelet_args
+      type: dict
+      required: false
+    upgrade_policy:
+      description: upgrade_policy
+      type: dict
+      required: false
+    zone:
+      description: zone
+      type: str
+      required: false
+    root_volume_size:
+      description: root_volume_size
+      type: int
+      required: false
+
+EXAMPLES:
+  - name: Create a pool
+    scaleway.scaleway.scaleway_k8s_pool:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      cluster_id: "aaaaaa"
+      node_type: "aaaaaa"
+      autoscaling: true
+      size: "aaaaaa"
+      container_runtime: "aaaaaa"
+      autohealing: true
+      root_volume_type: "aaaaaa"
+
+RETURN:
+  pool:
+    description: The pool information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      cluster_id: 00000000-0000-0000-0000-000000000000
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      name: "aaaaaa"
+      status: ready
+      version: "aaaaaa"
+      node_type: "aaaaaa"
+      autoscaling: true
+      size: 3
+      min_size: 3
+      max_size: 3
+      container_runtime: docker
+      autohealing: true
+      tags:
+        - aaaaaa
+        - bbbbbb
+      placement_group_id: 00000000-0000-0000-0000-000000000000
+      kubelet_args:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      upgrade_policy:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      zone: "aaaaaa"
+      root_volume_type: default_volume_type
+      root_volume_size: 3
+      region: fr-par

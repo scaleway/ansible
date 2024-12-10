@@ -1,0 +1,71 @@
+DOCUMENTATION:
+  module: scaleway_container_token
+  short_description: Manage Scaleway container's token
+  description:
+    - This module can be used to manage Scaleway container's token.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    token_id:
+      description: token_id
+      type: str
+      required: false
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    container_id:
+      description: container_id
+      type: str
+      required: false
+    namespace_id:
+      description: namespace_id
+      type: str
+      required: false
+    description:
+      description: description
+      type: str
+      required: false
+    expires_at:
+      description: expires_at
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a token
+    scaleway.scaleway.scaleway_container_token:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+
+RETURN:
+  token:
+    description: The token information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      token: "aaaaaa"
+      container_id: 00000000-0000-0000-0000-000000000000
+      namespace_id: 00000000-0000-0000-0000-000000000000
+      public_key: "aaaaaa"
+      status: ready
+      description: "aaaaaa"
+      expires_at: "aaaaaa"

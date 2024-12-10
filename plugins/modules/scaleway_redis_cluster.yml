@@ -1,0 +1,127 @@
+DOCUMENTATION:
+  module: scaleway_redis_cluster
+  short_description: Manage Scaleway redis's cluster
+  description:
+    - This module can be used to manage Scaleway redis's cluster.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    cluster_id:
+      description: cluster_id
+      type: str
+      required: false
+    version:
+      description: version
+      type: str
+      required: true
+    node_type:
+      description: node_type
+      type: str
+      required: true
+    user_name:
+      description: user_name
+      type: str
+      required: true
+    password:
+      description: password
+      type: str
+      required: true
+    tls_enabled:
+      description: tls_enabled
+      type: bool
+      required: true
+    zone:
+      description: zone
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+    name:
+      description: name
+      type: str
+      required: false
+    tags:
+      description: tags
+      type: list
+      elements: str
+      required: false
+    cluster_size:
+      description: cluster_size
+      type: int
+      required: false
+    acl_rules:
+      description: acl_rules
+      type: list
+      elements: str
+      required: false
+    endpoints:
+      description: endpoints
+      type: list
+      elements: str
+      required: false
+    cluster_settings:
+      description: cluster_settings
+      type: list
+      elements: str
+      required: false
+
+EXAMPLES:
+  - name: Create a cluster
+    scaleway.scaleway.scaleway_redis_cluster:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      version: "aaaaaa"
+      node_type: "aaaaaa"
+      user_name: "aaaaaa"
+      password: "aaaaaa"
+      tls_enabled: true
+
+RETURN:
+  cluster:
+    description: The cluster information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      project_id: 00000000-0000-0000-0000-000000000000
+      status: ready
+      version: "aaaaaa"
+      endpoints:
+        - aaaaaa
+        - bbbbbb
+      tags:
+        - aaaaaa
+        - bbbbbb
+      node_type: "aaaaaa"
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      tls_enabled: true
+      cluster_settings:
+        - aaaaaa
+        - bbbbbb
+      acl_rules:
+        - aaaaaa
+        - bbbbbb
+      cluster_size: 3
+      zone: "aaaaaa"
+      user_name: "aaaaaa"
+      upgradable_versions:
+        - aaaaaa
+        - bbbbbb

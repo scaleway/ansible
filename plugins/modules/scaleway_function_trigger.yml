@@ -1,0 +1,90 @@
+DOCUMENTATION:
+  module: scaleway_function_trigger
+  short_description: Manage Scaleway function's trigger
+  description:
+    - This module can be used to manage Scaleway function's trigger.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    trigger_id:
+      description: trigger_id
+      type: str
+      required: false
+    name:
+      description: name
+      type: str
+      required: true
+    description:
+      description: description
+      type: str
+      required: true
+    function_id:
+      description: function_id
+      type: str
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    scw_sqs_config:
+      description: scw_sqs_config
+      type: dict
+      required: false
+    sqs_config:
+      description: sqs_config
+      type: dict
+      required: false
+    scw_nats_config:
+      description: scw_nats_config
+      type: dict
+      required: false
+
+EXAMPLES:
+  - name: Create a trigger
+    scaleway.scaleway.scaleway_function_trigger:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      name: "aaaaaa"
+      description: "aaaaaa"
+      function_id: "aaaaaa"
+
+RETURN:
+  trigger:
+    description: The trigger information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      description: "aaaaaa"
+      input_type: sqs
+      status: ready
+      error_message: "aaaaaa"
+      function_id: 00000000-0000-0000-0000-000000000000
+      scw_sqs_config:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      sqs_config:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      scw_nats_config:
+        aaaaaa: bbbbbb
+        cccccc: dddddd

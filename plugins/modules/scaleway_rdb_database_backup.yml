@@ -1,0 +1,79 @@
+DOCUMENTATION:
+  module: scaleway_rdb_database_backup
+  short_description: Manage Scaleway rdb's database_backup
+  description:
+    - This module can be used to manage Scaleway rdb's database_backup.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    database_backup_id:
+      description: database_backup_id
+      type: str
+      required: false
+    instance_id:
+      description: instance_id
+      type: str
+      required: true
+    database_name:
+      description: database_name
+      type: str
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    name:
+      description: name
+      type: str
+      required: false
+    expires_at:
+      description: expires_at
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a database_backup
+    scaleway.scaleway.scaleway_rdb_database_backup:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      instance_id: "aaaaaa"
+      database_name: "aaaaaa"
+
+RETURN:
+  database_backup:
+    description: The database_backup information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      instance_id: 00000000-0000-0000-0000-000000000000
+      database_name: "aaaaaa"
+      name: "aaaaaa"
+      status: creating
+      size: 3
+      expires_at: "aaaaaa"
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      instance_name: "aaaaaa"
+      download_url: "aaaaaa"
+      download_url_expires_at: "aaaaaa"
+      region: fr-par
+      same_region: true

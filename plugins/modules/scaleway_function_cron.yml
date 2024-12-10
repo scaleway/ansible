@@ -1,0 +1,73 @@
+DOCUMENTATION:
+  module: scaleway_function_cron
+  short_description: Manage Scaleway function's cron
+  description:
+    - This module can be used to manage Scaleway function's cron.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    cron_id:
+      description: cron_id
+      type: str
+      required: false
+    function_id:
+      description: function_id
+      type: str
+      required: true
+    schedule:
+      description: schedule
+      type: str
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    args:
+      description: args
+      type: dict
+      required: false
+    name:
+      description: name
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a cron
+    scaleway.scaleway.scaleway_function_cron:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      function_id: "aaaaaa"
+      schedule: "aaaaaa"
+
+RETURN:
+  cron:
+    description: The cron information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      function_id: 00000000-0000-0000-0000-000000000000
+      schedule: "aaaaaa"
+      args:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      status: ready
+      name: "aaaaaa"

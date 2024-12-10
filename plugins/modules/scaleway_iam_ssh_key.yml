@@ -1,0 +1,61 @@
+DOCUMENTATION:
+  module: scaleway_iam_ssh_key
+  short_description: Manage Scaleway iam's ssh_key
+  description:
+    - This module can be used to manage Scaleway iam's ssh_key.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    ssh_key_id:
+      description: ssh_key_id
+      type: str
+      required: false
+    public_key:
+      description: public_key
+      type: str
+      required: true
+    name:
+      description: name
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a ssh_key
+    scaleway.scaleway.scaleway_iam_ssh_key:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      public_key: "aaaaaa"
+
+RETURN:
+  ssh_key:
+    description: The ssh_key information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      public_key: "aaaaaa"
+      fingerprint: "aaaaaa"
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      organization_id: 00000000-0000-0000-0000-000000000000
+      project_id: 00000000-0000-0000-0000-000000000000
+      disabled: true

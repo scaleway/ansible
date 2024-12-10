@@ -1,0 +1,160 @@
+DOCUMENTATION:
+  module: scaleway_function
+  short_description: Manage Scaleway function's function
+  description:
+    - This module can be used to manage Scaleway function's function.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    function_id:
+      description: function_id
+      type: str
+      required: false
+    namespace_id:
+      description: namespace_id
+      type: str
+      required: true
+    runtime:
+      description: runtime
+      type: str
+      required: true
+      choices:
+        - unknown_runtime
+        - golang
+        - python
+        - python3
+        - node8
+        - node10
+        - node14
+        - node16
+        - node17
+        - python37
+        - python38
+        - python39
+        - python310
+        - go113
+        - go117
+        - go118
+        - node18
+        - rust165
+        - go119
+        - python311
+        - php82
+        - node19
+        - go120
+    privacy:
+      description: privacy
+      type: str
+      required: true
+      choices:
+        - unknown_privacy
+        - public
+        - private
+    http_option:
+      description: http_option
+      type: str
+      required: true
+      choices:
+        - unknown_http_option
+        - enabled
+        - redirected
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    name:
+      description: name
+      type: str
+      required: false
+    environment_variables:
+      description: environment_variables
+      type: dict
+      required: false
+    min_scale:
+      description: min_scale
+      type: int
+      required: false
+    max_scale:
+      description: max_scale
+      type: int
+      required: false
+    memory_limit:
+      description: memory_limit
+      type: int
+      required: false
+    timeout:
+      description: timeout
+      type: str
+      required: false
+    handler:
+      description: handler
+      type: str
+      required: false
+    description:
+      description: description
+      type: str
+      required: false
+    secret_environment_variables:
+      description: secret_environment_variables
+      type: list
+      elements: str
+      required: false
+
+EXAMPLES:
+  - name: Create a function
+    scaleway.scaleway.scaleway_function:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      namespace_id: "aaaaaa"
+      runtime: "aaaaaa"
+      privacy: "aaaaaa"
+      http_option: "aaaaaa"
+
+RETURN:
+  function:
+    description: The function information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      namespace_id: 00000000-0000-0000-0000-000000000000
+      status: ready
+      environment_variables:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      min_scale: 3
+      max_scale: 3
+      runtime: golang
+      memory_limit: 3
+      cpu_limit: 3
+      timeout: "aaaaaa"
+      handler: "aaaaaa"
+      error_message: "aaaaaa"
+      privacy: public
+      description: "aaaaaa"
+      domain_name: "aaaaaa"
+      secret_environment_variables:
+        - aaaaaa
+        - bbbbbb
+      region: fr-par
+      http_option: enabled
+      runtime_message: "aaaaaa"

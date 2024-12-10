@@ -1,0 +1,83 @@
+DOCUMENTATION:
+  module: scaleway_registry_namespace
+  short_description: Manage Scaleway registry's namespace
+  description:
+    - This module can be used to manage Scaleway registry's namespace.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    namespace_id:
+      description: namespace_id
+      type: str
+      required: false
+    description:
+      description: description
+      type: str
+      required: true
+    is_public:
+      description: is_public
+      type: bool
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    name:
+      description: name
+      type: str
+      required: false
+    organization_id:
+      description: organization_id
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a namespace
+    scaleway.scaleway.scaleway_registry_namespace:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      description: "aaaaaa"
+      is_public: true
+
+RETURN:
+  namespace:
+    description: The namespace information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      description: "aaaaaa"
+      organization_id: 00000000-0000-0000-0000-000000000000
+      project_id: 00000000-0000-0000-0000-000000000000
+      status: ready
+      status_message: "aaaaaa"
+      endpoint: "aaaaaa"
+      is_public: true
+      size: 3
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      image_count: 3
+      region: fr-par

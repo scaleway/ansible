@@ -1,0 +1,97 @@
+DOCUMENTATION:
+  module: scaleway_iot_hub
+  short_description: Manage Scaleway iot's hub
+  description:
+    - This module can be used to manage Scaleway iot's hub.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    hub_id:
+      description: hub_id
+      type: str
+      required: false
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    name:
+      description: name
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+    product_plan:
+      description: product_plan
+      type: str
+      required: true
+      choices:
+        - plan_unknown
+        - plan_shared
+        - plan_dedicated
+        - plan_ha
+    disable_events:
+      description: disable_events
+      type: bool
+      required: false
+    events_topic_prefix:
+      description: events_topic_prefix
+      type: str
+      required: false
+    twins_graphite_config:
+      description: twins_graphite_config
+      type: dict
+      required: false
+
+EXAMPLES:
+  - name: Create a hub
+    scaleway.scaleway.scaleway_iot_hub:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      product_plan: "aaaaaa"
+
+RETURN:
+  hub:
+    description: The hub information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      status: error
+      product_plan: plan_shared
+      enabled: true
+      device_count: 3
+      connected_device_count: 3
+      endpoint: "aaaaaa"
+      disable_events: true
+      events_topic_prefix: "aaaaaa"
+      region: fr-par
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      project_id: 00000000-0000-0000-0000-000000000000
+      organization_id: 00000000-0000-0000-0000-000000000000
+      enable_device_auto_provisioning: true
+      has_custom_ca: true
+      twins_graphite_config:
+        aaaaaa: bbbbbb
+        cccccc: dddddd

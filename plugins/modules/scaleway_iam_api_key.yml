@@ -1,0 +1,71 @@
+DOCUMENTATION:
+  module: scaleway_iam_api_key
+  short_description: Manage Scaleway iam's api_key
+  description:
+    - This module can be used to manage Scaleway iam's api_key.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    access_key:
+      description: access_key
+      type: str
+      required: false
+    description:
+      description: description
+      type: str
+      required: true
+    application_id:
+      description: application_id
+      type: str
+      required: false
+    user_id:
+      description: user_id
+      type: str
+      required: false
+    expires_at:
+      description: expires_at
+      type: str
+      required: false
+    default_project_id:
+      description: default_project_id
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a api_key
+    scaleway.scaleway.scaleway_iam_api_key:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      description: "aaaaaa"
+
+RETURN:
+  api_key:
+    description: The api_key information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      access_key: "aaaaaa"
+      secret_key: "aaaaaa"
+      application_id: 00000000-0000-0000-0000-000000000000
+      user_id: 00000000-0000-0000-0000-000000000000
+      description: "aaaaaa"
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      expires_at: "aaaaaa"
+      default_project_id: 00000000-0000-0000-0000-000000000000
+      editable: true
+      creation_ip: "aaaaaa"
