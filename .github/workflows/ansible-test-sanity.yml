@@ -1,3 +1,6 @@
+# We only support ansible-core versions that are not EOL
+# https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
+
 name: sanity
 
 on:
@@ -10,40 +13,22 @@ on:
   workflow_dispatch:
 
 jobs:
-  sanity_29:
-    timeout-minutes: 60
-    name: Sanity (Ⓐ$${{ matrix.ansible }})
-    strategy:
-      matrix:
-        ansible:
-          - stable-2.9
-    runs-on: ubuntu-latest
-    steps:
-      - name: Perform testing
-        uses: ansible-community/ansible-test-gh-action@release/v1
-        with:
-          ansible-core-version: ${{ matrix.ansible }}
-          origin-python-version: 3.8
-          target-python-version: 3.8
-          testing-type: sanity
-
   sanity:
     timeout-minutes: 30
     name: Sanity (Ⓐ$${{ matrix.ansible }})
     strategy:
       matrix:
         ansible:
-        - stable-2.10
-        - stable-2.11
-        - stable-2.12
-        - stable-2.13
-        - devel
+          - stable-2.16
+          - stable-2.17
+          - stable-2.18
+          - devel
     runs-on: ubuntu-latest
     steps:
       - name: Perform testing
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
           ansible-core-version: ${{ matrix.ansible }}
-          origin-python-version: 3.9
-          target-python-version: 3.9
+          origin-python-version: 3.11
+          target-python-version: 3.11
           testing-type: sanity

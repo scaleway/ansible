@@ -75,8 +75,8 @@ EXAMPLES = r"""
     secret_key: "{{ scw_secret_key }}"
     frontend_id: "aaaaaa"
     action:
-        aaaaaa: bbbbbb
-        cccccc: dddddd
+      aaaaaa: bbbbbb
+      cccccc: dddddd
     index: "aaaaaa"
     description: "aaaaaa"
 """
