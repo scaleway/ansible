@@ -242,8 +242,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         instances = self._get_instances(client, filters)
         elastic_metals = self._get_elastic_metal(client, filters)
+        apple_silicon = self._get_apple_sillicon(client, filters)
 
-        return instances + elastic_metals
+        return instances + elastic_metals + apple_silicon
 
     def _get_instances(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = InstanceV1API(client)
