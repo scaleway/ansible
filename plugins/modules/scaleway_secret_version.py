@@ -83,8 +83,8 @@ options:
 EXAMPLES = r"""
 - name: Create a  version of the secret and disable the previous version
   scaleway.scaleway.scaleway_secret_version:
-    access_key:  "{{ scw_access_key }}"
-    secret_key:  "{{ scw_secret_key }}"
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
     project_id: "{{ scw_project_id }}"
     region: "{{ scw_region }}"
     name: "aaaaaa"
@@ -94,8 +94,8 @@ EXAMPLES = r"""
 
 - name: access the latest version of the secret
   scaleway.scaleway.scaleway_secret_access:
-    access_key:  "{{ scw_access_key }}"
-    secret_key:  "{{ scw_secret_key }}"
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
     project_id: "{{ scw_project_id }}"
     region: "{{ scw_region }}"
     name: "aaaaaa"
