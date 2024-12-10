@@ -69,14 +69,14 @@ DOCUMENTATION:
       type: dict
 
 EXAMPLES:
-  plugin: scaleway.scaleway.scaleway
-  access_key: <your access key>
-  secret_key: <your secret key>
-  api_url: https://api.scaleway.com
-  regions:
-    - fr-par-2
-    - nl-ams-1
-  tags:
-    - dev
-  variables:
-    ansible_host: public_ipv4
+  - plugin: scaleway.scaleway.scaleway
+    access_key: <your access key>
+    secret_key: <your secret key>
+    api_url: https://api.scaleway.com
+    regions:
+      - fr-par-2
+      - nl-ams-1
+    tags:
+      - dev
+    variables:
+      ansible_host: public_ipv4
