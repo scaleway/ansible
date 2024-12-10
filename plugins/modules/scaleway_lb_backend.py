@@ -147,11 +147,11 @@ EXAMPLES = r"""
     forward_port: "aaaaaa"
     sticky_sessions_cookie_name: "aaaaaa"
     health_check:
-        aaaaaa: bbbbbb
-        cccccc: dddddd
+      aaaaaa: bbbbbb
+      cccccc: dddddd
     server_ip:
-        - aaaaaa
-        - bbbbbb
+      - aaaaaa
+      - bbbbbb
     on_marked_down_action: "aaaaaa"
     proxy_protocol: "aaaaaa"
     forward_protocol: "aaaaaa"

@@ -16,7 +16,6 @@ tags:
   - compute
   - instances
 repository: https://github.com/scaleway/ansible
-#documentation: https://github.com/ansible-collection-migration/community.REPO_NAME/tree/main/docs
 homepage: https://github.com/scaleway/ansible
 issues: https://github.com/scaleway/ansible/issues
 build_ignore:
