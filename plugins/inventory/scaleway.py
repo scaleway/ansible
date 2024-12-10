@@ -388,8 +388,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             return results
 
-
-
     def _get_hostname(self, host: _Host, hostnames: List[str]) -> str:
         as_dict = host.__dict__
 
