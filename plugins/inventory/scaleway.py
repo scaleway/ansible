@@ -95,7 +95,7 @@ variables:
 
 
 from dataclasses import dataclass, field
-from types import SimpleNamespace, NoneType
+from types import SimpleNamespace
 from typing import List, Optional
 
 from ansible.errors import AnsibleError
