@@ -381,7 +381,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 state=str(server.status),
                 hostname=server.name,
                 public_ipv4=public_ipv4.address if public_ipv4 else None,
-                private_ipv4= None,
+                private_ipv4=None,
                 public_ipv6=public_ipv6.address if public_ipv6 else None,
             )
             results.append(host)
