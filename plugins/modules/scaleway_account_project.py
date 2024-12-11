@@ -7,69 +7,6 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-DOCUMENTATION = r"""
----
-module: scaleway_account_project
-short_description: Manage Scaleway account's project
-description:
-    - This module can be used to manage Scaleway account's project.
-version_added: "2.1.0"
-author:
-    - Nathanael Demacon (@quantumsheep)
-extends_documentation_fragment:
-    - scaleway.scaleway.scaleway
-    - scaleway.scaleway.scaleway_waitable_resource
-requirements:
-    - scaleway >= 0.6.0
-options:
-    state:
-        description:
-            - Indicate desired state of the target.
-            - C(present) will create the resource.
-            - C(absent) will delete the resource, if it exists.
-        default: present
-        choices: ["present", "absent"]
-        type: str
-    project_id:
-        description: project_id
-        type: str
-        required: false
-    name:
-        description: name
-        type: str
-        required: true
-    organization_id:
-        description: organization_id
-        type: str
-        required: false
-    description:
-        description: description
-        type: str
-        required: false
-"""
-
-EXAMPLES = r"""
-- name: Create a project
-  scaleway.scaleway.scaleway_account_project:
-    access_key: "{{ scw_access_key }}"
-    secret_key: "{{ scw_secret_key }}"
-    name: "aaaaaa"
-"""
-
-RETURN = r"""
----
-project:
-    description: The project information
-    returned: when I(state=present)
-    type: dict
-    sample:
-        id: 00000000-0000-0000-0000-000000000000
-        name: "aaaaaa"
-        organization_id: 00000000-0000-0000-0000-000000000000
-        created_at: "aaaaaa"
-        updated_at: "aaaaaa"
-        description: "aaaaaa"
-"""
 
 from ansible.module_utils.basic import (
     AnsibleModule,

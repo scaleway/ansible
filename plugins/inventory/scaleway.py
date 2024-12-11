@@ -8,91 +8,6 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-DOCUMENTATION = r"""
-name: scaleway
-author:
-    - Nathanael Demacon (@quantumsheep)
-short_description: Scaleway inventory source
-version_added: "1.0.0"
-requirements:
-    - scaleway >= 0.6.0
-description:
-    - Scaleway inventory plugin.
-    - Uses configuration file that ends with '(scaleway|scw).(yaml|yml)'.
-extends_documentation_fragment:
-    - scaleway.scaleway.scaleway
-    - constructed
-    - inventory_cache
-options:
-    plugin:
-        description:
-            - The name of the Scaleway Inventory Plugin, this should always be C(scaleway.scaleway.scaleway).
-        required: true
-        choices: ['scaleway.scaleway.scaleway']
-    zones:
-        description:
-            - List of zones to filter on.
-        type: list
-        elements: str
-        default:
-            - fr-par-1
-            - fr-par-2
-            - fr-par-3
-            - nl-ams-1
-            - nl-ams-2
-            - pl-waw-1
-            - pl-waw-2
-    tags:
-        description:
-            - List of tags to filter on.
-        type: list
-        elements: str
-        default: []
-    hostnames:
-        description: List of preference about what to use as an hostname.
-        type: list
-        elements: str
-        default:
-            - public_ipv4
-        choices:
-            - public_ipv4
-            - private_ipv4
-            - public_ipv6
-            - hostname
-            - id
-    variables:
-        description:
-            - "Variables mapping to apply to hosts in the format destination_variable: host_variable."
-            - "You can use the following host variables:"
-            - "  - C(id): The server id."
-            - "  - C(tags): The server tags."
-            - "  - C(zone): The server zone."
-            - "  - C(state): The server state."
-            - "  - C(hostname): The server hostname."
-            - "  - C(public_ipv4): The server public ipv4."
-            - "  - C(private_ipv4): The server private ipv4."
-            - "  - C(public_ipv6): The server public ipv6."
-            - "  - C(public_dns): The server public dns."
-            - "  - C(private_dns): The server private dns."
-            - ""
-            - "If the variable is not found, the host will be ignored."
-        type: dict
-"""
-
-EXAMPLES = r"""
-plugin: scaleway.scaleway.scaleway
-access_key: <your access key>
-secret_key: <your secret key>
-api_url: https://api.scaleway.com
-regions:
-    - fr-par-2
-    - nl-ams-1
-tags:
-    - dev
-variables:
-    ansible_host: public_ipv4
-"""
-
 
 from dataclasses import dataclass, field
 from types import SimpleNamespace
@@ -369,8 +284,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         results: List[_Host] = []
         for server in servers:
-            public_ipv4 = filter(lambda ip: ip.version == IPVersion.IPV4, server.interfaces.ips)
-            public_ipv6 = filter(lambda ip: ip.version == IPVersion.IPV6, server.interfaces.ips)
+            public_ipv4 = filter(
+                lambda ip: ip.version == IPVersion.IPV4, server.interfaces.ips
+            )
+            public_ipv6 = filter(
+                lambda ip: ip.version == IPVersion.IPV6, server.interfaces.ips
+            )
             public_ipv4 = next(public_ipv4, None)
             public_ipv6 = next(public_ipv6, None)
 

@@ -1,0 +1,74 @@
+DOCUMENTATION:
+  module: scaleway_vpc_private_network
+  short_description: Manage Scaleway vpc's private_network
+  description:
+    - This module can be used to manage Scaleway vpc's private_network.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    private_network_id:
+      description: private_network_id
+      type: str
+      required: false
+    zone:
+      description: zone
+      type: str
+      required: false
+    name:
+      description: name
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+    tags:
+      description: tags
+      type: list
+      elements: str
+      required: false
+    subnets:
+      description: subnets
+      type: list
+      elements: str
+      required: false
+
+EXAMPLES:
+  - name: Create a private_network
+    scaleway.scaleway.scaleway_vpc_private_network:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+
+RETURN:
+  private_network:
+    description: The private_network information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      organization_id: 00000000-0000-0000-0000-000000000000
+      project_id: 00000000-0000-0000-0000-000000000000
+      zone: "aaaaaa"
+      tags:
+        - aaaaaa
+        - bbbbbb
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      subnets:
+        - aaaaaa
+        - bbbbbb

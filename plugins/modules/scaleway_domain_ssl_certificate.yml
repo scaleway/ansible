@@ -1,0 +1,54 @@
+DOCUMENTATION:
+  module: scaleway_domain_ssl_certificate
+  short_description: Manage Scaleway domain's ssl_certificate
+  description:
+    - This module can be used to manage Scaleway domain's ssl_certificate.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    dns_zone:
+      description: dns_zone
+      type: str
+      required: true
+    alternative_dns_zones:
+      description: alternative_dns_zones
+      type: list
+      elements: str
+      required: false
+
+EXAMPLES:
+  - name: Create a ssl_certificate
+    scaleway.scaleway.scaleway_domain_ssl_certificate:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      dns_zone: "aaaaaa"
+
+RETURN:
+  ssl_certificate:
+    description: The ssl_certificate information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      dns_zone: "aaaaaa"
+      alternative_dns_zones:
+        - aaaaaa
+        - bbbbbb
+      status: new
+      private_key: "aaaaaa"
+      certificate_chain: "aaaaaa"
+      created_at: "aaaaaa"
+      expired_at: "aaaaaa"

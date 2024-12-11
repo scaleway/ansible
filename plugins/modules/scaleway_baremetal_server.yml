@@ -1,0 +1,109 @@
+DOCUMENTATION:
+  module: scaleway_baremetal_server
+  short_description: Manage Scaleway baremetal's server
+  description:
+    - This module can be used to manage Scaleway baremetal's server.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    server_id:
+      description: server_id
+      type: str
+      required: false
+    offer_id:
+      description: offer_id
+      type: str
+      required: true
+    name:
+      description: name
+      type: str
+      required: true
+    description:
+      description: description
+      type: str
+      required: true
+    zone:
+      description: zone
+      type: str
+      required: false
+    organization_id:
+      description: organization_id
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+    tags:
+      description: tags
+      type: list
+      elements: str
+      required: false
+    install:
+      description: install
+      type: dict
+      required: false
+    option_ids:
+      description: option_ids
+      type: list
+      elements: str
+      required: false
+
+EXAMPLES:
+  - name: Create a server
+    scaleway.scaleway.scaleway_baremetal_server:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      offer_id: "aaaaaa"
+      name: "aaaaaa"
+      description: "aaaaaa"
+
+RETURN:
+  server:
+    description: The server information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      organization_id: 00000000-0000-0000-0000-000000000000
+      project_id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      description: "aaaaaa"
+      updated_at: "aaaaaa"
+      created_at: "aaaaaa"
+      status: delivering
+      offer_id: 00000000-0000-0000-0000-000000000000
+      offer_name: "aaaaaa"
+      tags:
+        - aaaaaa
+        - bbbbbb
+      ips:
+        - aaaaaa
+        - bbbbbb
+      domain: "aaaaaa"
+      boot_type: normal
+      zone: "aaaaaa"
+      install:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      ping_status: ping_status_up
+      options:
+        - aaaaaa
+        - bbbbbb
+      rescue_server:
+        aaaaaa: bbbbbb
+        cccccc: dddddd

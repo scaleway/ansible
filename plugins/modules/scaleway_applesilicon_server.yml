@@ -1,0 +1,68 @@
+DOCUMENTATION:
+  module: scaleway_applesilicon_server
+  short_description: Manage Scaleway applesilicon's server
+  description:
+    - This module can be used to manage Scaleway applesilicon's server.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    server_id:
+      description: server_id
+      type: str
+      required: false
+    type_:
+      description: type_
+      type: str
+      required: true
+    zone:
+      description: zone
+      type: str
+      required: false
+    name:
+      description: name
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a server
+    scaleway.scaleway.scaleway_applesilicon_server:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      type_: "aaaaaa"
+
+RETURN:
+  server:
+    description: The server information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      type_: "aaaaaa"
+      name: "aaaaaa"
+      project_id: 00000000-0000-0000-0000-000000000000
+      organization_id: 00000000-0000-0000-0000-000000000000
+      ip: "aaaaaa"
+      vnc_url: "aaaaaa"
+      status: starting
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      deletable_at: "aaaaaa"
+      zone: "aaaaaa"

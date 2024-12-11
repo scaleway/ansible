@@ -1,0 +1,81 @@
+DOCUMENTATION:
+  module: scaleway_lb_certificate
+  short_description: Manage Scaleway lb's certificate
+  description:
+    - This module can be used to manage Scaleway lb's certificate.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    certificate_id:
+      description: certificate_id
+      type: str
+      required: false
+    lb_id:
+      description: lb_id
+      type: str
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    name:
+      description: name
+      type: str
+      required: false
+    letsencrypt:
+      description: letsencrypt
+      type: dict
+      required: false
+    custom_certificate:
+      description: custom_certificate
+      type: dict
+      required: false
+
+EXAMPLES:
+  - name: Create a certificate
+    scaleway.scaleway.scaleway_lb_certificate:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      lb_id: "aaaaaa"
+
+RETURN:
+  certificate:
+    description: The certificate information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      type_: letsencryt
+      id: 00000000-0000-0000-0000-000000000000
+      common_name: "aaaaaa"
+      subject_alternative_name:
+        - aaaaaa
+        - bbbbbb
+      fingerprint: "aaaaaa"
+      not_valid_before: 00000000-0000-0000-0000-000000000000
+      not_valid_after: 00000000-0000-0000-0000-000000000000
+      status: pending
+      lb:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      name: "aaaaaa"
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      status_details: "aaaaaa"

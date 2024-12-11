@@ -1,0 +1,123 @@
+DOCUMENTATION:
+  module: scaleway_vpcgw_dhcp
+  short_description: Manage Scaleway vpcgw's dhcp
+  description:
+    - This module can be used to manage Scaleway vpcgw's dhcp.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    dhcp_id:
+      description: dhcp_id
+      type: str
+      required: false
+    subnet:
+      description: subnet
+      type: str
+      required: true
+    zone:
+      description: zone
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+    address:
+      description: address
+      type: str
+      required: false
+    pool_low:
+      description: pool_low
+      type: str
+      required: false
+    pool_high:
+      description: pool_high
+      type: str
+      required: false
+    enable_dynamic:
+      description: enable_dynamic
+      type: bool
+      required: false
+    valid_lifetime:
+      description: valid_lifetime
+      type: str
+      required: false
+    renew_timer:
+      description: renew_timer
+      type: str
+      required: false
+    rebind_timer:
+      description: rebind_timer
+      type: str
+      required: false
+    push_default_route:
+      description: push_default_route
+      type: bool
+      required: false
+    push_dns_server:
+      description: push_dns_server
+      type: bool
+      required: false
+    dns_servers_override:
+      description: dns_servers_override
+      type: list
+      elements: str
+      required: false
+    dns_search:
+      description: dns_search
+      type: list
+      elements: str
+      required: false
+    dns_local_name:
+      description: dns_local_name
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a dhcp
+    scaleway.scaleway.scaleway_vpcgw_dhcp:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      subnet: "aaaaaa"
+
+RETURN:
+  dhcp:
+    description: The dhcp information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      organization_id: 00000000-0000-0000-0000-000000000000
+      project_id: 00000000-0000-0000-0000-000000000000
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      subnet: "aaaaaa"
+      address: "aaaaaa"
+      pool_low: "aaaaaa"
+      pool_high: "aaaaaa"
+      enable_dynamic: true
+      valid_lifetime: 00000000-0000-0000-0000-000000000000
+      renew_timer: "aaaaaa"
+      rebind_timer: "aaaaaa"
+      push_default_route: true
+      push_dns_server: true
+      dns_servers_override: 00000000-0000-0000-0000-000000000000
+      dns_search:
+        - aaaaaa
+        - bbbbbb
+      dns_local_name: "aaaaaa"
+      zone: "aaaaaa"

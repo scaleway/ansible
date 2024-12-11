@@ -1,0 +1,166 @@
+DOCUMENTATION:
+  module: scaleway_rdb_instance
+  short_description: Manage Scaleway rdb's instance
+  description:
+    - This module can be used to manage Scaleway rdb's instance.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    instance_id:
+      description: instance_id
+      type: str
+      required: false
+    engine:
+      description: engine
+      type: str
+      required: true
+    user_name:
+      description: user_name
+      type: str
+      required: true
+    password:
+      description: password
+      type: str
+      required: true
+    node_type:
+      description: node_type
+      type: str
+      required: true
+    is_ha_cluster:
+      description: is_ha_cluster
+      type: bool
+      required: true
+    disable_backup:
+      description: disable_backup
+      type: bool
+      required: true
+    volume_type:
+      description: volume_type
+      type: str
+      required: true
+      choices:
+        - lssd
+        - bssd
+    volume_size:
+      description: volume_size
+      type: int
+      required: true
+    backup_same_region:
+      description: backup_same_region
+      type: bool
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    organization_id:
+      description: organization_id
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+    name:
+      description: name
+      type: str
+      required: false
+    tags:
+      description: tags
+      type: list
+      elements: str
+      required: false
+    init_settings:
+      description: init_settings
+      type: list
+      elements: str
+      required: false
+    init_endpoints:
+      description: init_endpoints
+      type: list
+      elements: str
+      required: false
+
+EXAMPLES:
+  - name: Create a instance
+    scaleway.scaleway.scaleway_rdb_instance:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      engine: "aaaaaa"
+      user_name: "aaaaaa"
+      password: "aaaaaa"
+      node_type: "aaaaaa"
+      is_ha_cluster: true
+      disable_backup: true
+      volume_type: "aaaaaa"
+      volume_size: "aaaaaa"
+      backup_same_region: true
+
+RETURN:
+  instance:
+    description: The instance information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      created_at: "aaaaaa"
+      volume:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      region: fr-par
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      organization_id: 00000000-0000-0000-0000-000000000000
+      project_id: 00000000-0000-0000-0000-000000000000
+      status: ready
+      engine: "aaaaaa"
+      upgradable_version:
+        - aaaaaa
+        - bbbbbb
+      endpoint:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      tags:
+        - aaaaaa
+        - bbbbbb
+      settings:
+        - aaaaaa
+        - bbbbbb
+      backup_schedule:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      is_ha_cluster: true
+      read_replicas:
+        - aaaaaa
+        - bbbbbb
+      node_type: "aaaaaa"
+      init_settings:
+        - aaaaaa
+        - bbbbbb
+      endpoints:
+        - aaaaaa
+        - bbbbbb
+      logs_policy:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      backup_same_region: true
+      maintenances:
+        - aaaaaa
+        - bbbbbb

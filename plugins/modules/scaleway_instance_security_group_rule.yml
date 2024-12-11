@@ -1,0 +1,96 @@
+DOCUMENTATION:
+  module: scaleway_instance_security_group_rule
+  short_description: Manage Scaleway instance's security_group_rule
+  description:
+    - This module can be used to manage Scaleway instance's security_group_rule.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    security_group_id:
+      description: security_group_id
+      type: str
+      required: true
+    ip_range:
+      description: ip_range
+      type: str
+      required: true
+    position:
+      description: position
+      type: int
+      required: true
+    editable:
+      description: editable
+      type: bool
+      required: true
+    zone:
+      description: zone
+      type: str
+      required: false
+    protocol:
+      description: protocol
+      type: str
+      required: true
+      choices:
+        - TCP
+        - UDP
+        - ICMP
+        - ANY
+    direction:
+      description: direction
+      type: str
+      required: true
+      choices:
+        - inbound
+        - outbound
+    action:
+      description: action
+      type: str
+      required: true
+      choices:
+        - accept
+        - drop
+    dest_port_from:
+      description: dest_port_from
+      type: int
+      required: false
+    dest_port_to:
+      description: dest_port_to
+      type: int
+      required: false
+
+EXAMPLES:
+  - name: Create a security_group_rule
+    scaleway.scaleway.scaleway_instance_security_group_rule:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      security_group_id: "aaaaaa"
+      ip_range: "aaaaaa"
+      position: "aaaaaa"
+      editable: true
+      protocol: "aaaaaa"
+      direction: "aaaaaa"
+      action: "aaaaaa"
+
+RETURN:
+  security_group_rule:
+    description: The security_group_rule information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      rule:
+        aaaaaa: bbbbbb
+        cccccc: dddddd

@@ -1,0 +1,101 @@
+DOCUMENTATION:
+  module: scaleway_lb_frontend
+  short_description: Manage Scaleway lb's frontend
+  description:
+    - This module can be used to manage Scaleway lb's frontend.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    frontend_id:
+      description: frontend_id
+      type: str
+      required: false
+    lb_id:
+      description: lb_id
+      type: str
+      required: true
+    inbound_port:
+      description: inbound_port
+      type: int
+      required: true
+    backend_id:
+      description: backend_id
+      type: str
+      required: true
+    enable_http3:
+      description: enable_http3
+      type: bool
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+    name:
+      description: name
+      type: str
+      required: false
+    timeout_client:
+      description: timeout_client
+      type: str
+      required: false
+    certificate_id:
+      description: certificate_id
+      type: str
+      required: false
+    certificate_ids:
+      description: certificate_ids
+      type: list
+      elements: str
+      required: false
+
+EXAMPLES:
+  - name: Create a frontend
+    scaleway.scaleway.scaleway_lb_frontend:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      lb_id: "aaaaaa"
+      inbound_port: "aaaaaa"
+      backend_id: "aaaaaa"
+      enable_http3: true
+
+RETURN:
+  frontend:
+    description: The frontend information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      inbound_port: 3
+      backend:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      lb:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      timeout_client: "aaaaaa"
+      certificate:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      certificate_ids: 00000000-0000-0000-0000-000000000000
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      enable_http3: true

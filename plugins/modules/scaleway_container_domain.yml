@@ -1,0 +1,63 @@
+DOCUMENTATION:
+  module: scaleway_container_domain
+  short_description: Manage Scaleway container's domain
+  description:
+    - This module can be used to manage Scaleway container's domain.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    domain_id:
+      description: domain_id
+      type: str
+      required: false
+    hostname:
+      description: hostname
+      type: str
+      required: true
+    container_id:
+      description: container_id
+      type: str
+      required: true
+    region:
+      description: region
+      type: str
+      required: false
+      choices:
+        - fr-par
+        - nl-ams
+        - pl-waw
+
+EXAMPLES:
+  - name: Create a domain
+    scaleway.scaleway.scaleway_container_domain:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      hostname: "aaaaaa"
+      container_id: "aaaaaa"
+
+RETURN:
+  domain:
+    description: The domain information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      hostname: "aaaaaa"
+      container_id: 00000000-0000-0000-0000-000000000000
+      url: "aaaaaa"
+      status: ready
+      error_message: "aaaaaa"

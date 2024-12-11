@@ -7,128 +7,6 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-DOCUMENTATION = r"""
----
-module: scaleway_secret_version
-short_description: Manage Scaleway secret's secret version
-description:
-    - This module can be used to manage Scaleway secret's secret version.
-version_added: "2.1.0"
-author:
-    - Nathanael Demacon (@quantumsheep)
-extends_documentation_fragment:
-    - scaleway.scaleway.scaleway
-    - scaleway.scaleway.scaleway_waitable_resource
-requirements:
-    - scaleway >= 0.6.0
-options:
-    state:
-        description:
-            - Indicate desired state of the target.
-            - C(present) will create a new secret's version. If the secret does not exist, it will be created.
-            - C(absent) will delete the secret version, if it exists.
-            - C(disable) will disable the secret version, if it exists.
-            - C(enable) will enable the secret version, if it exists.
-            - C(access) will access the secret version, if it exists.
-        default: present
-        choices: ["present", "absent", "disable", "enable", "access"]
-        type: str
-    secret_id:
-        description: secret_id
-        type: str
-        required: false
-    name:
-        description: secret's name
-        type: str
-        required: true
-    region:
-        description: region
-        type: str
-        required: false
-        choices:
-            - fr-par
-            - nl-ams
-            - pl-waw
-    project_id:
-        description: project_id
-        type: str
-        required: false
-    disable_previous:
-        description: when creating a new version, disable the previous version
-        type: bool
-        required: false
-    destroy_previous:
-        description: when creating a new version, destroy the previous version
-        type: bool
-        required: false
-    revision:
-        description: revision
-        type: str
-        required: false
-    tags:
-        description: tags
-        type: list
-        elements: str
-        required: false
-    description:
-        description: description
-        type: str
-        required: false
-    data:
-        description: the secret value
-        type: str
-        required: false
-"""
-
-EXAMPLES = r"""
-- name: Create a  version of the secret and disable the previous version
-  scaleway.scaleway.scaleway_secret_version:
-    access_key: "{{ scw_access_key }}"
-    secret_key: "{{ scw_secret_key }}"
-    project_id: "{{ scw_project_id }}"
-    region: "{{ scw_region }}"
-    name: "aaaaaa"
-    state: "present"
-    disable_previous: true
-    data: "{{ data }}"
-
-- name: access the latest version of the secret
-  scaleway.scaleway.scaleway_secret_access:
-    access_key: "{{ scw_access_key }}"
-    secret_key: "{{ scw_secret_key }}"
-    project_id: "{{ scw_project_id }}"
-    region: "{{ scw_region }}"
-    name: "aaaaaa"
-  register: data
-"""
-
-RETURN = r"""
----
-secret_version:
-    description: The secret version data
-    returned: when I(state=present)
-    type: dict
-    sample:
-        id: 00000000-0000-0000-0000-000000000000
-        project_id: 00000000-0000-0000-0000-000000000000
-        name: "aaaaaa"
-        status: ready
-        created_at: "1970-01-01T00:00:00.000000+00:00"
-        updated_at: "1970-01-01T00:00:00.000000+00:00"
-        tags:
-            - aaaaaa
-            - bbbbbb
-        region: fr-par
-        version_count: 3
-        description: "foobar"
-
-secret_data:
-    description: The value of secret version data
-    returned: when I(state=access)
-    type: dict
-    sample:
-        data: "my_secret_data"
-"""
 
 import base64
 
@@ -203,7 +81,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
 
     module.exit_json(
         changed=True,
-        msg=f"secret {secret.name} ({secret.id}) revision { secret_version.revision }]\
+        msg=f"secret {secret.name} ({secret.id}) revision {secret_version.revision}]\
                            has been created",
         data=secret.__dict__,
     )
@@ -231,7 +109,7 @@ def delete(module: AnsibleModule, client: "Client") -> None:
 
     module.exit_json(
         changed=True,
-        msg=f"secret's  {secret.name} ({secret.id}) revision{ revision } has been deleted",
+        msg=f"secret's  {secret.name} ({secret.id}) revision {revision} has been deleted",
     )
 
 
@@ -263,7 +141,6 @@ def access(module: AnsibleModule, client: "Client") -> None:
 def enable(module: AnsibleModule, client: "Client") -> None:
     api = SecretV1Alpha1API(client)
     region = module.params.pop("region", None)
-    project_id = module.params.pop("project_id", None)
     name = module.params.pop("name", None)
     id = module.params.pop("id", None)
     revision = module.params.pop("revision", None)
@@ -278,7 +155,7 @@ def enable(module: AnsibleModule, client: "Client") -> None:
 
     module.exit_json(
         changed=True,
-        msg=f"secret's secret {secret.name} ({secret.id}) revision {revision } has been disabled",
+        msg=f"secret's secret {secret.name} ({secret.id}) revision {revision} has been disabled",
         data=secret.__dict__,
     )
 
@@ -305,7 +182,7 @@ def disable(module: AnsibleModule, client: "Client") -> None:
 
     module.exit_json(
         changed=True,
-        msg=f"secret's secret {secret.name} ({secret.id}) revision { revision } has been disabled",
+        msg=f"secret's secret {secret.name} ({secret.id}) revision {revision} has been disabled",
     )
 
 

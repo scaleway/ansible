@@ -1,0 +1,112 @@
+DOCUMENTATION:
+  module: scaleway_vpcgw_gateway
+  short_description: Manage Scaleway vpcgw's gateway
+  description:
+    - This module can be used to manage Scaleway vpcgw's gateway.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    gateway_id:
+      description: gateway_id
+      type: str
+      required: false
+    type_:
+      description: type_
+      type: str
+      required: true
+    enable_smtp:
+      description: enable_smtp
+      type: bool
+      required: true
+    enable_bastion:
+      description: enable_bastion
+      type: bool
+      required: true
+    zone:
+      description: zone
+      type: str
+      required: false
+    project_id:
+      description: project_id
+      type: str
+      required: false
+    name:
+      description: name
+      type: str
+      required: false
+    tags:
+      description: tags
+      type: list
+      elements: str
+      required: false
+    upstream_dns_servers:
+      description: upstream_dns_servers
+      type: list
+      elements: str
+      required: false
+    ip_id:
+      description: ip_id
+      type: str
+      required: false
+    bastion_port:
+      description: bastion_port
+      type: int
+      required: false
+
+EXAMPLES:
+  - name: Create a gateway
+    scaleway.scaleway.scaleway_vpcgw_gateway:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      type_: "aaaaaa"
+      enable_smtp: true
+      enable_bastion: true
+
+RETURN:
+  gateway:
+    description: The gateway information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      organization_id: 00000000-0000-0000-0000-000000000000
+      project_id: 00000000-0000-0000-0000-000000000000
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      type_:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      status: stopped
+      name: "aaaaaa"
+      tags:
+        - aaaaaa
+        - bbbbbb
+      ip:
+        aaaaaa: bbbbbb
+        cccccc: dddddd
+      gateway_networks:
+        - aaaaaa
+        - bbbbbb
+      upstream_dns_servers:
+        - aaaaaa
+        - bbbbbb
+      version: "aaaaaa"
+      can_upgrade_to: "aaaaaa"
+      bastion_enabled: true
+      bastion_port: 3
+      smtp_enabled: true
+      zone: "aaaaaa"

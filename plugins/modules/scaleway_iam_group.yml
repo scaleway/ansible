@@ -1,0 +1,60 @@
+DOCUMENTATION:
+  module: scaleway_iam_group
+  short_description: Manage Scaleway iam's group
+  description:
+    - This module can be used to manage Scaleway iam's group.
+  version_added: "2.1.0"
+  author:
+    - Nathanael Demacon (@quantumsheep)
+  extends_documentation_fragment:
+    - scaleway.scaleway.scaleway
+    - scaleway.scaleway.scaleway_waitable_resource
+  requirements:
+    - scaleway >= 0.6.0
+  options:
+    state:
+      description:
+        - Indicate desired state of the target.
+        - C(present) will create the resource.
+        - C(absent) will delete the resource, if it exists.
+      default: present
+      choices: ["present", "absent"]
+      type: str
+    group_id:
+      description: group_id
+      type: str
+      required: false
+    description:
+      description: description
+      type: str
+      required: true
+    organization_id:
+      description: organization_id
+      type: str
+      required: false
+    name:
+      description: name
+      type: str
+      required: false
+
+EXAMPLES:
+  - name: Create a group
+    scaleway.scaleway.scaleway_iam_group:
+      access_key: "{{ scw_access_key }}"
+      secret_key: "{{ scw_secret_key }}"
+      description: "aaaaaa"
+
+RETURN:
+  group:
+    description: The group information
+    returned: when I(state=present)
+    type: dict
+    sample:
+      id: 00000000-0000-0000-0000-000000000000
+      created_at: "aaaaaa"
+      updated_at: "aaaaaa"
+      organization_id: 00000000-0000-0000-0000-000000000000
+      name: "aaaaaa"
+      description: "aaaaaa"
+      user_ids: 00000000-0000-0000-0000-000000000000
+      application_ids: 00000000-0000-0000-0000-000000000000
