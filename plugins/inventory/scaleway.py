@@ -126,13 +126,6 @@ _ALLOWED_FILE_NAME_SUFFIXES = (
     "scw.yml",
 )
 
-
-@dataclass
-class _Filters:
-    zones: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
-
-
 @dataclass
 class InstanceServerState:
     RUNNING = "running"
@@ -141,6 +134,13 @@ class InstanceServerState:
     STARTING = "starting"
     STOPPING = "stopping"
     LOCKED = "locked"
+
+@dataclass
+class _Filters:
+    zones: List[str] = field(default_factory=list)
+    tags: List[str] = field(default_factory=list)
+    state: Optional[str] = InstanceServerState.RUNNING
+
 
 
 @dataclass
@@ -268,7 +268,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 api.list_servers_all(
                     zone=zone,
                     tags=filters.tags if filters.tags else None,
-                    state=state,
+                    state=filters.state,
                 )
             )
 
