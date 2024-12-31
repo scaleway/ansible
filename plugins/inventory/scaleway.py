@@ -112,7 +112,6 @@ try:
     from scaleway.baremetal.v1 import Server as BaremetalServer
     from scaleway.instance.v1 import InstanceV1API
     from scaleway.instance.v1 import Server as InstanceServer
-    from scaleway.instance.v1 import ServerState
     from scaleway.dedibox.v1 import DediboxV1API
     from scaleway.dedibox.v1 import ServerSummary as DediboxServer
 
@@ -141,7 +140,6 @@ class InstanceServerState:
     STARTING = "starting"
     STOPPING = "stopping"
     LOCKED = "locked"
-
 
 @dataclass
 class _Host:
