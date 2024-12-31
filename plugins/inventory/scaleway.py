@@ -133,6 +133,15 @@ class _Filters:
     zones: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
 
+@dataclass
+class InstanceServerState:
+    RUNNING = "running"
+    STOPPED = "stopped"
+    STOPPED_IN_PLACE = "stopped_in_place"
+    STARTING = "starting"
+    STOPPING = "stopping"
+    LOCKED = "locked"
+
 
 @dataclass
 class _Host:
@@ -249,7 +258,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return instances + elastic_metals + apple_silicon + dedibox_servers
 
-    def _get_instances(self, client: "Client", filters: _Filters) -> List[_Host]:
+    def _get_instances(self, client: "Client", filters: _Filters, state: Optional[str] = InstanceServerState.RUNNING,) -> List[_Host]:
         api = InstanceV1API(client)
 
         servers: List[InstanceServer] = []
@@ -259,7 +268,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 api.list_servers_all(
                     zone=zone,
                     tags=filters.tags if filters.tags else None,
-                    state=ServerState.RUNNING,
+                    state=state,
                 )
             )
 
