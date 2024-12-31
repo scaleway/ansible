@@ -132,6 +132,7 @@ class _Filters:
     zones: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
 
+
 @dataclass
 class InstanceServerState:
     RUNNING = "running"
@@ -140,6 +141,7 @@ class InstanceServerState:
     STARTING = "starting"
     STOPPING = "stopping"
     LOCKED = "locked"
+
 
 @dataclass
 class _Host:
