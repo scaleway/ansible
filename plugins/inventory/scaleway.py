@@ -132,6 +132,7 @@ _ALLOWED_FILE_NAME_SUFFIXES = (
     "scw.yml",
 )
 
+
 @dataclass
 class InstanceServerState:
     RUNNING = "running"
@@ -147,7 +148,6 @@ class _Filters:
     zones: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
     state: Optional[str] = InstanceServerState.RUNNING
-
 
 
 @dataclass
