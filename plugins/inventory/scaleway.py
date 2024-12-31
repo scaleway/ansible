@@ -48,6 +48,11 @@ options:
         type: list
         elements: str
         default: []
+    state:
+        description:
+            - State of the instance server
+        type: str
+        default: running
     hostnames:
         description: List of preference about what to use as an hostname.
         type: list
@@ -89,6 +94,8 @@ regions:
     - nl-ams-1
 tags:
     - dev
+state:
+    - stopped
 variables:
     ansible_host: public_ipv4
 """
@@ -104,7 +111,6 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructa
 
 try:
     from scaleway_core.bridge import Zone
-
     from scaleway import Client, ScalewayException
     from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API
     from scaleway.applesilicon.v1alpha1 import Server as ApplesiliconServer
@@ -134,6 +140,7 @@ class InstanceServerState:
     STARTING = "starting"
     STOPPING = "stopping"
     LOCKED = "locked"
+
 
 @dataclass
 class _Filters:
@@ -258,7 +265,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return instances + elastic_metals + apple_silicon + dedibox_servers
 
-    def _get_instances(self, client: "Client", filters: _Filters, state: Optional[str] = InstanceServerState.RUNNING,) -> List[_Host]:
+    def _get_instances(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = InstanceV1API(client)
 
         servers: List[InstanceServer] = []
@@ -451,6 +458,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _get_filters(self):
         zones = self.get_option("zones")
         tags = self.get_option("tags")
+        state = self.get_option("state")
 
         filters = _Filters()
 
@@ -459,5 +467,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if tags:
             filters.tags = tags
+
+        if state:
+            filters.state = state
 
         return filters
