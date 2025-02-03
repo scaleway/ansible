@@ -1,4 +1,0 @@
-resource_name: "ansible-test-inventory-instance"
-resource_description: "Ansible Scaleway Instance Inventory integration tests"
-resource_is_public: false
-resource_region: "fr-par"
