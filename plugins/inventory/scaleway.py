@@ -103,7 +103,7 @@ variables:
 
 
 from dataclasses import dataclass, field
-from types import SimpleNamespace, NoneType
+from types import SimpleNamespace
 from typing import List, Optional
 
 from ansible.errors import AnsibleError
@@ -132,6 +132,7 @@ _ALLOWED_FILE_NAME_SUFFIXES = (
     "scw.yaml",
     "scw.yml",
 )
+
 
 @dataclass
 class _Filters:
@@ -254,7 +255,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return instances + elastic_metals + apple_silicon
 
-
     def _get_instances(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = InstanceV1API(client)
 
@@ -285,7 +285,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             results.append(host)
 
         return results
-
 
     def _get_elastic_metal(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = BaremetalV1API(client)
@@ -330,7 +329,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         api = ApplesiliconV1Alpha1API(client)
 
         servers: List[ApplesiliconServer] = []
-
 
         for zone in filters.zones:
             try:
@@ -449,7 +447,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         zones = self.get_option("zones")
         tags = self.get_option("tags")
         state = self.get_option("state")
-
 
         filters = _Filters()
 
