@@ -365,8 +365,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         servers: List[DediboxServer] = []
 
         for zone in filters.zones:
-            found = api.list_servers(zone=zone)
-            servers.extend(found)
+            try:
+                found = api.list_servers(
+                    zone=zone,
+                )
+                servers.extend(found)
+            except ScalewayException:
+                pass
 
         results: List[_Host] = []
         for server in servers:
