@@ -50,7 +50,7 @@ options:
         default: []
     state:
         description:
-            - État du serveur d'instance
+            - Instance server status
         type: list
         elements: str
         default: [running]
@@ -265,7 +265,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 servers.extend(api.list_servers_all(
                     zone=zone,
                     tags=filters.tags if filters.tags else None,
-                    state=state,
+                    state=ServerState(state),
                 ))
 
         results: List[_Host] = []
