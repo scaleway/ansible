@@ -48,6 +48,12 @@ options:
         type: list
         elements: str
         default: []
+    state:
+        description:
+            - Instance server status
+        type: list
+        elements: str
+        default: [running]
     hostnames:
         description: List of preference about what to use as an hostname.
         type: list
@@ -89,6 +95,8 @@ regions:
     - nl-ams-1
 tags:
     - dev
+state:
+    - stopped
 variables:
     ansible_host: public_ipv4
 """
@@ -104,16 +112,14 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructa
 
 try:
     from scaleway_core.bridge import Zone
-
     from scaleway import Client, ScalewayException
     from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API
     from scaleway.applesilicon.v1alpha1 import Server as ApplesiliconServer
     from scaleway.baremetal.v1 import BaremetalV1API, IPVersion
     from scaleway.baremetal.v1 import Server as BaremetalServer
-    from scaleway.instance.v1 import InstanceV1API
+    from scaleway.instance.v1 import InstanceV1API, ServerState
     from scaleway.instance.v1 import Server as InstanceServer
-    from scaleway.instance.v1 import ServerState
-    from scaleway.dedibox.v1 import DediboxV1API
+    from scaleway.dedibox.v1 import DediboxV1API, IPVersion
     from scaleway.dedibox.v1 import ServerSummary as DediboxServer
 
     HAS_SCALEWAY_SDK = True
@@ -132,6 +138,7 @@ _ALLOWED_FILE_NAME_SUFFIXES = (
 class _Filters:
     zones: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
+    state: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -139,7 +146,7 @@ class _Host:
     id: str
     tags: List[str]
     zone: "Zone"
-    state: str
+    state: "ServerState"
 
     hostname: str
     public_ipv4: Optional[str]
@@ -242,12 +249,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         client = self._get_client()
         filters = self._get_filters()
 
-        instances = self._get_instances(client, filters)
-        elastic_metals = self._get_elastic_metal(client, filters)
-        apple_silicon = self._get_apple_sillicon(client, filters)
-        dedibox_servers = self._get_dedibox(client, filters)
+        instances: List[InstanceServer] = self._get_instances(client, filters)
+        elastic_metals: List[BaremetalServer] = self._get_elastic_metal(client, filters)
+        apple_silicon: List[ApplesiliconServer] = self._get_apple_sillicon(client, filters)
 
-        return instances + elastic_metals + apple_silicon + dedibox_servers
+        return instances + elastic_metals + apple_silicon
 
     def _get_instances(self, client: "Client", filters: _Filters) -> List[_Host]:
         api = InstanceV1API(client)
@@ -255,13 +261,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         servers: List[InstanceServer] = []
 
         for zone in filters.zones:
-            servers.extend(
-                api.list_servers_all(
+            for state in filters.state:
+                servers.extend(api.list_servers_all(
                     zone=zone,
                     tags=filters.tags if filters.tags else None,
-                    state=ServerState.RUNNING,
-                )
-            )
+                    state=ServerState(state),
+                ))
 
         results: List[_Host] = []
         for server in servers:
@@ -272,12 +277,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 state=str(server.state),
                 hostname=server.hostname,
                 public_ipv4=server.public_ip.address if server.public_ip else None,
-                private_ipv4=server.private_ip,
-                public_ipv6=server.ipv6.address if server.ipv6 else None,
+                private_ipv4=server.private_ip if server.private_ip else None,
+                public_ipv6=server.ipv6 if server.ipv6 else None,
                 public_dns=f"{server.id}.pub.instances.scw.cloud",
                 private_dns=f"{server.id}.priv.instances.scw.cloud",
             )
-
             results.append(host)
 
         return results
@@ -340,7 +344,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for server in servers:
             host = _Host(
                 id=server.id,
-                tags=["apple_sillicon"],
+                tags=["apple_sillicon", *server.tags],
                 zone=server.zone,
                 state=str(server.status),
                 hostname=server.name,
@@ -360,7 +364,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         for zone in filters.zones:
             try:
-                found = api.list_servers_all(
+                found = api.list_servers(
                     zone=zone,
                 )
                 servers.extend(found)
@@ -442,6 +446,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _get_filters(self):
         zones = self.get_option("zones")
         tags = self.get_option("tags")
+        state = self.get_option("state")
 
         filters = _Filters()
 
@@ -450,5 +455,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if tags:
             filters.tags = tags
+
+        if state:
+            filters.state = state
 
         return filters
