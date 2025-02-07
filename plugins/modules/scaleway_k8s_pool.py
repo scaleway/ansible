@@ -1,3 +1,8 @@
+##################
+# Waiting for scaleway merge fix https://github.com/scaleway/ansible/pull/47
+##################
+
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2023, Scaleway
@@ -25,7 +30,7 @@ options:
     state:
         description:
             - Indicate desired state of the target.
-            - C(present) will create the resource.
+            - C(present) will create the resource, or update if 'pool_id' is present
             - C(absent) will delete the resource, if it exists.
         default: present
         choices: ["present", "absent"]
@@ -137,6 +142,14 @@ EXAMPLES = r"""
     autohealing: true
     root_volume_type: "aaaaaa"
     public_ip_disabled: true
+    
+- name: Update a pool
+  scaleway.scaleway.scaleway_k8s_pool:
+    access_key: "{{ scw_access_key }}"
+    secret_key: "{{ scw_secret_key }}"
+    cluster_id: "aaaaaa"
+    pool_id: "my_pool"
+    size: 3
 """
 
 RETURN = r"""
@@ -201,14 +214,28 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = K8SV1API(client)
 
-    id = module.params.pop("id", None)
+    obj = lambda: None
+    obj.stop = None
+    obj.timeout = 600
+    obj.min_delay = 1
+    obj.max_delay = 30
+
+    id = module.params["pool_id"]
     if id is not None:
-        resource = api.get_pool(pool_id=id)
+        resource = api.get_pool(pool_id=id, region=module.params["region"])
 
         if module.check_mode:
             module.exit_json(changed=False)
 
-        module.exit_json(changed=False, data=resource)
+        not_none_params = {
+            key: value for key, value in module.params.items() if value is not None
+        }
+        not_none_params.pop("cluster_id")
+        resource = api.update_pool(**not_none_params)
+        resource = api.wait_for_pool(pool_id=resource.id, options=obj, region=module.params["region"])
+
+        del resource.upgrade_policy
+        module.exit_json(changed=True, data=vars(resource))
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -217,15 +244,16 @@ def create(module: AnsibleModule, client: "Client") -> None:
         key: value for key, value in module.params.items() if value is not None
     }
     resource = api.create_pool(**not_none_params)
-    resource = api.wait_for_pool(pool_id=resource.id, region=module.params["region"])
+    resource = api.wait_for_pool(pool_id=resource.id, options=obj, region=module.params["region"])
 
-    module.exit_json(changed=True, data=resource.__dict__)
+    del resource.upgrade_policy
+    module.exit_json(changed=True, data=vars(resource))
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
     api = K8SV1API(client)
 
-    id = module.params.pop("id", None)
+    id = module.params.pop("pool_id", None)
     name = module.params.pop("name", None)
 
     if id is not None:
@@ -276,35 +304,35 @@ def main() -> None:
     argument_spec.update(scaleway_waitable_resource_argument_spec())
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
-        pool_id=dict(type="str"),
+        pool_id=dict(type="str", default=None),
         cluster_id=dict(
             type="str",
             required=True,
         ),
         node_type=dict(
             type="str",
-            required=True,
+            required=False,
         ),
         autoscaling=dict(
             type="bool",
-            required=True,
+            required=False,
         ),
         size=dict(
             type="int",
-            required=True,
+            required=False,
         ),
         container_runtime=dict(
             type="str",
-            required=True,
+            required=False,
             choices=["unknown_runtime", "docker", "containerd", "crio"],
         ),
         autohealing=dict(
             type="bool",
-            required=True,
+            required=False,
         ),
         root_volume_type=dict(
             type="str",
-            required=True,
+            required=False,
             choices=["default_volume_type", "l_ssd", "b_ssd", "sbs_5k", "sbs_15k"],
         ),
         region=dict(
@@ -351,13 +379,16 @@ def main() -> None:
         ),
         public_ip_disabled=dict(
             type="bool",
-            required=True,
+            required=False,
         ),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_one_of=(["pool_id", "name"],),
+        required_by={
+            'name': ('node_type','root_volume_type','autohealing','container_runtime','size','autoscaling','public_ip_disabled',),
+        },
         supports_check_mode=True,
     )
 
