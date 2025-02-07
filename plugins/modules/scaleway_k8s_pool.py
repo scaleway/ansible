@@ -305,7 +305,7 @@ def main() -> None:
         root_volume_type=dict(
             type="str",
             required=True,
-            choices=["default_volume_type", "l_ssd", "b_ssd"],
+            choices=["default_volume_type", "l_ssd", "b_ssd", "sbs_5k", "sbs_15k"],
         ),
         region=dict(
             type="str",
