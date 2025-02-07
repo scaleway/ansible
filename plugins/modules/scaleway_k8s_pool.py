@@ -71,6 +71,8 @@ options:
             - default_volume_type
             - l_ssd
             - b_ssd
+            - sbs_5k
+            - sbs_15k
     region:
         description: region
         type: str
@@ -116,6 +118,10 @@ options:
         description: root_volume_size
         type: int
         required: false
+    public_ip_disabled:
+        description: public_ip_disabled
+        type: bool
+        required: true
 """
 
 EXAMPLES = r"""
@@ -130,6 +136,7 @@ EXAMPLES = r"""
     container_runtime: "aaaaaa"
     autohealing: true
     root_volume_type: "aaaaaa"
+    public_ip_disabled: true
 """
 
 RETURN = r"""
@@ -166,6 +173,7 @@ pool:
         zone: "aaaaaa"
         root_volume_type: default_volume_type
         root_volume_size: 3
+        public_ip_disabled: true
         region: fr-par
 """
 
@@ -340,6 +348,10 @@ def main() -> None:
         root_volume_size=dict(
             type="int",
             required=False,
+        ),
+        public_ip_disabled=dict(
+            type="bool",
+            required=True,
         ),
     )
 
