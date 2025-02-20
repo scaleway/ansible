@@ -120,7 +120,6 @@ def scaleway_pop_client_params(module: AnsibleModule) -> None:
         "access_key",
         "secret_key",
         "organization_id",
-        "project_id",
         "api_url",
         "api_allow_insecure",
         "user_agent",
