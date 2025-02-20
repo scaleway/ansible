@@ -113,6 +113,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = ApplesiliconV1Alpha1API(client)
 
+    project_id = module.params.pop("project_id", None)
     id = module.params.pop("id", None)
     if id is not None:
         resource = api.get_server(server_id=id)
