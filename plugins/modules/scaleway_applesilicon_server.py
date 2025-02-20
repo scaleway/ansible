@@ -112,7 +112,6 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = ApplesiliconV1Alpha1API(client)
 
-    project_id = module.params.pop("project_id", None)
     id = module.params.pop("id", None)
     if id is not None:
         resource = api.get_server(server_id=id)
@@ -128,10 +127,10 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    not_none_params["project_id"] = project_id
     resource = api.create_server(**not_none_params)
     resource = api.wait_for_server(
-        server_id=resource.id
+        server_id=resource.id,
+        zone=resource.zone
     )
 
     module.exit_json(changed=True, data=resource.__dict__)
