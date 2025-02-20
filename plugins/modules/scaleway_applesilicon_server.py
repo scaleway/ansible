@@ -46,10 +46,14 @@ options:
         description: name
         type: str
         required: false
+    enable_vpc:
+        description: Whether or not to enable VPC access
+        type: bool
+        required: true
     project_id:
         description: project_id
         type: str
-        required: false
+        required: true
 """
 
 EXAMPLES = r"""
@@ -57,7 +61,9 @@ EXAMPLES = r"""
   scaleway.scaleway.scaleway_applesilicon_server:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
+    project_id: "{{ scw_project_id }}"
     type_: "aaaaaa"
+    enable_vpc: false
 """
 
 RETURN = r"""
@@ -79,6 +85,7 @@ server:
         updated_at: "aaaaaa"
         deletable_at: "aaaaaa"
         zone: "aaaaaa"
+        enable_vpc: false
 """
 
 from ansible.module_utils.basic import (
@@ -105,6 +112,7 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = ApplesiliconV1Alpha1API(client)
 
+    project_id = module.params.pop("project_id", None)
     id = module.params.pop("id", None)
     if id is not None:
         resource = api.get_server(server_id=id)
@@ -120,9 +128,10 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
+    not_none_params["project_id"] = project_id
     resource = api.create_server(**not_none_params)
     resource = api.wait_for_server(
-        server_id=resource.id, region=module.params["region"]
+        server_id=resource.id
     )
 
     module.exit_json(changed=True, data=resource.__dict__)
@@ -199,6 +208,10 @@ def main() -> None:
             type="str",
             required=False,
         ),
+        enable_vpc=dict(
+            type="bool",
+            required=True,
+        )
     )
 
     module = AnsibleModule(
