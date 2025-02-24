@@ -109,6 +109,7 @@ try:
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
+
 def create(module: AnsibleModule, client: "Client") -> None:
     api = ApplesiliconV1Alpha1API(client)
 

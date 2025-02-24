@@ -141,6 +141,7 @@ def scaleway_pop_waitable_resource_params(module: AnsibleModule) -> None:
         if param in module.params:
             module.params.pop(param)
 
+
 def object_to_dict(obj):
     if isinstance(obj, list):
         return [object_to_dict(item) for item in obj]
