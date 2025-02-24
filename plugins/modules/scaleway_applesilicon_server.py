@@ -69,103 +69,103 @@ EXAMPLES = r"""
 RETURN = r"""
 ---
 id:
-description: The unique identifier of the server.
-returned: always
-type: str
-sample: "00000000-0000-0000-0000-000000000000"
+    description: The unique identifier of the server.
+    returned: always
+    type: str
+    sample: "00000000-0000-0000-0000-000000000000"
 
 type_:
-description: The type of the server, such as the instance class or size.
-returned: always
-type: str
-sample: "M2-M"
+    description: The type of the server, such as the instance class or size.
+    returned: always
+    type: str
+    sample: "M2-M"
 
 name:
-description: The name of the server.
-returned: always
-type: str
-sample: "my-applesilicon-server"
+    description: The name of the server.
+    returned: always
+    type: str
+    sample: "my-applesilicon-server"
 
 project_id:
-description: The unique identifier of the project to which the server belongs.
-returned: always
-type: str
-sample: "00000000-0000-0000-0000-000000000000"
+    description: The unique identifier of the project to which the server belongs.
+    returned: always
+    type: str
+    sample: "00000000-0000-0000-0000-000000000000"
 
 organization_id:
-description: The unique identifier of the organization under which the server resides.
-returned: always
-type: str
-sample: "00000000-0000-0000-0000-000000000000"
+    description: The unique identifier of the organization under which the server resides.
+    returned: always
+    type: str
+    sample: "00000000-0000-0000-0000-000000000000"
 
 ip:
-description: The IP address assigned to the server.
-returned: always
-type: str
-sample: "192.168.1.100"
+    description: The IP address assigned to the server.
+    returned: always
+    type: str
+    sample: "192.168.1.100"
 
 vnc_url:
-description: The VNC URL for accessing the server's console (if applicable).
-returned: always
-type: str
-sample: "vnc://192.168.1.100:5900"
+    description: The VNC URL for accessing the server's console (if applicable).
+    returned: always
+    type: str
+    sample: "vnc://192.168.1.100:5900"
 
 status:
-description: The current status of the server (e.g., "starting", "running", "stopped").
-returned: always
-type: str
-sample: "starting"
+    description: The current status of the server (e.g., "starting", "running", "stopped").
+    returned: always
+    type: str
+    sample: "starting"
 
 os:
-description: The initially installed OS, this does not necessarily reflect the current OS version
-returned: always
-type: dict
-sample: {
-            "compatible_server_types": [
-                "M1-M",
-                "M2-M",
-                "M2-L",
-                "M4-S"
-            ],
-            "family": "Sequoia",
-            "id": "367b9c18-d57f-4c9a-bcea-9e1fda66fc70",
-            "image_url": "https://scw-apple-silicon.s3.fr-par.scw.cloud/scw-console/os/macos-sequoia.png",
-            "is_beta": false,
-            "label": "macOS Sequoia 15.2",
-            "name": "macos-sequoia-15.2",
-            "version": "15.2",
-            "xcode_version": "16"
-        },
+    description: The initially installed OS, this does not necessarily reflect the current OS version
+    returned: always
+    type: dict
+    sample: {
+                "compatible_server_types": [
+                    "M1-M",
+                    "M2-M",
+                    "M2-L",
+                    "M4-S"
+                ],
+                "family": "Sequoia",
+                "id": "367b9c18-d57f-4c9a-bcea-9e1fda66fc70",
+                "image_url": "https://scw-apple-silicon.s3.fr-par.scw.cloud/scw-console/os/macos-sequoia.png",
+                "is_beta": false,
+                "label": "macOS Sequoia 15.2",
+                "name": "macos-sequoia-15.2",
+                "version": "15.2",
+                "xcode_version": "16"
+            }
 
 created_at:
-description: The UTC timestamp of when the server was created.
-returned: always
-type: str
-sample: "2025-02-24T12:00:00Z"
+    description: The UTC timestamp of when the server was created.
+    returned: always
+    type: str
+    sample: "2025-02-24T12:00:00Z"
 
 updated_at:
-description: The UTC timestamp of the last update to the server.
-returned: always
-type: str
-sample: "2025-02-24T12:30:00Z"
+    description: The UTC timestamp of the last update to the server.
+    returned: always
+    type: str
+    sample: "2025-02-24T12:30:00Z"
 
 deletable_at:
-description: The UTC timestamp of when the server can be deleted (if applicable).
-returned: always
-type: str
-sample: "2025-12-24T12:00:00Z"
+    description: The UTC timestamp of when the server can be deleted (if applicable).
+    returned: always
+    type: str
+    sample: "2025-12-24T12:00:00Z"
 
 zone:
-description: The zone where the server is located (e.g., "fr-par-1" for Paris).
-returned: always
-type: str
-sample: "fr-par-1"
+    description: The zone where the server is located (e.g., "fr-par-1" for Paris).
+    returned: always
+    type: str
+    sample: "fr-par-1"
 
 enable_vpc:
-description: Whether the server is part of a Virtual Private Cloud (VPC).
-returned: always
-type: bool
-sample: false
+    description: Whether the server is part of a Virtual Private Cloud (VPC).
+    returned: always
+    type: bool
+    sample: false
 """
 
 from ansible.module_utils.basic import (
