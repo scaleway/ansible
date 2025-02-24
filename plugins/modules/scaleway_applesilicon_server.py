@@ -135,7 +135,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
         zone=resource.zone
     )
 
-    module.exit_json(changed=False, data=object_to_dict(resource))
+    module.exit_json(changed=True, data=object_to_dict(resource))
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
