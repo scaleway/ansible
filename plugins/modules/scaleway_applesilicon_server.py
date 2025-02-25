@@ -46,10 +46,14 @@ options:
         description: name
         type: str
         required: false
+    enable_vpc:
+        description: Whether or not to enable VPC access
+        type: bool
+        required: true
     project_id:
         description: project_id
         type: str
-        required: false
+        required: true
 """
 
 EXAMPLES = r"""
@@ -57,7 +61,9 @@ EXAMPLES = r"""
   scaleway.scaleway.scaleway_applesilicon_server:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
+    project_id: "{{ scw_project_id }}"
     type_: "aaaaaa"
+    enable_vpc: false
 """
 
 RETURN = r"""
@@ -79,6 +85,7 @@ server:
         updated_at: "aaaaaa"
         deletable_at: "aaaaaa"
         zone: "aaaaaa"
+        enable_vpc: false
 """
 
 from ansible.module_utils.basic import (
@@ -91,6 +98,7 @@ from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import 
     scaleway_get_client_from_module,
     scaleway_pop_client_params,
     scaleway_pop_waitable_resource_params,
+    object_to_dict,
 )
 
 try:
@@ -120,12 +128,14 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
+    not_none_params["project_id"] = client.default_project_id
     resource = api.create_server(**not_none_params)
     resource = api.wait_for_server(
-        server_id=resource.id, region=module.params["region"]
+        server_id=resource.id,
+        zone=resource.zone
     )
 
-    module.exit_json(changed=True, data=resource.__dict__)
+    module.exit_json(changed=True, data=object_to_dict(resource))
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
@@ -135,27 +145,31 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     name = module.params.pop("name", None)
 
     if id is not None:
-        resource = api.get_server(server_id=id, region=module.params["region"])
+        resource = api.get_server(server_id=id, zone=module.params["zone"])
     elif name is not None:
-        resources = api.list_servers_all(name=name, region=module.params["region"])
-        if len(resources) == 0:
+        resources = api.list_servers_all(zone=module.params["zone"])
+        final_resources = []
+        for resource in resources:
+            if resource.name == name:
+                final_resources.append(resource)
+        if len(final_resources) == 0:
             module.exit_json(msg="No server found with name {name}")
-        elif len(resources) > 1:
+        elif len(final_resources) > 1:
             module.exit_json(msg="More than one server found with name {name}")
         else:
-            resource = resources[0]
+            resource = final_resources[0]
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_server(server_id=resource.id, region=module.params["region"])
+    api.delete_server(server_id=resource.id, zone=module.params["zone"])
 
     try:
-        api.wait_for_server(server_id=resource.id, region=module.params["region"])
+        api.wait_for_server(server_id=resource.id, zone=module.params["zone"])
     except ScalewayException as e:
-        if e.status_code != 404:
+        if e.status_code != 403:
             raise e
 
     module.exit_json(
@@ -197,8 +211,12 @@ def main() -> None:
         ),
         project_id=dict(
             type="str",
-            required=False,
+            required=True,
         ),
+        enable_vpc=dict(
+            type="bool",
+            required=True,
+        )
     )
 
     module = AnsibleModule(
