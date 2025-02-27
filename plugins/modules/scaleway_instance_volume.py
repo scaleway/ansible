@@ -147,14 +147,14 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     volume = module.params.pop("volume", None)
 
     if volume is not None:
-        resource = api.get_volume(volume_id=volume, region=module.params["region"])
+        resource = api.get_volume(volume_id=volume, zone=module.params["zone"])
     else:
         module.fail_json(msg="volume is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_volume(volume_id=resource.volume, region=module.params["region"])
+    api.delete_volume(volume_id=resource.volume.id, zone=module.params["zone"])
 
     module.exit_json(
         changed=True,
