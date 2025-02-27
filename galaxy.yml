@@ -2,7 +2,7 @@
 
 namespace: scaleway
 name: scaleway
-version: 2.5.0
+version: 2.6.0
 readme: README.md
 authors:
   - Ansible (https://github.com/ansible)
