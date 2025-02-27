@@ -107,6 +107,7 @@ from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import 
     scaleway_get_client_from_module,
     scaleway_pop_client_params,
     scaleway_pop_waitable_resource_params,
+    object_to_dict,
 )
 
 try:
@@ -138,7 +139,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
     }
     resource = api.create_volume(**not_none_params)
 
-    module.exit_json(changed=True, data=resource.__dict__)
+    module.exit_json(changed=True, data=object_to_dict(resource))
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
