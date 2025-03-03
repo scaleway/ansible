@@ -102,6 +102,7 @@ variables:
 """
 
 
+import os
 from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import List, Optional
@@ -403,13 +404,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _get_client(self):
         config_file = self.get_option("config_file")
-        profile = self.get_option("profile")
-        access_key = self.get_option("access_key")
-        secret_key = self.get_option("secret_key")
-        organization_id = self.get_option("organization_id")
-        project_id = self.get_option("project_id")
-        api_url = self.get_option("api_url")
-        api_allow_insecure = self.get_option("api_allow_insecure")
+        profile = self.get_option("profile") or os.getenv("SCW_PROFILE")
+        access_key = self.get_option("access_key") or os.getenv("SCW_ACCESS_KEY")
+        secret_key = self.get_option("secret_key") or os.getenv("SCW_SECRET_KEY")
+        organization_id = self.get_option("organization_id") or os.getenv("SCW_DEFAULT_ORGANIZATION_ID")
+        project_id = self.get_option("project_id") or os.getenv("SCW_DEFAULT_PROJECT_ID")
+        api_url = self.get_option("api_url") or os.getenv("SCW_API_URL")
+        api_allow_insecure = self.get_option("api_allow_insecure") or os.getenv("SCW_INSECURE")
         user_agent = self.get_option("user_agent")
 
         if profile:
