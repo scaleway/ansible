@@ -11,7 +11,7 @@ jobs:
         uses: ansible/ansible-lint@main
         # optional (see below):
         with:
-          args: ""
+          args: "--exclude=.github"
           setup_python: "true"
           working_directory: ""
           requirements_file: ""

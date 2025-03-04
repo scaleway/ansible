@@ -1,0 +1,9 @@
+name: Integration Nightly
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  integration:
+    uses: ./.github/workflows/ansible-test-integration.yml
