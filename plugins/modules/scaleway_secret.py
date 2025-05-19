@@ -16,11 +16,8 @@ description:
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
-extends_documentation_fragment:
-    - scaleway.scaleway.scaleway
-    - scaleway.scaleway.scaleway_waitable_resource
 requirements:
-    - scaleway >= 0.6.0
+    - scaleway >= 2.9.0
 options:
     state:
         description:
@@ -34,18 +31,10 @@ options:
         description: secret_id
         type: str
         required: false
-    name:
+    secret_name:
         description: name
         type: str
-        required: true
-    region:
-        description: region
-        type: str
         required: false
-        choices:
-            - fr-par
-            - nl-ams
-            - pl-waw
     project_id:
         description: project_id
         type: str
@@ -59,14 +48,23 @@ options:
         description: description
         type: str
         required: false
+    protected:
+        description: Protected secrets can be read and modified but they cannot be deleted
+        type: bool
+        required: false
+        default: false
 """
 
 EXAMPLES = r"""
 - name: Create a secret
   scaleway.scaleway.scaleway_secret:
-    access_key: "{{ scw_access_key }}"
-    secret_key: "{{ scw_secret_key }}"
-    name: "aaaaaa"
+    secret_name: "test_secret"
+    protected: true
+    project_id: "6867048b-fe12-4e96-835e-41c79a39604b"
+    tags:
+      - tag1
+      - tag2
+    description: "test description"
 """
 
 RETURN = r"""
@@ -76,140 +74,108 @@ secret:
     returned: when I(state=present)
     type: dict
     sample:
-        id: 00000000-0000-0000-0000-000000000000
-        project_id: 00000000-0000-0000-0000-000000000000
-        name: "aaaaaa"
-        status: ready
-        created_at: "aaaaaa"
-        updated_at: "aaaaaa"
-        tags:
-            - aaaaaa
-            - bbbbbb
+        created_at: "2025-05-14T12:02:50.136043+00:00"
+        deletion_requested_at: null
+        description: "test description"
+        ephemeral_policy: null
+        id: "c8571246-4bf3-4b62-bfcc-11a79d74fd57"
+        managed: false
+        name: "ansible-test-secret"
+        path: "/"
+        project_id: "6867048b-fe12-4e96-835e-41c79a39604b"
+        protected: false
         region: fr-par
-        version_count: 3
-        description: "aaaaaa"
+        status: ready
+        tags: ["tag1", "tag2"]
+        type_: opaque
+        updated_at: "2025-05-14T12:02:50.136043+00:00"
+        used_by: []
+        version_count: 0
 """
 
-from ansible.module_utils.basic import (
-    AnsibleModule,
-    missing_required_lib,
-)
 from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
-    scaleway_argument_spec,
-    scaleway_waitable_resource_argument_spec,
-    scaleway_get_client_from_module,
-    scaleway_pop_client_params,
-    scaleway_pop_waitable_resource_params,
+    build_scaleway_client_and_module,
 )
+from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway_secret import (
+    get_secret_id,
+)
+from ansible.module_utils.basic import AnsibleModule
 
+HAS_SCALEWAY_SDK = True
 try:
+    from scaleway.secret.v1beta1 import SecretV1Beta1API
     from scaleway import Client
-    from scaleway.secret.v1alpha1 import SecretV1Alpha1API
-
-    HAS_SCALEWAY_SDK = True
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: "Client") -> None:
-    api = SecretV1Alpha1API(client)
-
-    id = module.params.pop("id", None)
-    if id is not None:
-        resource = api.get_secret(secret_id=id)
-
-        if module.check_mode:
-            module.exit_json(changed=False)
-
-        module.exit_json(changed=False, data=resource)
-
-    if module.check_mode:
-        module.exit_json(changed=True)
+def create(client: "Client", module: AnsibleModule) -> None:
+    api = SecretV1Beta1API(client)
 
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
-    resource = api.create_secret(**not_none_params)
+
+    if not_none_params.get("secret_id"):
+        module.exit_json(changed=False, msg="Secret's update is not supported")
+
+    if not_none_params.get("project_id") is None:
+        not_none_params["project_id"] = client.default_project_id
+
+    not_none_params["region"] = client.default_region
+    not_none_params["name"] = not_none_params.pop("secret_name")
+
+    try:
+        resource = api.create_secret(**not_none_params)
+    except Exception as e:
+        module.fail_json(msg="Failed to create secret", exception=e)
 
     module.exit_json(changed=True, data=resource.__dict__)
 
 
-def delete(module: AnsibleModule, client: "Client") -> None:
-    api = SecretV1Alpha1API(client)
+def delete(client: "Client", module: AnsibleModule) -> None:
+    api = SecretV1Beta1API(client)
 
-    id = module.params.pop("id", None)
-    name = module.params.pop("name", None)
-    region = module.params.pop("region", None)
+    try:
+        secret_id = get_secret_id(api, module.params)
+    except Exception as e:
+        module.fail_json(msg="Failed to get secret id", exception=e)
 
-    if id is not None:
-        resource = api.get_secret(secret_id=id, region=region)
-    elif name is not None:
-        resource = api.get_secret_by_name(secret_name=name, region=region)
-
-    if module.check_mode:
-        module.exit_json(changed=True)
-
-    api.delete_secret(secret_id=resource.id, region=region)
+    try:
+        api.delete_secret(secret_id=secret_id)
+    except Exception as e:
+        module.fail_json(msg="Failed to delete secret", exception=e)
 
     module.exit_json(
         changed=True,
-        msg=f"secret's secret {resource.name} ({resource.id}) deleted",
+        msg=f"Secret's secret {secret_id} deleted",
     )
 
 
-def core(module: AnsibleModule) -> None:
-    client = scaleway_get_client_from_module(module)
-
+def run_module(client: "Client", module: AnsibleModule) -> None:
     state = module.params.pop("state")
-    scaleway_pop_client_params(module)
-    scaleway_pop_waitable_resource_params(module)
 
     if state == "present":
-        create(module, client)
+        create(client, module)
     elif state == "absent":
-        delete(module, client)
+        delete(client, module)
 
 
 def main() -> None:
-    argument_spec = scaleway_argument_spec()
-    argument_spec.update(scaleway_waitable_resource_argument_spec())
-    argument_spec.update(
-        state=dict(type="str", default="present", choices=["absent", "present"]),
-        secret_id=dict(type="str", no_log=True),
-        name=dict(
-            type="str",
-            required=True,
+    client, module = build_scaleway_client_and_module(
+        dict(
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            secret_id=dict(type="str", required=False),
+            secret_name=dict(type="str", required=False),
+            project_id=dict(type="str", required=False),
+            tags=dict(type="list", required=False, elements="str"),
+            description=dict(type="str", required=False),
+            protected=dict(type="bool", required=False, default=False),
         ),
-        region=dict(
-            type="str",
-            required=False,
-            choices=["fr-par", "nl-ams", "pl-waw"],
-        ),
-        project_id=dict(
-            type="str",
-            required=False,
-        ),
-        tags=dict(
-            type="list",
-            required=False,
-            elements="str",
-        ),
-        description=dict(
-            type="str",
-            required=False,
-        ),
+        required_one_of=[["secret_id", "secret_name"]],
     )
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_one_of=(["secret_id", "name"],),
-        supports_check_mode=True,
-    )
-
-    if not HAS_SCALEWAY_SDK:
-        module.fail_json(msg=missing_required_lib("scaleway"))
-
-    core(module)
+    run_module(client, module)
 
 
 if __name__ == "__main__":

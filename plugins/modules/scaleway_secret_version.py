@@ -16,55 +16,34 @@ description:
 version_added: "2.1.0"
 author:
     - Nathanael Demacon (@quantumsheep)
-extends_documentation_fragment:
-    - scaleway.scaleway.scaleway
-    - scaleway.scaleway.scaleway_waitable_resource
 requirements:
-    - scaleway >= 0.6.0
+    - scaleway >= 2.9.0
 options:
     state:
         description:
             - Indicate desired state of the target.
             - C(present) will create a new secret's version. If the secret does not exist, it will be created.
             - C(absent) will delete the secret version, if it exists.
-            - C(disable) will disable the secret version, if it exists.
-            - C(enable) will enable the secret version, if it exists.
-            - C(access) will access the secret version, if it exists.
         default: present
-        choices: ["present", "absent", "disable", "enable", "access"]
+        choices: ["present", "absent"]
         type: str
     secret_id:
-        description: secret_id
+        description: Secret's id associated with the version
         type: str
         required: false
-    name:
-        description: secret's name
-        type: str
-        required: true
-    region:
-        description: region
+    secret_name:
+        description: Secret's name associated with the version
         type: str
         required: false
-        choices:
-            - fr-par
-            - nl-ams
-            - pl-waw
     project_id:
         description: project_id
         type: str
-        required: false
-    disable_previous:
-        description: when creating a new version, disable the previous version
-        type: bool
-        required: false
-    destroy_previous:
-        description: when creating a new version, destroy the previous version
-        type: bool
         required: false
     revision:
         description: revision
         type: str
         required: false
+        default: latest
     tags:
         description: tags
         type: list
@@ -81,25 +60,15 @@ options:
 """
 
 EXAMPLES = r"""
-- name: Create a  version of the secret and disable the previous version
-  scaleway.scaleway.scaleway_secret_version:
-    access_key: "{{ scw_access_key }}"
-    secret_key: "{{ scw_secret_key }}"
-    project_id: "{{ scw_project_id }}"
-    region: "{{ scw_region }}"
-    name: "aaaaaa"
-    state: "present"
-    disable_previous: true
-    data: "{{ data }}"
+- name: Create a secret
+  scaleway.scaleway.scaleway_secret:
+    secret_name: "ansible-test-secret"
+  register: secret
 
-- name: access the latest version of the secret
-  scaleway.scaleway.scaleway_secret_access:
-    access_key: "{{ scw_access_key }}"
-    secret_key: "{{ scw_secret_key }}"
-    project_id: "{{ scw_project_id }}"
-    region: "{{ scw_region }}"
-    name: "aaaaaa"
-  register: data
+- name: Create a secret version
+  scaleway.scaleway.scaleway_secret_version:
+    secret_id: "{{ secret.data.id }}"
+    data: "my_secret_data"
 """
 
 RETURN = r"""
@@ -109,280 +78,110 @@ secret_version:
     returned: when I(state=present)
     type: dict
     sample:
-        id: 00000000-0000-0000-0000-000000000000
-        project_id: 00000000-0000-0000-0000-000000000000
-        name: "aaaaaa"
-        status: ready
-        created_at: "1970-01-01T00:00:00.000000+00:00"
-        updated_at: "1970-01-01T00:00:00.000000+00:00"
-        tags:
-            - aaaaaa
-            - bbbbbb
-        region: fr-par
-        version_count: 3
-        description: "foobar"
-
-secret_data:
-    description: The value of secret version data
-    returned: when I(state=access)
-    type: dict
-    sample:
-        data: "my_secret_data"
+        created_at: "2025-05-14T12:02:50.846327+00:00"
+        deleted_at: null
+        deletion_requested_at: null
+        description: ""
+        ephemeral_properties: null
+        latest: true
+        revision: 1
+        secret_id: "c8571246-4bf3-4b62-bfcc-11a79d74fd57"
+        status: enabled
+        updated_at: "2025-05-14T12:02:50.846327+00:00"
 """
 
 import base64
 
-from ansible.module_utils.basic import (
-    AnsibleModule,
-    missing_required_lib,
-)
 from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
-    scaleway_argument_spec,
-    scaleway_waitable_resource_argument_spec,
-    scaleway_get_client_from_module,
-    scaleway_pop_client_params,
-    scaleway_pop_waitable_resource_params,
+    build_scaleway_client_and_module,
 )
+from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway_secret import get_secret_id
+from ansible.module_utils.basic import AnsibleModule
+
+HAS_SCALEWAY_SDK = True
 
 try:
     from scaleway import Client
-    from scaleway.secret.v1alpha1 import SecretV1Alpha1API
-    from scaleway_core.api import ScalewayException
-
-    HAS_SCALEWAY_SDK = True
+    from scaleway.secret.v1beta1 import SecretV1Beta1API
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(module: AnsibleModule, client: "Client") -> None:
-    api = SecretV1Alpha1API(client)
-    region = module.params.pop("region", None)
-    project_id = module.params.pop("project_id", None)
-    name = module.params.pop("name", None)
-    id = module.params.pop("id", None)
+def create(client: "Client", module: AnsibleModule) -> None:
+    api = SecretV1Beta1API(client)
 
-    data = module.params.pop("data", None).encode()
-    if data is not None:
-        data = base64.b64encode(data).decode()
+    try:
+        secret_id = get_secret_id(api, module.params)
+    except Exception as e:
+        module.fail_json(msg=str(e))
 
-    not_none_params = {
-        key: value for key, value in module.params.items() if value is not None
-    }
+    not_none_params = {key: value for key, value in module.params.items() if value is not None}
+    not_none_params["secret_id"] = secret_id
 
-    if id is not None:
-        secret = api.get_secret(secret_id=id)
-        secret_version = api.create_secret_version(
-            secret_id=id,
-            region=region,
-            data=data,
-            **not_none_params,
-        )
+    revision = not_none_params.pop("revision", None)
+    if revision is not None:
+        module.warn("revision is ignored when creating a secret version")
 
-        if module.check_mode:
-            module.exit_json(changed=False)
+    data = module.params.pop("data", None)
+    if data is None:
+        return module.fail_json(msg="data is required when creating a secret version")
 
-        module.exit_json(changed=False, data=secret)
-    elif name is not None:
-        try:
-            secret = api.get_secret_by_name(secret_name=name, region=region)
-        except ScalewayException as exc:
-            if exc.status_code == 404:
-                secret = api.create_secret(
-                    name=name, project_id=project_id, region=region
-                )
-            else:
-                raise exc
-        secret_version = api.create_secret_version(
-            secret_id=secret.id,
-            region=region,
-            data=data,
-            **not_none_params,
-        )
-    if module.check_mode:
-        module.exit_json(changed=True)
+    not_none_params["data"] = base64.b64encode(data.encode()).decode()
+
+    secret_version = api.create_secret_version(
+        **not_none_params,
+    )
 
     module.exit_json(
         changed=True,
-        msg=f"secret {secret.name} ({secret.id}) revision { secret_version.revision }]\
-                           has been created",
-        data=secret.__dict__,
+        msg=f"({not_none_params.get('secret_id')}) revision {secret_version.revision} has been created",
+        data=secret_version.__dict__,
     )
 
 
-def delete(module: AnsibleModule, client: "Client") -> None:
-    api = SecretV1Alpha1API(client)
+def delete(client: "Client", module: AnsibleModule) -> None:
+    api = SecretV1Beta1API(client)
 
-    id = module.params.pop("id", None)
-    name = module.params.pop("name", None)
-    region = module.params.pop("region", None)
-    revision = module.params.pop("revision", None)
+    revision = module.params.get("revision")
 
-    if id is not None:
-        secret = api.get_secret(secret_id=id, region=region)
-    elif name is not None:
-        secret = api.get_secret_by_name(secret_name=name, region=region)
-    else:
-        module.fail_json(msg="id is required")
+    try:
+        secret_id = get_secret_id(api, module.params)
+    except Exception as e:
+        module.fail_json(msg=str(e))
 
-    if module.check_mode:
-        module.exit_json(changed=True)
-
-    api.destroy_secret_version(secret_id=secret.id, region=region, revision=revision)
+    api.delete_secret_version(secret_id=secret_id, revision=revision)
 
     module.exit_json(
         changed=True,
-        msg=f"secret's  {secret.name} ({secret.id}) revision{ revision } has been deleted",
+        msg=f"secret's version {revision} has been deleted",
     )
 
 
-def access(module: AnsibleModule, client: "Client") -> None:
-    api = SecretV1Alpha1API(client)
-
-    id = module.params.pop("id", None)
-    name = module.params.pop("name", None)
-    region = module.params.pop("region", None)
-    revision = module.params.pop("revision", None)
-    if id is not None:
-        secret = api.get_secret(secret_id=id, region=region)
-
-        if module.check_mode:
-            module.exit_json(changed=False)
-    else:
-        secret = api.get_secret_by_name(secret_name=name, region=region)
-
-    revision = "latest_enabled" if revision is None else revision
-    secret_version = api.access_secret_version(
-        secret_id=secret.id, revision=revision, region=region
-    )
-    data = base64.b64decode(secret_version.data)
-    if module.check_mode:
-        module.exit_json(changed=True)
-    module.exit_json(changed=True, data=data)
-
-
-def enable(module: AnsibleModule, client: "Client") -> None:
-    api = SecretV1Alpha1API(client)
-    region = module.params.pop("region", None)
-    project_id = module.params.pop("project_id", None)
-    name = module.params.pop("name", None)
-    id = module.params.pop("id", None)
-    revision = module.params.pop("revision", None)
-
-    if id is not None:
-        secret = api.get_secret(secret_id=id)
-    elif name is not None:
-        secret = api.get_secret_by_name(secret_name=name, region=region)
-    api.enable_secret_version(secret_id=secret.id, region=region, revision=revision)
-    if module.check_mode:
-        module.exit_json(changed=True)
-
-    module.exit_json(
-        changed=True,
-        msg=f"secret's secret {secret.name} ({secret.id}) revision {revision } has been disabled",
-        data=secret.__dict__,
-    )
-
-
-def disable(module: AnsibleModule, client: "Client") -> None:
-    api = SecretV1Alpha1API(client)
-
-    id = module.params.pop("id", None)
-    name = module.params.pop("name", None)
-    region = module.params.pop("region", None)
-    revision = module.params.pop("revision", None)
-
-    if id is not None:
-        secret = api.get_secret(secret_id=id, region=region)
-    elif name is not None:
-        secret = api.get_secret_by_name(secret_name=name, region=region)
-    else:
-        module.fail_json(msg="id is required")
-
-    if module.check_mode:
-        module.exit_json(changed=True)
-
-    api.disable_secret_version(secret_id=secret.id, region=region, revision=revision)
-
-    module.exit_json(
-        changed=True,
-        msg=f"secret's secret {secret.name} ({secret.id}) revision { revision } has been disabled",
-    )
-
-
-def core(module: AnsibleModule) -> None:
-    client = scaleway_get_client_from_module(module)
-
+def run_module(client: "Client", module: AnsibleModule) -> None:
     state = module.params.pop("state")
-    scaleway_pop_client_params(module)
-    scaleway_pop_waitable_resource_params(module)
 
     if state == "present":
-        create(module, client)
+        create(client, module)
     elif state == "absent":
-        delete(module, client)
-    elif state == "enable":
-        enable(module, client)
-    elif state == "disable":
-        disable(module, client)
-    elif state == "access":
-        access(module, client)
+        delete(client, module)
 
 
 def main() -> None:
-    argument_spec = scaleway_argument_spec()
-    argument_spec.update(scaleway_waitable_resource_argument_spec())
-    argument_spec.update(
-        state=dict(
-            type="str",
-            default="present",
-            choices=["absent", "present", "enable", "disable", "access"],
+    client, module = build_scaleway_client_and_module(
+        dict(
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            secret_id=dict(type="str", required=False),
+            secret_name=dict(type="str", required=False),
+            project_id=dict(type="str", required=False),
+            tags=dict(type="list", required=False, elements="str"),
+            description=dict(type="str", required=False),
+            data=dict(type="str", required=False, no_log=True),
+            revision=dict(type="str", required=False, default="latest"),
         ),
-        secret_id=dict(type="str", no_log=True),
-        name=dict(
-            type="str",
-            required=True,
-        ),
-        region=dict(
-            type="str",
-            required=False,
-            choices=["fr-par", "nl-ams", "pl-waw"],
-        ),
-        project_id=dict(
-            type="str",
-            required=False,
-        ),
-        tags=dict(
-            type="list",
-            required=False,
-            elements="str",
-        ),
-        description=dict(
-            type="str",
-            required=False,
-        ),
-        destroy_previous=dict(type="bool", required=False),
-        disable_previous=dict(type="bool", required=False),
-        data=dict(
-            type="str",
-            required=False,
-            #  no_log=True
-        ),
-        revision=dict(
-            type="str",
-            required=False,
-        ),
+        required_one_of=[["secret_id", "secret_name"]],
     )
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_one_of=(["secret_id", "name"],),
-        supports_check_mode=True,
-    )
-
-    if not HAS_SCALEWAY_SDK:
-        module.fail_json(msg=missing_required_lib("scaleway"))
-
-    core(module)
+    run_module(client, module)
 
 
 if __name__ == "__main__":

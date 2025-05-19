@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import absolute_import, division, print_function
-
+import os
 from typing import Any, Dict
 
 __metaclass__ = type
@@ -151,3 +151,28 @@ def object_to_dict(obj):
         return {key: object_to_dict(value) for key, value in obj.__dict__.items()}
     else:
         return obj
+
+
+def build_scaleway_client_and_module(argument_spec: dict, **kwargs: Any):
+    module = AnsibleModule(argument_spec=argument_spec, **kwargs)
+    if not HAS_SCALEWAY_SDK:
+        module.fail_json(msg=missing_required_lib("scaleway"))
+
+    client = Client.from_config_file_and_env(
+        filepath=os.environ.get("SCW_CONFIG_PATH"),
+        profile_name=os.environ.get("SCW_PROFILE"),
+    )
+    # handle a few client validation here because it is not done by the scaleway-sdk
+    if client.default_region is None:
+        module.fail_json(
+            msg="default_region parameter must be set in the configuration"
+            + " or via the SCW_DEFAULT_REGION environment variable"
+        )
+
+    if client.default_project_id is None and client.default_organization_id is None:
+        module.fail_json(
+            msg="default_project_id or default_organization_id parameter must be set in the configuration"
+            + " or via the SCW_DEFAULT_PROJECT_ID or SCW_DEFAULT_ORGANIZATION_ID environment variable"
+        )
+
+    return client, module

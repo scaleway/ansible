@@ -1,0 +1,46 @@
+---
+- name: Create Secret
+  scaleway.scaleway.scaleway_secret:
+    secret_name: "ansible-test-secret"
+  register: secret
+
+- name: Print secret
+  ansible.builtin.debug:
+    var: secret
+
+- name: Create Secret Version
+  scaleway.scaleway.scaleway_secret_version:
+    secret_id: "{{ secret.data.id }}"
+    data: "confidential data"
+  register: secret_version
+
+- name: Print secret_version
+  ansible.builtin.debug:
+    var: secret_version
+
+- name: Assert Secret Version
+  ansible.builtin.assert:
+    that:
+      - secret_version.data.revision == 1
+
+- name: Delete Secret Version
+  scaleway.scaleway.scaleway_secret_version:
+    secret_id: "{{ secret.data.id }}"
+    revision: "{{ secret_version.data.revision }}"
+    state: absent
+
+- name: Delete Secret By Name
+  scaleway.scaleway.scaleway_secret:
+    secret_name: "ansible-test-secret"
+    state: absent
+
+- name: Create Secret again
+  scaleway.scaleway.scaleway_secret:
+    secret_name: "ansible-test-secret"
+    state: present
+  register: secret
+
+- name: Delete Secret By ID
+  scaleway.scaleway.scaleway_secret:
+    secret_id: "{{ secret.data.id }}"
+    state: absent
