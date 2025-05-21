@@ -49,6 +49,7 @@ jobs:
 
         - name: Create scw config
           run: |
+            echo "Creating scw config"
             mkdir -p $HOME/.config/scw
             cat << EOF > $HOME/.config/scw/config.yaml
             access_key: ${{ secrets.SCW_ACCESS_KEY }}
