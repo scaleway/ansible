@@ -92,10 +92,10 @@ secret_version:
 
 import base64
 
-from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
+from ..module_utils.scaleway import (
     build_scaleway_client_and_module,
 )
-from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway_secret import get_secret_id
+from ..module_utils.scaleway_secret import get_secret
 from ansible.module_utils.basic import AnsibleModule
 
 HAS_SCALEWAY_SDK = True
@@ -110,15 +110,25 @@ except ImportError:
 def create(client: "Client", module: AnsibleModule) -> None:
     api = SecretV1Beta1API(client)
 
-    try:
-        secret_id = get_secret_id(api, module.params)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    secret_id = module.params.get("secret_id")
 
-    not_none_params = {key: value for key, value in module.params.items() if value is not None}
-    not_none_params["secret_id"] = secret_id
+    if not secret_id:
+        try:
+            secret_model = get_secret(
+                api,
+                name=module.params.get("secret_name"),
+            )
+            secret_id = secret_model.id
+            module.params.pop("secret_name")
+        except Exception as e:
+            module.fail_json(msg=str(e))
 
-    revision = not_none_params.pop("revision", None)
+    parameters = {
+        key: value for key, value in module.params.items() if value is not None
+    }
+    parameters["secret_id"] = secret_id
+
+    revision = parameters.pop("revision", None)
     if revision is not None:
         module.warn("revision is ignored when creating a secret version")
 
@@ -126,15 +136,13 @@ def create(client: "Client", module: AnsibleModule) -> None:
     if data is None:
         return module.fail_json(msg="data is required when creating a secret version")
 
-    not_none_params["data"] = base64.b64encode(data.encode()).decode()
+    parameters["data"] = base64.b64encode(data.encode()).decode()
 
-    secret_version = api.create_secret_version(
-        **not_none_params,
-    )
+    secret_version = api.create_secret_version(**parameters)
 
     module.exit_json(
         changed=True,
-        msg=f"({not_none_params.get('secret_id')}) revision {secret_version.revision} has been created",
+        msg=f"({parameters.get('secret_id')}) revision {secret_version.revision} has been created",
         data=secret_version.__dict__,
     )
 
@@ -143,11 +151,18 @@ def delete(client: "Client", module: AnsibleModule) -> None:
     api = SecretV1Beta1API(client)
 
     revision = module.params.get("revision")
+    secret_id = module.params.get("secret_id")
 
-    try:
-        secret_id = get_secret_id(api, module.params)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    if not secret_id:
+        try:
+            secret_model = get_secret(
+                api,
+                name=module.params.get("secret_name"),
+            )
+            secret_id = secret_model.id
+            module.params.pop("secret_name")
+        except Exception as e:
+            module.fail_json(msg=str(e))
 
     api.delete_secret_version(secret_id=secret_id, revision=revision)
 
