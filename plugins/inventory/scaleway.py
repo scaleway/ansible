@@ -345,7 +345,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for server in servers:
             host = _Host(
                 id=server.id,
-                tags=["apple_sillicon", *server.tags],
+                tags=["apple_sillicon"],
                 zone=server.zone,
                 state=str(server.status),
                 hostname=server.name,
