@@ -1,46 +1,78 @@
 ---
-- name: Create Secret
+- name: Create a new secret
   scaleway.scaleway.scaleway_secret:
-    secret_name: "ansible-test-secret"
+    name: "ansible-test-secret"
   register: secret
 
-- name: Print secret
-  ansible.builtin.debug:
-    var: secret
+- name: Re create the secret - no update
+  scaleway.scaleway.scaleway_secret:
+    name: "ansible-test-secret"
+  register: secret
 
-- name: Create Secret Version
+- name: Assert no update
+  ansible.builtin.assert:
+    that:
+      - secret.changed == False
+      - secret.diff.before == secret.diff.after
+
+- name: Update secret
+  scaleway.scaleway.scaleway_secret:
+    name: "ansible-test-secret"
+    description: "updated description"
+  register: secret
+
+- name: Assert secret updated
+  ansible.builtin.assert:
+    that:
+      - secret.data.description == "updated description"
+      - secret.diff.before.description == ""
+      - secret.diff.after.description == "updated description"
+
+- name: Update secret in check mode
+  scaleway.scaleway.scaleway_secret:
+    name: "ansible-test-secret"
+    description: "updated description"
+    tags:
+      - "tag1"
+      - "tag2"
+  register: secret
+  check_mode: true
+
+- name: Assert secret is not updated
+  ansible.builtin.assert:
+    that:
+      - secret.changed == False
+      - secret.diff.before.tags == []
+      - secret.diff.after.tags == ["tag1", "tag2"]
+
+- name: Create a new secret version
   scaleway.scaleway.scaleway_secret_version:
     secret_id: "{{ secret.data.id }}"
     data: "confidential data"
   register: secret_version
 
-- name: Print secret_version
-  ansible.builtin.debug:
-    var: secret_version
-
-- name: Assert Secret Version
+- name: Assert secret version created
   ansible.builtin.assert:
     that:
       - secret_version.data.revision == 1
 
-- name: Delete Secret Version
+- name: Delete secret version
   scaleway.scaleway.scaleway_secret_version:
     secret_id: "{{ secret.data.id }}"
     revision: "{{ secret_version.data.revision }}"
     state: absent
 
-- name: Delete Secret By Name
+- name: Delete secret
   scaleway.scaleway.scaleway_secret:
-    secret_name: "ansible-test-secret"
+    name: "ansible-test-secret"
     state: absent
 
-- name: Create Secret again
+- name: Create secret in check mode
   scaleway.scaleway.scaleway_secret:
-    secret_name: "ansible-test-secret"
-    state: present
+    name: "ansible-test-secret"
+    description: "updated description"
+    tags:
+      - "tag1"
+      - "tag2"
   register: secret
-
-- name: Delete Secret By ID
-  scaleway.scaleway.scaleway_secret:
-    secret_id: "{{ secret.data.id }}"
-    state: absent
+  check_mode: true

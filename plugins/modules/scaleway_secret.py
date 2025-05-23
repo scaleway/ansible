@@ -27,14 +27,10 @@ options:
         default: present
         choices: ["present", "absent"]
         type: str
-    secret_id:
-        description: secret_id
-        type: str
-        required: false
-    secret_name:
+    name:
         description: name
         type: str
-        required: false
+        required: true
     project_id:
         description: project_id
         type: str
@@ -58,7 +54,7 @@ options:
 EXAMPLES = r"""
 - name: Create a secret
   scaleway.scaleway.scaleway_secret:
-    secret_name: "test_secret"
+    name: "test_secret"
     protected: true
     project_id: "6867048b-fe12-4e96-835e-41c79a39604b"
     tags:
@@ -93,42 +89,71 @@ secret:
         version_count: 0
 """
 
-from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
+from ..module_utils.scaleway import (
     build_scaleway_client_and_module,
 )
-from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway_secret import (
-    get_secret_id,
+
+from ..module_utils.scaleway_secret import (
+    update_secret,
+    get_secret,
+    is_duplicate,
+    build_diff,
+    build_secret,
+    SecretNotFound,
 )
+
+
 from ansible.module_utils.basic import AnsibleModule
 
 HAS_SCALEWAY_SDK = True
 try:
     from scaleway.secret.v1beta1 import SecretV1Beta1API
-    from scaleway import Client
+    from scaleway import Client, ScalewayException
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(client: "Client", module: AnsibleModule) -> None:
+def create_or_update_check(
+    client: "Client", module: AnsibleModule, parameters: dict
+) -> None:
     api = SecretV1Beta1API(client)
 
-    not_none_params = {
-        key: value for key, value in module.params.items() if value is not None
-    }
+    try:
+        changed, _, current_model = update_secret(api, parameters, check_mode=True)  # pylint: disable=disallowed-name
+        module.exit_json(
+            changed=changed,
+            data=current_model.__dict__,
+            diff=build_diff(current_model, parameters),
+        )
+    except SecretNotFound:
+        module.exit_json(
+            changed=False,
+            data=build_secret(parameters).__dict__,
+            diff={
+                "before": {},
+                "after": build_secret(parameters).__dict__,
+            },
+        )
 
-    if not_none_params.get("secret_id"):
-        module.exit_json(changed=False, msg="Secret's update is not supported")
 
-    if not_none_params.get("project_id") is None:
-        not_none_params["project_id"] = client.default_project_id
-
-    not_none_params["region"] = client.default_region
-    not_none_params["name"] = not_none_params.pop("secret_name")
+def create_or_update(client: "Client", module: AnsibleModule, parameters: dict) -> None:
+    api = SecretV1Beta1API(client)
 
     try:
-        resource = api.create_secret(**not_none_params)
-    except Exception as e:
-        module.fail_json(msg="Failed to create secret", exception=e)
+        resource = api.create_secret(**parameters)
+    except ScalewayException as scw_exception:
+        if is_duplicate(scw_exception):
+            try:
+                changed, updated_model, current_model = update_secret(api, parameters)
+                module.exit_json(
+                    changed=changed,
+                    data=updated_model.__dict__,
+                    diff=build_diff(current_model, parameters),
+                )
+            except Exception as e:
+                module.fail_json(msg="Failed to update secret", exception=e)
+        else:
+            module.fail_json(msg="Failed to create secret", exception=scw_exception)
 
     module.exit_json(changed=True, data=resource.__dict__)
 
@@ -137,18 +162,21 @@ def delete(client: "Client", module: AnsibleModule) -> None:
     api = SecretV1Beta1API(client)
 
     try:
-        secret_id = get_secret_id(api, module.params)
+        secret = get_secret(api, name=module.params["name"])
     except Exception as e:
-        module.fail_json(msg="Failed to get secret id", exception=e)
+        module.fail_json(
+            msg=f"Failed to get secret {module.params['name']}", exception=e
+        )
 
     try:
-        api.delete_secret(secret_id=secret_id)
+        api.delete_secret(secret_id=secret.id)
     except Exception as e:
-        module.fail_json(msg="Failed to delete secret", exception=e)
+        module.fail_json(msg=f"Failed to delete secret {secret.name}", exception=e)
 
     module.exit_json(
         changed=True,
-        msg=f"Secret's secret {secret_id} deleted",
+        msg=f"Secret's secret {secret.id} deleted",
+        data=secret.__dict__,
     )
 
 
@@ -156,7 +184,17 @@ def run_module(client: "Client", module: AnsibleModule) -> None:
     state = module.params.pop("state")
 
     if state == "present":
-        create(client, module)
+        parameters = {
+            key: value for key, value in module.params.items() if value is not None
+        }
+        if parameters.get("project_id") is None:
+            parameters["project_id"] = client.default_project_id
+        parameters["region"] = client.default_region
+
+        if module.check_mode:
+            create_or_update_check(client, module, parameters)
+        else:
+            create_or_update(client, module, parameters)
     elif state == "absent":
         delete(client, module)
 
@@ -165,14 +203,13 @@ def main() -> None:
     client, module = build_scaleway_client_and_module(
         dict(
             state=dict(type="str", default="present", choices=["absent", "present"]),
-            secret_id=dict(type="str", required=False),
-            secret_name=dict(type="str", required=False),
+            name=dict(type="str", required=True),
             project_id=dict(type="str", required=False),
             tags=dict(type="list", required=False, elements="str"),
             description=dict(type="str", required=False),
             protected=dict(type="bool", required=False, default=False),
         ),
-        required_one_of=[["secret_id", "secret_name"]],
+        supports_check_mode=True,
     )
 
     run_module(client, module)
