@@ -250,9 +250,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         client = self._get_client()
         filters = self._get_filters()
 
-        instances: List[InstanceServer] = self._get_instances(client, filters)
-        elastic_metals: List[BaremetalServer] = self._get_elastic_metal(client, filters)
-        apple_silicon: List[ApplesiliconServer] = self._get_apple_sillicon(client, filters)
+        instances: List[InstanceServer] = self._get_instances(client, filters) or []
+        elastic_metals: List[BaremetalServer] = self._get_elastic_metal(client, filters) or []
+        apple_silicon: List[ApplesiliconServer] = self._get_apple_sillicon(client, filters) or []
 
         return instances + elastic_metals + apple_silicon
 
@@ -345,7 +345,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for server in servers:
             host = _Host(
                 id=server.id,
-                tags=["apple_sillicon", *server.tags],
+                tags=["apple_silicon"],
                 zone=server.zone,
                 state=str(server.status),
                 hostname=server.name,
