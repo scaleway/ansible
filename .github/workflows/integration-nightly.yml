@@ -7,3 +7,4 @@ on:
 jobs:
   integration:
     uses: ./.github/workflows/ansible-test-integration.yml
+    secrets: inherit

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from ansible.module_utils import basic
 
-from ansible_collections.scaleway.scaleway.plugins.modules import (
+from ....plugins.modules import (
     scaleway_secret,
     scaleway_secret_version,
 )
@@ -21,7 +21,7 @@ class TestScalewaySecret:
         "set_module_args",
         [
             {
-                "secret_name": "test_secret",
+                "name": "test_secret",
                 "project_id": test_uuid,
                 "tags": ["test", "secret"],
                 "description": "test_description",
@@ -33,7 +33,11 @@ class TestScalewaySecret:
     @patch.object(secret_api, "unmarshal_Secret")
     @patch.object(secret_api.SecretV1Beta1API, "_request")
     def test_create_with_project_id(
-        self, mock_request, mock_unmarshal_secret, scaleway_config_profile, set_module_args
+        self,
+        mock_request,
+        mock_unmarshal_secret,
+        scaleway_config_profile,
+        set_module_args,
     ):
         mock_unmarshal_secret.return_value = MagicMock()
         mock_request.return_value = MagicMock(status_code=201)
@@ -54,7 +58,7 @@ class TestScalewaySecret:
         "set_module_args",
         [
             {
-                "secret_name": "test_secret",
+                "name": "test_secret",
                 "tags": ["test", "secret"],
                 "description": "test_description",
                 "protected": False,
@@ -65,7 +69,11 @@ class TestScalewaySecret:
     @patch.object(secret_api, "unmarshal_Secret")
     @patch.object(secret_api.SecretV1Beta1API, "_request")
     def test_create_with_default_project_id(
-        self, mock_request, mock_unmarshal_secret, scaleway_config_profile, set_module_args
+        self,
+        mock_request,
+        mock_unmarshal_secret,
+        scaleway_config_profile,
+        set_module_args,
     ):
         mock_unmarshal_secret.return_value = MagicMock()
         mock_request.return_value = MagicMock(status_code=201)
@@ -86,19 +94,34 @@ class TestScalewaySecret:
         "set_module_args",
         [
             {
-                "secret_id": test_uuid,
+                "name": "test_secret",
                 "state": "absent",
             }
         ],
         indirect=True,
     )
-    @patch.object(secret_api, "unmarshal_Secret")
+    @patch.object(secret_api, "unmarshal_ListSecretsResponse")
     @patch.object(secret_api.SecretV1Beta1API, "_request")
-    def test_delete_secret(self, mock_request, mock_unmarshal_secret, scaleway_config_profile, set_module_args):
-        mock_unmarshal_secret.return_value = MagicMock(id=self.test_uuid)
+    def test_delete_secret(
+        self,
+        mock_request,
+        mock_unmarshal_list_secrets_response,
+        scaleway_config_profile,
+        set_module_args,
+    ):
+        class MockedSecret(MagicMock):
+            id = self.test_uuid
+            name = "test_secret"
+
+            def __dict__(self):
+                pass
+
+        mock_unmarshal_list_secrets_response.return_value = MagicMock(
+            secrets=[MockedSecret]
+        )
         mock_request.side_effect = [
-            MagicMock(status_code=200),  # Get secret response
-            MagicMock(status_code=204),  # Delete response
+            MagicMock(status_code=200),  # list secret response
+            MagicMock(status_code=204),  # delete secret response
         ]
         scaleway_secret.main()
         mock_request.assert_any_call(
@@ -123,9 +146,19 @@ class TestScalewaySecretVersion:
     )
     @patch.object(secret_api, "unmarshal_SecretVersion")
     @patch.object(secret_api.SecretV1Beta1API, "_request")
-    def test_create(self, mock_request, mock_unmarshal_secret_version, scaleway_config_profile, set_module_args):
+    def test_create(
+        self,
+        mock_request,
+        mock_unmarshal_secret_version,
+        scaleway_config_profile,
+        set_module_args,
+    ):
         mock_unmarshal_secret_version.return_value = MagicMock()
-        mock_request.return_value = MagicMock(status_code=201)
+        mock_request.side_effect = [
+            MagicMock(status_code=200, id=self.test_uuid, name="test_secret"),
+            MagicMock(status_code=201),
+        ]
+
         scaleway_secret_version.main()
         mock_request.assert_called_once_with(
             "POST",
@@ -148,10 +181,22 @@ class TestScalewaySecretVersion:
     @patch.object(secret_api, "unmarshal_SecretVersion")
     @patch.object(secret_api.SecretV1Beta1API, "_request")
     @patch.object(secret_api.SecretV1Beta1API, "list_secrets")
-    def test_create_with_secret_name(
-        self, mock_list_secrets, mock_request, mock_unmarshal_secret_version, scaleway_config_profile, set_module_args
+    def test_create_with_name(
+        self,
+        mock_list_secrets,
+        mock_request,
+        mock_unmarshal_secret_version,
+        scaleway_config_profile,
+        set_module_args,
     ):
-        mock_list_secrets.return_value = MagicMock(secrets=[MagicMock(id=self.test_uuid)])
+        class MockedSecret(MagicMock):
+            id = self.test_uuid
+            name = "test_secret"
+
+            def __dict__(self):
+                pass
+
+        mock_list_secrets.return_value = MagicMock(secrets=[MockedSecret])
         mock_unmarshal_secret_version.return_value = MagicMock()
         mock_request.return_value = MagicMock(status_code=201)
         scaleway_secret_version.main()
@@ -167,22 +212,38 @@ class TestScalewaySecretVersion:
         "set_module_args",
         [
             {
-                "secret_id": test_uuid,
+                "secret_name": "test_secret",
                 "state": "absent",
                 "revision": "latest",
             }
         ],
         indirect=True,
     )
-    @patch.object(secret_api.SecretV1Beta1API, "get_secret_version")
-    @patch.object(secret_api.SecretV1Beta1API, "delete_secret_version")
+    @patch.object(secret_api, "unmarshal_ListSecretsResponse")
+    @patch.object(secret_api.SecretV1Beta1API, "_request")
     def test_delete_secret_version(
-        self, mock_delete_secret_version, mock_get_secret_version, scaleway_config_profile, set_module_args
+        self,
+        mock_request,
+        mock_unmarshal_list_secrets_response,
+        scaleway_config_profile,
+        set_module_args,
     ):
-        mock_get_secret_version.return_value = MagicMock(id=self.test_uuid)
-        mock_delete_secret_version.return_value = MagicMock(status_code=204)
+        class MockedSecret(MagicMock):
+            id = self.test_uuid
+            name = "test_secret"
+
+            def __dict__(self):
+                pass
+
+        mock_unmarshal_list_secrets_response.return_value = MagicMock(
+            secrets=[MockedSecret]
+        )
+        mock_request.side_effect = [
+            MagicMock(status_code=200),  # list secret response
+            MagicMock(status_code=204),  # delete secret response
+        ]
         scaleway_secret_version.main()
-        mock_delete_secret_version.assert_called_once_with(
-            secret_id=self.test_uuid,
-            revision="latest",
+        mock_request.assert_any_call(
+            "DELETE",
+            f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}/versions/latest",
         )
