@@ -15,7 +15,7 @@ author:
 short_description: Scaleway inventory source
 version_added: "1.0.0"
 requirements:
-    - scaleway >= 0.6.0
+    - scaleway >= 2.9.0
 description:
     - Scaleway inventory plugin.
     - Uses configuration file that ends with '(scaleway|scw).(yaml|yml)'.
@@ -55,7 +55,7 @@ options:
         elements: str
         default: [running]
     hostnames:
-        description: List of preference about what to use as an hostname.
+        description: A list in order of precedence for hostname variables.
         type: list
         elements: str
         default:
@@ -80,16 +80,12 @@ options:
             - "  - C(public_ipv6): The server public ipv6."
             - "  - C(public_dns): The server public dns."
             - "  - C(private_dns): The server private dns."
-            - ""
             - "If the variable is not found, the host will be ignored."
         type: dict
 """
 
 EXAMPLES = r"""
 plugin: scaleway.scaleway.scaleway
-access_key: <your access key>
-secret_key: <your secret key>
-api_url: https://api.scaleway.com
 regions:
     - fr-par-2
     - nl-ams-1
@@ -105,7 +101,7 @@ variables:
 import os
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import List, Optional
+from typing import List
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.basic import missing_required_lib
@@ -116,11 +112,11 @@ try:
     from scaleway import Client, ScalewayException
     from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API
     from scaleway.applesilicon.v1alpha1 import Server as ApplesiliconServer
-    from scaleway.baremetal.v1 import BaremetalV1API, IPVersion
+    from scaleway.baremetal.v1 import BaremetalV1API, IPVersion as BaremetalIPVersion
     from scaleway.baremetal.v1 import Server as BaremetalServer
     from scaleway.instance.v1 import InstanceV1API, ServerState
     from scaleway.instance.v1 import Server as InstanceServer
-    from scaleway.dedibox.v1 import DediboxV1API, IPVersion
+    from scaleway.dedibox.v1 import DediboxV1API, IPVersion as DediboxIPVersion
     from scaleway.dedibox.v1 import ServerSummary as DediboxServer
 
     HAS_SCALEWAY_SDK = True
@@ -150,13 +146,13 @@ class _Host:
     state: "ServerState"
 
     hostname: str
-    public_ipv4: Optional[str]
-    private_ipv4: Optional[str]
-    public_ipv6: Optional[str]
+    public_ipv4: list[str] = field(default_factory=list)
+    private_ipv4: list[str] = field(default_factory=list)
+    public_ipv6: list[str] = field(default_factory=list)
 
     # Instances-only
-    public_dns: Optional[str] = None
-    private_dns: Optional[str] = None
+    public_dns: str | None = None
+    private_dns: str | None = None
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
@@ -195,40 +191,39 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if use_cache:
             try:
-                results = self._cache[cache_key]
+                all_hosts = self._cache[cache_key]
             except KeyError:
                 update_cache = True
 
         if not use_cache or update_cache:
-            results = self.get_inventory()
+            all_hosts = self.get_inventory()
 
         if update_cache:
-            self._cache[cache_key] = results
+            self._cache[cache_key] = all_hosts
 
-        self.populate(results)
+        self.populate(all_hosts)
 
-    def populate(self, results: List[_Host]):
-        hostnames = self.get_option("hostnames")
+    def populate(self, all_hosts: List[_Host]):
+        host_attributes = self.get_option("hostnames")
         variables = self.get_option("variables") or {}
 
-        for result in results:
-            groups = self.get_host_groups(result)
+        for host in all_hosts:
+            groups = self.get_host_groups(host)
 
             try:
-                hostname = self._get_hostname(result, hostnames)
+                hostname = self._get_host_attribute(host, host_attributes)
             except AnsibleError as e:
-                self.display.warning(f"Skipping host {result.id}: {e}")
+                self.display.warning(f"Skipping host {host.id}: {e}")
                 continue
 
             self.inventory.add_host(host=hostname)
 
             should_skip = False
             for variable, source in variables.items():
-                value = getattr(result, source, None)
+                value = getattr(host, source, None)
                 if not value:
                     self.display.warning(
-                        f"Skipping host {result.id}: "
-                        f"Field {source} is not available."
+                        f"Skipping host {host.id}: Field {source} is not available."
                     )
                     self.inventory.remove_host(SimpleNamespace(name=hostname))
                     should_skip = True
@@ -244,7 +239,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self.inventory.add_child(group=group, child=hostname)
 
     def get_host_groups(self, host: _Host):
-        return set(host.tags).union(set([host.zone.replace("-", "_")]))
+        return set(self.sanitize_tag(tag) for tag in host.tags).union(
+            set([self.sanitize_tag(host.zone)])
+        )
+
+    def sanitize_tag(self, tag: str):
+        forbidden_characters = [
+            "-",
+            " ",
+        ]
+        for forbidden_character in forbidden_characters:
+            tag = tag.strip().replace(forbidden_character, "_")
+
+        return tag
 
     def get_inventory(self):
         client = self._get_client()
@@ -252,7 +259,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         instances: List[InstanceServer] = self._get_instances(client, filters)
         elastic_metals: List[BaremetalServer] = self._get_elastic_metal(client, filters)
-        apple_silicon: List[ApplesiliconServer] = self._get_apple_sillicon(client, filters)
+        apple_silicon: List[ApplesiliconServer] = self._get_apple_sillicon(
+            client, filters
+        )
 
         return instances + elastic_metals + apple_silicon
 
@@ -263,11 +272,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         for zone in filters.zones:
             for state in filters.state:
-                servers.extend(api.list_servers_all(
-                    zone=zone,
-                    tags=filters.tags if filters.tags else None,
-                    state=ServerState(state),
-                ))
+                servers.extend(
+                    api.list_servers_all(
+                        zone=zone,
+                        tags=filters.tags if filters.tags else None,
+                        state=ServerState(state),
+                    )
+                )
 
         results: List[_Host] = []
         for server in servers:
@@ -277,9 +288,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 zone=server.zone,
                 state=str(server.state),
                 hostname=server.hostname,
-                public_ipv4=server.public_ip.address if server.public_ip else None,
-                private_ipv4=server.private_ip if server.private_ip else None,
-                public_ipv6=server.ipv6 if server.ipv6 else None,
+                public_ipv4=[server.public_ip.address] if server.public_ip else [],
+                private_ipv4=[server.private_ip.address] if server.private_ip else [],
+                public_ipv6=[server.ipv6.address] if server.ipv6 else [],
                 public_dns=f"{server.id}.pub.instances.scw.cloud",
                 private_dns=f"{server.id}.priv.instances.scw.cloud",
             )
@@ -305,21 +316,22 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         results: List[_Host] = []
         for server in servers:
-            public_ipv4s = filter(lambda ip: ip.version == IPVersion.IPV4, server.ips)
-            public_ipv6s = filter(lambda ip: ip.version == IPVersion.IPV6, server.ips)
-
-            public_ipv4 = next(public_ipv4s, None)
-            public_ipv6 = next(public_ipv6s, None)
-
             host = _Host(
                 id=server.id,
                 tags=["elastic_metal", *server.tags],
                 zone=server.zone,
                 state=str(server.status),
                 hostname=server.name,
-                public_ipv4=public_ipv4.address if public_ipv4 else None,
-                private_ipv4=None,
-                public_ipv6=public_ipv6.address if public_ipv6 else None,
+                public_ipv4=[
+                    ip.address
+                    for ip in server.ips
+                    if ip.version == BaremetalIPVersion.I_PV4
+                ],
+                public_ipv6=[
+                    ip.address
+                    for ip in server.ips
+                    if ip.version == BaremetalIPVersion.I_PV6
+                ],
             )
 
             results.append(host)
@@ -349,7 +361,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 zone=server.zone,
                 state=str(server.status),
                 hostname=server.name,
-                public_ipv4=server.ip,
+                public_ipv4=[server.ip],
                 private_ipv4=None,
                 public_ipv6=None,
             )
@@ -374,10 +386,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         results: List[_Host] = []
         for server in servers:
-            public_ipv4 = filter(lambda ip: ip.version == IPVersion.IPV4, server.interfaces.ips)
-            public_ipv6 = filter(lambda ip: ip.version == IPVersion.IPV6, server.interfaces.ips)
-            public_ipv4 = next(public_ipv4, None)
-            public_ipv6 = next(public_ipv6, None)
+            public_ipv4 = []
+            public_ipv6 = []
+
+            for interface in server.interfaces:
+                for ip in interface.ips:
+                    if ip.version == DediboxIPVersion.IPV4:
+                        public_ipv4.append(ip.address)
+                    elif ip.version == DediboxIPVersion.IPV6:
+                        public_ipv6.append(ip.address)
 
             host = _Host(
                 id=server.id,
@@ -385,64 +402,28 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 zone=server.zone,
                 state=str(server.status),
                 hostname=server.name,
-                public_ipv4=public_ipv4.address if public_ipv4 else None,
+                public_ipv4=public_ipv4,
                 private_ipv4=None,
-                public_ipv6=public_ipv6.address if public_ipv6 else None,
+                public_ipv6=public_ipv6,
             )
             results.append(host)
 
             return results
 
-    def _get_hostname(self, host: _Host, hostnames: List[str]) -> str:
-        as_dict = host.__dict__
+    def _get_host_attribute(self, host: _Host, host_attributes: List[str]) -> str:
+        host_as_dict = host.__dict__
 
-        for hostname in hostnames:
-            if hostname in as_dict and as_dict[hostname]:
-                return as_dict[hostname]
+        for host_attribute in host_attributes:
+            if host_attribute in host_as_dict and host_as_dict[host_attribute]:
+                return host_as_dict[host_attribute]
 
-        raise AnsibleError(f"No hostname found for {host.id} in {hostnames}")
+        raise AnsibleError(f"{host.id} has no attribute {host_attributes}")
 
     def _get_client(self):
-        config_file = self.get_option("config_file")
-        profile = self.get_option("profile") or os.getenv("SCW_PROFILE")
-        access_key = self.get_option("access_key") or os.getenv("SCW_ACCESS_KEY")
-        secret_key = self.get_option("secret_key") or os.getenv("SCW_SECRET_KEY")
-        organization_id = self.get_option("organization_id") or os.getenv("SCW_DEFAULT_ORGANIZATION_ID")
-        project_id = self.get_option("project_id") or os.getenv("SCW_DEFAULT_PROJECT_ID")
-        api_url = self.get_option("api_url") or os.getenv("SCW_API_URL")
-        api_allow_insecure = self.get_option("api_allow_insecure") or os.getenv("SCW_INSECURE")
-        user_agent = self.get_option("user_agent")
-
-        if profile:
-            client = Client.from_config_file(
-                filepath=config_file if config_file else None,
-                profile_name=profile,
-            )
-        else:
-            client = Client()
-
-        if access_key:
-            client.access_key = access_key
-
-        if secret_key:
-            client.secret_key = secret_key
-
-        if organization_id:
-            client.default_organization_id = organization_id
-
-        if project_id:
-            client.default_project_id = project_id
-
-        if api_url:
-            client.api_url = api_url
-
-        if api_allow_insecure:
-            client.api_allow_insecure = api_allow_insecure
-
-        if user_agent:
-            client.user_agent = user_agent
-
-        return client
+        return Client.from_config_file_and_env(
+            filepath=self.get_option("config_file") or os.getenv("SCW_CONFIG_FILE"),
+            profile_name=self.get_option("profile") or os.getenv("SCW_PROFILE"),
+        )
 
     def _get_filters(self):
         zones = self.get_option("zones")
