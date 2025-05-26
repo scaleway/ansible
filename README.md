@@ -2,14 +2,40 @@
 
 This collection contains modules and plugins for Ansible to automate the management of Scaleway infrastructure and services.
 
+**Disclaimer:** Most of modules in this collection are not tested and may not work as expected.
+
+**Supported modules:**
+
+* `scaleway.scaleway.scaleway` (dynamic inventory plugin)
+* `scaleway.scaleway.scaleway_instance`
+* `scaleway.scaleway.scaleway_secret`
+* `scaleway.scaleway.scaleway_secret_version`
+* `scaleway.scaleway.scaleway_applesilicon_server`
+
 ## Reach us
 
 You can contact us on our [Slack community](https://slack.scaleway.com/).
 
 ## Included content
 
-* **Inventory**
-  * scaleway.scaleway.scaleway: dynamic inventory plugin for Scaleway's Instances, Elastic Metal and Apple Sillicon
+### Inventory
+
+* `scaleway.scaleway.scaleway`: dynamic inventory plugin for Scaleway's Instances, Elastic Metal and Apple Sillicon
+
+**Usage example:**
+
+**scw.yml**
+
+```yaml
+plugin: scaleway.scaleway.scaleway
+profile: base-profile # your scaleway credentials profile
+host_attributes:
+  - public_ipv4
+  - hostname
+  - id
+```
+
+`ansible-inventory -i scw.yml --list` will list all the hosts from the dynamic inventory.
 
 ## Using this collection
 
@@ -21,9 +47,16 @@ Before using the Scaleway collection, you need to install it with the Ansible Ga
 ansible-galaxy collection install scaleway.scaleway
 ```
 
+Note that the python module dependencies are not installed by `ansible-galaxy`.
+They can be manually installed using pip:
+
+```sh
+pip install -r requirements-scaleway.txt
+```
+
 You can also include it in a requirements.yml file and install it via `ansible-galaxy collection install -r requirements.yml`, using the format:
 
-```yal
+```yaml
 ---
 collections:
   - name: scaleway.scaleway
