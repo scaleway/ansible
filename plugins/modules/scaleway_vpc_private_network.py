@@ -211,10 +211,6 @@ def main() -> None:
             required=False,
             elements="str",
         ),
-        vpc_id=dict(
-            type="str",
-            required=False,
-        ),
     )
 
     module = AnsibleModule(
