@@ -128,6 +128,10 @@ options:
         type: list
         elements: str
         required: false
+    private_network_id:
+        description: private_network_id
+        type: str
+        required: true
 """
 
 EXAMPLES = r"""
@@ -139,6 +143,7 @@ EXAMPLES = r"""
     description: "aaaaaa"
     version: "aaaaaa"
     cni: "aaaaaa"
+    private_network_id: "00000000-0000-0000-0000-000000000000"
 """
 
 RETURN = r"""
@@ -160,6 +165,7 @@ cluster:
             - aaaaaa
             - bbbbbb
         cni: cilium
+        private_network_id: 00000000-0000-0000-0000-000000000000
         description: "aaaaaa"
         cluster_url: "aaaaaa"
         dns_wildcard: "aaaaaa"
@@ -190,12 +196,13 @@ from ansible.module_utils.basic import (
     AnsibleModule,
     missing_required_lib,
 )
-from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
+from ...plugins.module_utils.scaleway import (
     scaleway_argument_spec,
     scaleway_waitable_resource_argument_spec,
     scaleway_get_client_from_module,
     scaleway_pop_client_params,
     scaleway_pop_waitable_resource_params,
+    object_to_dict,
 )
 
 try:
@@ -230,7 +237,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
         cluster_id=resource.id, region=module.params["region"]
     )
 
-    module.exit_json(changed=True, data=resource.__dict__)
+    module.exit_json(changed=True, data=object_to_dict(resource))
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
@@ -368,6 +375,10 @@ def main() -> None:
             required=False,
             elements="str",
         ),
+        private_network_id=dict(
+            type="str",
+            required=True
+        )
     )
 
     module = AnsibleModule(
