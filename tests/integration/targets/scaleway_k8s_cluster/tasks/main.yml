@@ -1,0 +1,81 @@
+---
+- name: Test K8S Cluster
+  block:
+    - name: Ensure Access Key is provided
+      ansible.builtin.fail:
+        msg: scw_access_key should be defined in tests/integration/integration_config.yml
+      when:
+        - scw_access_key is not defined
+        - scw_access_key | length == 0
+
+    - name: Ensure Secret Key is provided
+      ansible.builtin.fail:
+        msg: scw_secret_key should be defined in tests/integration/integration_config.yml
+      when:
+        - scw_secret_key is not defined
+        - scw_secret_key | length == 0
+
+    - name: Ensure Default Project ID is provided
+      ansible.builtin.fail:
+        msg: scw_default_project_id should be defined in tests/integration/integration_config.yml
+      when:
+        - scw_default_project_id is not defined
+        - scw_default_project_id | length == 0
+
+    - name: Create Private Network
+      scaleway.scaleway.scaleway_vpc_private_network:
+        name: "{{ resource_name }}"
+        region: "{{ resource_region }}"
+        project_id: "{{ scw_default_project_id }}"
+        access_key: "{{ scw_access_key }}"
+        secret_key: "{{ scw_secret_key }}"
+      register: integration_k8s_cluster_pn
+
+    - name: Create Cluster
+      scaleway.scaleway.scaleway_k8s_cluster:
+        name: "{{ resource_name }}"
+        region: "{{ resource_region }}"
+        project_id: "{{ scw_default_project_id }}"
+        access_key: "{{ scw_access_key }}"
+        secret_key: "{{ scw_secret_key }}"
+        state: present
+        private_network_id: "{{ integration_k8s_cluster_pn.data.id }}"
+        _type: "{{ resource_type }}"
+        version: "{{ resource_version }}"
+        cni: "{{ resource_cni }}"
+        description: "{{ resource_description }}"
+        tags: "{{ resource_tags }}"
+      register: integration_k8s_cluster_creation
+
+    - name: Delete Cluster
+      scaleway.scaleway.scaleway_k8s_cluster:
+        name: "{{ resource_name }}"
+        region: "{{ resource_region }}"
+        project_id: "{{ scw_default_project_id }}"
+        access_key: "{{ scw_access_key }}"
+        secret_key: "{{ scw_secret_key }}"
+        state: absent
+        private_network_id: "{{ integration_k8s_cluster_pn.data.id }}"
+        _type: "{{ resource_type }}"
+        version: "{{ resource_version }}"
+        cni: "{{ resource_cni }}"
+        description: "{{ resource_description }}"
+        tags: "{{ resource_tags }}"
+      register: integration_k8s_cluster_deletion
+
+    - name: Create Cluster (Check)
+      check_mode: true
+      scaleway.scaleway.scaleway_k8s_cluster:
+        name: "{{ resource_name }}"
+        region: "{{ resource_region }}"
+        project_id: "{{ scw_default_project_id }}"
+        access_key: "{{ scw_access_key }}"
+        secret_key: "{{ scw_secret_key }}"
+        state: present
+        private_network_id: "{{ integration_k8s_cluster_pn.data.id }}"
+        _type: "{{ resource_type }}"
+        version: "{{ resource_version }}"
+        cni: "{{ resource_cni }}"
+        description: "{{ resource_description }}"
+        tags: "{{ resource_tags }}"
+      register: integration_vpc_pn_creation_check
