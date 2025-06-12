@@ -2,56 +2,85 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass, field
+from typing import Type, TypeVar
 
 
-def model_diff(source: dataclass, destination: dataclass) -> dict:
-    """
-    diff two models guaranteed to be the same type
-    the source model is the source of truth
+T = TypeVar("T", bound="Model")
 
-    example:
-        source:
-            Secret(
-                key1="value1",
-                key2="value2",
-            )
-        destination:
-            Secret(
-                key1="value1",
-                key2="value2",
-            )
-        return:
-            {}
 
-        source:
-            Secret(
-                key1="value1",
-                key2="value2",
-            )
-        destination:
-            Secret(
-                key1="value2",
-                key2="value3",
-            )
-        return:
-            {
-                "key1": "value1",
-                "key2": "value2",
-            }
-    """
-    if source.__class__.__name__ != destination.__class__.__name__:
-        raise ValueError(
-            f"The models are not the same: {source.__class__.__name__} != {destination.__class__.__name__}"
+@dataclass
+class Model:
+    @classmethod
+    def build_model(cls: Type[T], parameters: dict) -> T:
+        model = cls(
+            **{k: v for k, v in parameters.items() if k in cls.__dataclass_fields__}
         )
+        return model
 
-    diff = {}
+    def diff(self, other: "Model") -> dict:
+        """
+        diff two models guaranteed to be the same type
+        the source model is the source of truth
 
-    source_as_dict = asdict(source)
-    destination_as_dict = asdict(destination)
+        example:
+            source:
+                Secret(
+                    key1="value1",
+                    key2="value2",
+                )
+            destination:
+                Secret(
+                    key1="value1",
+                    key2="value2",
+                )
+            return:
+                {}
 
-    for key, value in source_as_dict.items():
-        if destination_as_dict[key] != value:
-            diff[key] = value
+            source:
+                Secret(
+                    key1="value1",
+                    key2="value2",
+                )
+            destination:
+                Secret(
+                    key1="value2",
+                    key2="value3",
+                )
+            return:
+                {
+                    "key1": "value1",
+                    "key2": "value2",
+                }
+        """
+        if self.__class__.__name__ != other.__class__.__name__:
+            raise ValueError(
+                f"The models are not the same: {self.__class__.__name__} != {other.__class__.__name__}"
+            )
 
-    return diff
+        diff = {}
+
+        self_as_dict = asdict(self)
+        other_as_dict = asdict(other)
+
+        for key, value in self_as_dict.items():
+            if other_as_dict[key] != value:
+                diff[key] = value
+
+        return diff
+
+
+@dataclass
+class Secret(Model):
+    name: str
+    id: str = ""
+    description: str = ""
+    tags: list[str] = field(default_factory=list)
+
+
+@dataclass
+class SecretVersion(Model):
+    secret_id: str
+    revision: str
+    data: str = ""
+    description: str = ""

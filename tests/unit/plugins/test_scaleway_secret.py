@@ -9,6 +9,7 @@ from ....plugins.modules import (
     scaleway_secret_version,
 )
 
+
 import scaleway.secret.v1beta1.api as secret_api
 
 
@@ -153,14 +154,23 @@ class TestScalewaySecretVersion:
         scaleway_config_profile,
         set_module_args,
     ):
-        mock_unmarshal_secret_version.return_value = MagicMock()
+        mock_unmarshal_secret_version.return_value = MagicMock(
+            secret_id=self.test_uuid,
+            revision="latest",
+        )
+
         mock_request.side_effect = [
-            MagicMock(status_code=200, id=self.test_uuid, name="test_secret"),
+            MagicMock(status_code=404),  # the secret version does not exist
             MagicMock(status_code=201),
         ]
 
         scaleway_secret_version.main()
-        mock_request.assert_called_once_with(
+
+        mock_request.assert_any_call(
+            "GET",
+            f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}/versions/latest",
+        )
+        mock_request.assert_any_call(
             "POST",
             f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}/versions",
             body={
@@ -172,39 +182,98 @@ class TestScalewaySecretVersion:
         "set_module_args",
         [
             {
-                "secret_name": "test_secret",
+                "secret_id": test_uuid,
                 "data": "test_data",
             }
         ],
         indirect=True,
     )
+    @patch.object(secret_api, "unmarshal_AccessSecretVersionResponse")
     @patch.object(secret_api, "unmarshal_SecretVersion")
     @patch.object(secret_api.SecretV1Beta1API, "_request")
-    @patch.object(secret_api.SecretV1Beta1API, "list_secrets")
-    def test_create_with_name(
+    def test_create_already_exists_same_data(
         self,
-        mock_list_secrets,
         mock_request,
         mock_unmarshal_secret_version,
+        mock_unmarshal_access_secret_version_response,
         scaleway_config_profile,
         set_module_args,
     ):
-        class MockedSecret(MagicMock):
-            id = self.test_uuid
-            name = "test_secret"
+        mock_unmarshal_secret_version.return_value = MagicMock(
+            secret_id=self.test_uuid,
+            revision=1,
+        )
+        mock_unmarshal_access_secret_version_response.return_value = MagicMock(
+            data="dGVzdF9kYXRh",
+        )
 
-            def __dict__(self):
-                pass
+        mock_request.side_effect = [
+            MagicMock(status_code=200),  # the secret version exist
+            MagicMock(status_code=200),  # call to access the secret version
+        ]
 
-        mock_list_secrets.return_value = MagicMock(secrets=[MockedSecret])
-        mock_unmarshal_secret_version.return_value = MagicMock()
-        mock_request.return_value = MagicMock(status_code=201)
         scaleway_secret_version.main()
-        mock_request.assert_called_once_with(
+
+        mock_request.assert_any_call(
+            "GET",
+            f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}/versions/latest",
+        )
+        mock_request.assert_any_call(
+            "GET",
+            f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}/versions/latest/access",
+        )
+
+    @pytest.mark.parametrize(
+        "set_module_args",
+        [
+            {
+                "secret_id": test_uuid,
+                "data": "new_data",
+            }
+        ],
+        indirect=True,
+    )
+    @patch.object(secret_api, "unmarshal_AccessSecretVersionResponse")
+    @patch.object(secret_api, "unmarshal_SecretVersion")
+    @patch.object(secret_api.SecretV1Beta1API, "_request")
+    def test_create_already_exists_different_data(
+        self,
+        mock_request,
+        mock_unmarshal_secret_version,
+        mock_unmarshal_access_secret_version_response,
+        scaleway_config_profile,
+        set_module_args,
+    ):
+        mock_unmarshal_secret_version.return_value = MagicMock(
+            secret_id=self.test_uuid,
+            revision=1,
+        )
+        mock_unmarshal_access_secret_version_response.return_value = MagicMock(
+            data="dGVzdF9kYXRh",
+        )
+
+        mock_request.side_effect = [
+            MagicMock(status_code=200),  # the secret version exist
+            MagicMock(status_code=200),  # call to access the secret version
+            MagicMock(status_code=201),  # call to create the secret version
+        ]
+
+        scaleway_secret_version.main()
+
+        mock_request.assert_any_call(
+            "GET",
+            f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}/versions/latest",
+        )
+        mock_request.assert_any_call(
+            "GET",
+            f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}/versions/latest/access",
+        )
+
+        mock_request.assert_any_call(
             "POST",
             f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}/versions",
             body={
-                "data": "dGVzdF9kYXRh",
+                "data": "bmV3X2RhdGE=",
             },
         )
 
