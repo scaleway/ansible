@@ -1,9 +1,0 @@
-resource_name: "ansible-test-k8s-cluster"
-resource_region: "fr-par"
-resource_type: "kapsule"
-resource_version: "1.32.3"
-resource_cni: "cilium"
-resource_description: "This cluster was created with ansible"
-resource_tags:
-  - "tag1"
-  - "tag2"
