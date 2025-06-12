@@ -116,6 +116,11 @@ options:
         description: root_volume_size
         type: int
         required: false
+    public_ip_disabled:
+        description: public_ip_disabled
+        type: bool
+        required: false
+        default: false
 """
 
 EXAMPLES = r"""
@@ -167,23 +172,26 @@ pool:
         root_volume_type: default_volume_type
         root_volume_size: 3
         region: fr-par
+        public_ip_disabled: false
 """
 
 from ansible.module_utils.basic import (
     AnsibleModule,
     missing_required_lib,
 )
-from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
+from ..module_utils.scaleway import (
     scaleway_argument_spec,
     scaleway_waitable_resource_argument_spec,
     scaleway_get_client_from_module,
     scaleway_pop_client_params,
     scaleway_pop_waitable_resource_params,
+    object_to_dict,
 )
 
 try:
     from scaleway import Client, ScalewayException
     from scaleway.k8s.v1 import K8SV1API
+    from scaleway_core.utilsimport import WaitForOptions
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -209,9 +217,13 @@ def create(module: AnsibleModule, client: "Client") -> None:
         key: value for key, value in module.params.items() if value is not None
     }
     resource = api.create_pool(**not_none_params)
-    resource = api.wait_for_pool(pool_id=resource.id, region=module.params["region"])
+    if "wait" in module.params:
+        options = WaitForOptions()
+        if "wait_timeout" in module.params:
+            options.timeout = module.params["wait_timeout"]
+        resource = api.wait_for_pool(pool_id=resource.id, region=module.params["region"], options=options)
 
-    module.exit_json(changed=True, data=resource.__dict__)
+    module.exit_json(changed=True, data=object_to_dict(resource))
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
@@ -341,6 +353,11 @@ def main() -> None:
             type="int",
             required=False,
         ),
+        public_ip_disabled=dict(
+            type="bool",
+            required=False,
+            default=False,
+        )
     )
 
     module = AnsibleModule(
