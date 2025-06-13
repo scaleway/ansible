@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-__metaclass__ = type
-
 from dataclasses import asdict, dataclass, field
 from typing import Type, TypeVar
 
