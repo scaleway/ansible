@@ -1,8 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from dataclasses import dataclass, field
-
-from .model import model_diff
+from .model import Model, Secret, SecretVersion
 
 try:
     from scaleway.secret.v1beta1.api import SecretV1Beta1API
@@ -10,34 +8,17 @@ try:
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
-__metaclass__ = type
-
 
 class SecretNotFound(Exception):
     pass
 
 
-@dataclass
-class Secret:
-    """
-    Model a Secret object with fields we support mutability for
-    Excepted id and name which act as primary keys
-    """
-
-    name: str
-    id: str = ""
-    description: str = ""
-    tags: list[str] = field(default_factory=list)
-
-
 def build_secret(parameters: dict) -> Secret:
-    secret = Secret(name=parameters.get("name"))
+    return Secret.build_model(parameters)
 
-    for k, v in parameters.items():
-        if k in Secret.__dataclass_fields__:
-            setattr(secret, k, v)
 
-    return secret
+def build_secret_version(parameters: dict) -> SecretVersion:
+    return SecretVersion.build_model(parameters)
 
 
 def get_secret(api: "SecretV1Beta1API", **kwargs) -> Secret:
@@ -61,36 +42,51 @@ def get_secret(api: "SecretV1Beta1API", **kwargs) -> Secret:
     return build_secret(secret.__dict__)
 
 
+def get_latest_secret_version(api: "SecretV1Beta1API", **kwargs) -> SecretVersion:
+    """
+    Get a secret version by secret_id and revision
+    """
+    secret_version = api.get_secret_version(
+        secret_id=kwargs["secret_id"], revision="latest"
+    )
+
+    secret_version_access = api.access_secret_version(
+        secret_id=kwargs["secret_id"],
+        revision="latest",
+    )
+
+    return build_secret_version(
+        {**secret_version.__dict__, "data": secret_version_access.data}
+    )
+
+
 def update_secret(
     api: "SecretV1Beta1API", parameters: dict, check_mode: bool = False
 ) -> tuple[bool, Secret, Secret]:
     """
-    Update a secret by checking the difference between the source and destination object
+    Update a secret by checking the difference between the local and remote object
 
-    The source object is builded from the parameters and act as the source of truth
-    The destination object is the object retrieved from the API
+    The local object is builded from the parameters and act as the source of truth
+    The remote object is retrieved from the API
 
-    If the diff is empty, return the destination object
-    If the diff is not empty, try to update the secret with the updated values and return the source object for ansible to display the diff
-
-    return changed, updated_model, current_model
+    return changed, local_model, remote_model
     """
-    destination_model = get_secret(api, name=parameters.get("name"))
+    remote_model = get_secret(api, name=parameters.get("name"))
 
     # build and diff source model with the api one
-    source_model = build_secret(parameters)
-    source_model.id = destination_model.id
+    local_model = build_secret(parameters)
+    local_model.id = remote_model.id
 
-    diff = model_diff(source_model, destination_model)
+    diff = local_model.diff(remote_model)
     if len(diff) == 0:
-        return False, source_model, destination_model
+        return False, local_model, remote_model
 
     if check_mode:
-        return False, source_model, destination_model
+        return False, local_model, remote_model
 
-    updated_secret = api.update_secret(secret_id=destination_model.id, **diff)
+    updated_secret = api.update_secret(secret_id=remote_model.id, **diff)
 
-    return True, build_secret(updated_secret.__dict__), destination_model
+    return True, build_secret(updated_secret.__dict__), remote_model
 
 
 def is_duplicate(scw_exception: "ScalewayException") -> bool:
@@ -105,13 +101,11 @@ def is_duplicate(scw_exception: "ScalewayException") -> bool:
     return False
 
 
-def build_diff(before_model: Secret, after_args: dict) -> dict:
+def build_ansible_diff(remote_model: Model, local_model: Model) -> dict:
     """
     Build an Ansible diff dictionary from a before and after model
     """
-    after = build_secret(after_args)
-    after.id = before_model.id
     return dict(
-        before=before_model.__dict__,
-        after=after.__dict__,
+        before=remote_model.__dict__,
+        after=local_model.__dict__,
     )

@@ -24,6 +24,7 @@
 - name: Assert secret updated
   ansible.builtin.assert:
     that:
+      - secret.changed == True
       - secret.data.description == "updated description"
       - secret.diff.before.description == ""
       - secret.diff.after.description == "updated description"
@@ -45,7 +46,7 @@
       - secret.diff.before.tags == []
       - secret.diff.after.tags == ["tag1", "tag2"]
 
-- name: Create a new secret version
+- name: Create a secret version
   scaleway.scaleway.scaleway_secret_version:
     secret_id: "{{ secret.data.id }}"
     data: "confidential data"
@@ -54,7 +55,56 @@
 - name: Assert secret version created
   ansible.builtin.assert:
     that:
+      - secret_version.changed == True
       - secret_version.data.revision == 1
+
+- name: Create a secret version in check mode
+  scaleway.scaleway.scaleway_secret_version:
+    secret_id: "{{ secret.data.id }}"
+    data: "confidential data"
+  check_mode: true
+  register: secret_version_check
+
+- name: Assert secret version is not updated
+  ansible.builtin.assert:
+    that:
+      - secret_version_check.changed == False
+
+- name: Force create a new secret version (same data)
+  scaleway.scaleway.scaleway_secret_version:
+    secret_id: "{{ secret.data.id }}"
+    data: "confidential data"
+    force_new_version: true
+  register: secret_version
+
+- name: Assert secret version incremented
+  ansible.builtin.assert:
+    that:
+      - secret_version.changed == True
+      - secret_version.data.revision == 2
+
+- name: Create a new secret version with different data
+  scaleway.scaleway.scaleway_secret_version:
+    secret_id: "{{ secret.data.id }}"
+    data: "different data"
+  register: secret_version
+
+- name: Assert secret version incremented
+  ansible.builtin.assert:
+    that:
+      - secret_version.changed == True
+      - secret_version.data.revision == 3
+
+- name: Create a new secret version with the same data (no force)
+  scaleway.scaleway.scaleway_secret_version:
+    secret_id: "{{ secret.data.id }}"
+    data: "different data"
+  register: secret_version_noop
+
+- name: Assert secret version is not updated
+  ansible.builtin.assert:
+    that:
+      - secret_version_noop.changed == False
 
 - name: Delete secret version
   scaleway.scaleway.scaleway_secret_version:

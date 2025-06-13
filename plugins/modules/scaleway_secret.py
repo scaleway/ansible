@@ -97,7 +97,7 @@ from ..module_utils.scaleway_secret import (
     update_secret,
     get_secret,
     is_duplicate,
-    build_diff,
+    build_ansible_diff,
     build_secret,
     SecretNotFound,
 )
@@ -119,20 +119,18 @@ def create_or_update_check(
     api = SecretV1Beta1API(client)
 
     try:
-        changed, _, current_model = update_secret(api, parameters, check_mode=True)  # pylint: disable=disallowed-name
+        changed, local_model, remote_model = update_secret(
+            api, parameters, check_mode=True
+        )  # pylint: disable=disallowed-name
         module.exit_json(
             changed=changed,
-            data=current_model.__dict__,
-            diff=build_diff(current_model, parameters),
+            data=local_model.__dict__,
+            diff=build_ansible_diff(remote_model, local_model),
         )
     except SecretNotFound:
         module.exit_json(
             changed=False,
-            data=build_secret(parameters).__dict__,
-            diff={
-                "before": {},
-                "after": build_secret(parameters).__dict__,
-            },
+            diff={"before": {}, "after": build_secret(parameters).__dict__},
         )
 
 
@@ -144,11 +142,12 @@ def create_or_update(client: "Client", module: AnsibleModule, parameters: dict) 
     except ScalewayException as scw_exception:
         if is_duplicate(scw_exception):
             try:
-                changed, updated_model, current_model = update_secret(api, parameters)
+                changed, local_model, remote_model = update_secret(api, parameters)
+                parameters["id"] = local_model.id
                 module.exit_json(
                     changed=changed,
-                    data=updated_model.__dict__,
-                    diff=build_diff(current_model, parameters),
+                    data=local_model.__dict__,
+                    diff=build_ansible_diff(remote_model, local_model),
                 )
             except Exception as e:
                 module.fail_json(msg="Failed to update secret", exception=e)

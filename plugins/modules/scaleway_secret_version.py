@@ -35,19 +35,9 @@ options:
         description: Secret's name associated with the version
         type: str
         required: false
-    project_id:
-        description: project_id
-        type: str
-        required: false
     revision:
         description: revision
         type: str
-        required: false
-        default: latest
-    tags:
-        description: tags
-        type: list
-        elements: str
         required: false
     description:
         description: description
@@ -57,6 +47,11 @@ options:
         description: the secret value
         type: str
         required: false
+    force_new_version:
+        description: force the creation of a new secret version, even if the data is identical to the previous version
+        type: bool
+        required: false
+        default: false
 """
 
 EXAMPLES = r"""
@@ -95,7 +90,12 @@ import base64
 from ..module_utils.scaleway import (
     build_scaleway_client_and_module,
 )
-from ..module_utils.scaleway_secret import get_secret
+from ..module_utils.scaleway_secret import (
+    get_secret,
+    build_ansible_diff,
+    build_secret_version,
+    get_latest_secret_version,
+)
 from ansible.module_utils.basic import AnsibleModule
 
 HAS_SCALEWAY_SDK = True
@@ -103,68 +103,102 @@ HAS_SCALEWAY_SDK = True
 try:
     from scaleway import Client
     from scaleway.secret.v1beta1 import SecretV1Beta1API
+    from scaleway import ScalewayException
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
 
-def create(client: "Client", module: AnsibleModule) -> None:
+def create_secret_version(
+    api: "SecretV1Beta1API", module: AnsibleModule, parameters: dict
+) -> None:
+    try:
+        secret_version = api.create_secret_version(**parameters)
+        module.exit_json(
+            changed=True,
+            msg=f"({parameters.get('secret_id')}) revision {secret_version.revision} has been created",
+            data=build_secret_version(secret_version.__dict__).__dict__,
+        )
+    except ScalewayException as scw_exception:
+        module.fail_json(msg="Failed to create secret version", exception=scw_exception)
+
+
+def create_check_mode(
+    client: "Client", module: AnsibleModule, parameters: dict
+) -> None:
     api = SecretV1Beta1API(client)
 
-    secret_id = module.params.get("secret_id")
+    parameters["data"] = base64.b64encode(parameters.get("data").encode()).decode()
+    parameters["revision"] = "latest"
 
-    if not secret_id:
-        try:
-            secret_model = get_secret(
-                api,
-                name=module.params.get("secret_name"),
+    try:
+        remote_model = get_latest_secret_version(api, **parameters)
+        module.exit_json(
+            changed=False,
+            data=remote_model.__dict__,
+            diff=build_ansible_diff(remote_model, build_secret_version(parameters)),
+        )
+    except ScalewayException as scw_exception:
+        if scw_exception.status_code == 404:
+            module.exit_json(
+                changed=False,
+                diff={"before": {}, "after": build_secret_version(parameters).__dict__},
             )
-            secret_id = secret_model.id
-            module.params.pop("secret_name")
-        except Exception as e:
-            module.fail_json(msg=str(e))
+        module.fail_json(msg="Failed to get secret version", exception=scw_exception)
 
-    parameters = {
-        key: value for key, value in module.params.items() if value is not None
-    }
-    parameters["secret_id"] = secret_id
 
-    revision = parameters.pop("revision", None)
-    if revision is not None:
-        module.warn("revision is ignored when creating a secret version")
+def create(client: "Client", module: AnsibleModule, parameters: dict) -> None:
+    api = SecretV1Beta1API(client)
 
-    data = module.params.pop("data", None)
-    if data is None:
-        return module.fail_json(msg="data is required when creating a secret version")
+    if parameters.get("secret_id") is None:
+        secret = get_secret(api, name=parameters.pop("secret_name"))
+        parameters["secret_id"] = secret.id
 
-    parameters["data"] = base64.b64encode(data.encode()).decode()
+    parameters["data"] = base64.b64encode(parameters.get("data").encode()).decode()
 
-    secret_version = api.create_secret_version(**parameters)
+    if parameters.pop("force_new_version", False):
+        return create_secret_version(api, module, parameters)
 
-    module.exit_json(
-        changed=True,
-        msg=f"({parameters.get('secret_id')}) revision {secret_version.revision} has been created",
-        data=secret_version.__dict__,
-    )
+    try:
+        remote_model = get_latest_secret_version(api, **parameters)
+    except ScalewayException as scw_exception:
+        if scw_exception.status_code == 404:
+            return create_secret_version(api, module, parameters)
+        module.fail_json(msg="Failed to get secret version", exception=scw_exception)
+
+    parameters["revision"] = remote_model.revision
+    local_model = build_secret_version(parameters)
+    ansible_diff = build_ansible_diff(remote_model, local_model)
+    diff = remote_model.diff(local_model)
+
+    if len(diff) > 0:
+        parameters.pop("revision")
+        return create_secret_version(api, module, parameters)
+    else:
+        module.exit_json(
+            changed=False,
+            msg="latest secret version data is up to date",
+            diff=ansible_diff,
+        )
 
 
 def delete(client: "Client", module: AnsibleModule) -> None:
     api = SecretV1Beta1API(client)
 
     revision = module.params.get("revision")
+
     secret_id = module.params.get("secret_id")
+    if secret_id is None:
+        secret = get_secret(api, name=module.params.get("secret_name"))
+        secret_id = secret.id
 
-    if not secret_id:
-        try:
-            secret_model = get_secret(
-                api,
-                name=module.params.get("secret_name"),
+    try:
+        api.delete_secret_version(secret_id=secret_id, revision=revision)
+    except ScalewayException as scw_exception:
+        if scw_exception.status_code == 404:
+            module.exit_json(
+                changed=False,
+                msg=f"secret's version {revision} not found",
             )
-            secret_id = secret_model.id
-            module.params.pop("secret_name")
-        except Exception as e:
-            module.fail_json(msg=str(e))
-
-    api.delete_secret_version(secret_id=secret_id, revision=revision)
 
     module.exit_json(
         changed=True,
@@ -175,8 +209,19 @@ def delete(client: "Client", module: AnsibleModule) -> None:
 def run_module(client: "Client", module: AnsibleModule) -> None:
     state = module.params.pop("state")
 
+    parameters = {
+        key: value for key, value in module.params.items() if value is not None
+    }
+    parameters["region"] = client.default_region
+
     if state == "present":
-        create(client, module)
+        if parameters.pop("revision", None) is not None:
+            module.warn("revision is ignored when creating a secret version")
+
+        if module.check_mode:
+            create_check_mode(client, module, parameters)
+        else:
+            create(client, module, parameters)
     elif state == "absent":
         delete(client, module)
 
@@ -187,13 +232,17 @@ def main() -> None:
             state=dict(type="str", default="present", choices=["absent", "present"]),
             secret_id=dict(type="str", required=False),
             secret_name=dict(type="str", required=False),
-            project_id=dict(type="str", required=False),
-            tags=dict(type="list", required=False, elements="str"),
             description=dict(type="str", required=False),
             data=dict(type="str", required=False, no_log=True),
-            revision=dict(type="str", required=False, default="latest"),
+            revision=dict(type="str", required=False),
+            force_new_version=dict(type="bool", required=False, default=False),
         ),
         required_one_of=[["secret_id", "secret_name"]],
+        required_if=[
+            ["state", "present", ["data"]],
+            ["state", "absent", ["revision"]],
+        ],
+        supports_check_mode=True,
     )
 
     run_module(client, module)
