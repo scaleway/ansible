@@ -1,10 +1,13 @@
 import os
+import sys
 
+HAS_YAML = False
 try:
     import yaml
+
+    HAS_YAML = True
 except ImportError:
     pass
-import sys
 
 __version__: str = "integration"
 
@@ -21,11 +24,11 @@ possible_paths = [
 ]
 
 for path in possible_paths:
-    try:
-        if os.path.isfile(path):
+    if os.path.isfile(path) and HAS_YAML:
+        try:
             with open(path, "r") as file:
                 config = yaml.safe_load(file)
                 __version__ = config.get("version", "integration")
                 break
-    except (OSError, yaml.YAMLError):
-        continue
+        except yaml.YAMLError:
+            continue
