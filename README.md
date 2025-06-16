@@ -31,14 +31,17 @@ Authentication is handled with the `SCW_PROFILE` or the `SCW_ACCESS_KEY` and `SC
 
 Please check this [documentation](https://www.scaleway.com/en/docs/scaleway-sdk/reference-content/scaleway-configuration-file/) for detailed instructions on how to configure your Scaleway credentials.
 
-
 ## Installing the collection
 
+### Locally
+
+You can clone this repository and install the collection locally with `ansible-galaxy collection install .`
+
+### Galaxy
 
 ```sh
 ansible-galaxy collection install scaleway.scaleway
 ```
-
 
 You can also include it in a requirements.yml file and install it via `ansible-galaxy collection install -r requirements.yml`, using the format:
 
