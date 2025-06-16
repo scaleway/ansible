@@ -1,5 +1,9 @@
 import os
-import yaml
+
+try:
+    import yaml
+except ImportError:
+    pass
 import sys
 
 __version__: str = "integration"
