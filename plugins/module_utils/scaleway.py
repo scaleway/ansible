@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from typing import Any, Dict
 
-__metaclass__ = type
+from .version import __version__
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
 
@@ -174,5 +174,7 @@ def build_scaleway_client_and_module(argument_spec: dict, **kwargs: Any):
             msg="default_project_id or default_organization_id parameter must be set in the configuration"
             + " or via the SCW_DEFAULT_PROJECT_ID or SCW_DEFAULT_ORGANIZATION_ID environment variable"
         )
+
+    client.user_agent = f"scaleway-ansible/{__version__}"
 
     return client, module

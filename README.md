@@ -17,8 +17,7 @@ You can contact us on our [Slack community](https://slack.scaleway.com/).
 ```yaml
 plugin: scaleway.scaleway.scaleway
 profile: base-profile # your scaleway credentials profile
-host_attributes:
-  - public_ipv4
+hostnames:
   - hostname
   - id
 ```
