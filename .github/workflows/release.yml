@@ -26,9 +26,13 @@ jobs:
       - name: Install antsibull-changelog
         run: pip install antsibull-changelog
 
-      - name: Set galaxy.yml version
+      - name: Check galaxy.yml version match the tag
         run: |
-          sed -i -e "s/version:.*/version: ${{ github.ref_name }}/" galaxy.yml
+          VERSION=$(grep 'version:' galaxy.yml | awk '{print $2}')
+          if [[ "$VERSION" != "${{ github.ref_name }}" ]]; then
+            echo "galaxy.yml version does not match the tag: $VERSION != ${{ github.ref_name }}"
+            exit 1
+          fi
 
       - name: Build changelog
         run: antsibull-changelog release
