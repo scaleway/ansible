@@ -5,6 +5,9 @@ Community Scaleway Release Notes
 .. contents:: Topics
 
 
+v2.6.0
+======
+
 v2.5.0
 ======
 
