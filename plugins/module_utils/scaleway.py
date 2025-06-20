@@ -185,10 +185,13 @@ def object_to_dict(obj):
         return obj
 
 
-def build_scaleway_client_and_module(argument_spec: dict, **kwargs: Any):
-    module = AnsibleModule(argument_spec=argument_spec, **kwargs)
+class BuildException(Exception):
+    pass
+
+
+def build_scaleway_client() -> "Client":
     if not HAS_SCALEWAY_SDK:
-        module.fail_json(msg=missing_required_lib("scaleway"))
+        raise BuildException("scaleway SDK is not installed")
 
     client = Client.from_config_file_and_env(
         filepath=os.environ.get("SCW_CONFIG_PATH"),
@@ -196,17 +199,27 @@ def build_scaleway_client_and_module(argument_spec: dict, **kwargs: Any):
     )
     # handle a few client validation here because it is not done by the scaleway-sdk
     if client.default_region is None:
-        module.fail_json(
-            msg="default_region parameter must be set in the configuration"
+        raise BuildException(
+            "default_region parameter must be set in the configuration"
             + " or via the SCW_DEFAULT_REGION environment variable"
         )
 
     if client.default_project_id is None and client.default_organization_id is None:
-        module.fail_json(
-            msg="default_project_id or default_organization_id parameter must be set in the configuration"
+        raise BuildException(
+            "default_project_id or default_organization_id parameter must be set in the configuration"
             + " or via the SCW_DEFAULT_PROJECT_ID or SCW_DEFAULT_ORGANIZATION_ID environment variable"
         )
 
     client.user_agent = f"scaleway-ansible/{__version__}"
+
+    return client
+
+
+def build_scaleway_client_and_module(argument_spec: dict, **kwargs: Any):
+    module = AnsibleModule(argument_spec=argument_spec, **kwargs)
+    try:
+        client = build_scaleway_client()
+    except BuildException as e:
+        module.fail_json(msg=str(e))
 
     return client, module

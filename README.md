@@ -24,6 +24,35 @@ hostnames:
 
 `ansible-inventory -i scw.yml --list` will list all the hosts from the dynamic inventory.
 
+## Lookup
+
+* `scaleway.scaleway.scaleway_secret`: lookup plugin for Scaleway's Secrets
+
+**Usage example:**
+
+```yaml
+- hosts: localhost
+
+  vars:
+    secret_versions: "{{ lookup('scaleway.scaleway.scaleway_secret', 'secret-epic-lumiere', 'test') }}"
+
+  tasks:
+    - name: Debug secret versions
+      ansible.builtin.debug:
+        msg: "{{ secret_versions | split(',') | map('b64decode') }}"
+```
+
+will print the secret's secret data as a list:
+
+```shell
+ok: [localhost] => {
+    "msg": [
+        "test",
+        "abcd"
+    ]
+}
+```
+
 
 ## Authentication and Environment variables
 

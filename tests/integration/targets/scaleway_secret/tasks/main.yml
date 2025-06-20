@@ -58,6 +58,24 @@
       - secret_version.changed == True
       - secret_version.data.revision == 1
 
+- name: Lookup secret by name
+  ansible.builtin.set_fact:
+    secret_value: "{{ lookup('scaleway.scaleway.scaleway_secret', 'ansible-test-secret') }}"
+
+- name: Assert Secret Version lookup data
+  ansible.builtin.assert:
+    that:
+      - secret_value | b64decode == 'confidential data'
+
+- name: Lookup secret revision by id
+  ansible.builtin.set_fact:
+    secret_revision: "{{ lookup('scaleway.scaleway.scaleway_secret', '{{ secret.data.id }}', attribute='revision') }}"
+
+- name: Assert secret revision lookup data
+  ansible.builtin.assert:
+    that:
+      - secret_revision | string == "1" # ansible < 2.17 return a string
+
 - name: Create a secret version in check mode
   scaleway.scaleway.scaleway_secret_version:
     secret_id: "{{ secret.data.id }}"
