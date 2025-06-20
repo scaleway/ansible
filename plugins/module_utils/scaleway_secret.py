@@ -42,17 +42,18 @@ def get_secret(api: "SecretV1Beta1API", **kwargs) -> Secret:
     return build_secret(secret.__dict__)
 
 
-def get_latest_secret_version(api: "SecretV1Beta1API", **kwargs) -> SecretVersion:
+def get_secret_version(api: "SecretV1Beta1API", **kwargs) -> SecretVersion:
     """
     Get a secret version by secret_id and revision
     """
+    revision = kwargs.get("revision", "latest")
     secret_version = api.get_secret_version(
-        secret_id=kwargs["secret_id"], revision="latest"
+        secret_id=kwargs["secret_id"], revision=revision
     )
 
     secret_version_access = api.access_secret_version(
         secret_id=kwargs["secret_id"],
-        revision="latest",
+        revision=revision,
     )
 
     return build_secret_version(

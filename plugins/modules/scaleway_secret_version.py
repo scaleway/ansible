@@ -94,7 +94,7 @@ from ..module_utils.scaleway_secret import (
     get_secret,
     build_ansible_diff,
     build_secret_version,
-    get_latest_secret_version,
+    get_secret_version,
 )
 from ansible.module_utils.basic import AnsibleModule
 
@@ -131,7 +131,7 @@ def create_check_mode(
     parameters["revision"] = "latest"
 
     try:
-        remote_model = get_latest_secret_version(api, **parameters)
+        remote_model = get_secret_version(api, **parameters)
         module.exit_json(
             changed=False,
             data=remote_model.__dict__,
@@ -159,7 +159,7 @@ def create(client: "Client", module: AnsibleModule, parameters: dict) -> None:
         return create_secret_version(api, module, parameters)
 
     try:
-        remote_model = get_latest_secret_version(api, **parameters)
+        remote_model = get_secret_version(api, **parameters)
     except ScalewayException as scw_exception:
         if scw_exception.status_code == 404:
             return create_secret_version(api, module, parameters)
