@@ -24,40 +24,40 @@ jobs:
           - stable-2.18
           - stable-2.19
     env:
-     ansible-collections-path: "./ansible_collections/scaleway/scaleway"
+      ansible-collections-path: "./ansible_collections/scaleway/scaleway"
 
     steps:
-        - name: Create directory
-          run: |
-            mkdir -p ${{ env.ansible-collections-path }}
+      - name: Create directory
+        run: |
+          mkdir -p ${{ env.ansible-collections-path }}
 
-        - name: Checkout the repo
-          uses: actions/checkout@v4
-          with:
-            path: ${{ env.ansible-collections-path }}
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.ansible-collections-path }}
 
-        - name: Setup Python and install ansible
-          uses: actions/setup-python@v5
-          with:
-            python-version: 3.11
+      - name: Setup Python and install ansible
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
 
-        - name: Install ansible
-          run: |
-            python -m pip install \
-              https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz \
-              --disable-pip-version-check
+      - name: Install ansible
+        run: |
+          python -m pip install \
+            https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz \
+            --disable-pip-version-check
 
-        - name: Create scw config
-          run: |
-            mkdir -p $HOME/.config/scw
-            cat << EOF > $HOME/.config/scw/config.yaml
-            access_key: ${{ secrets.SCW_ACCESS_KEY }}
-            secret_key: ${{ secrets.SCW_SECRET_KEY }}
-            default_region: ${{ secrets.SCW_DEFAULT_REGION }}
-            default_project_id: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
-            EOF
+      - name: Create scw config
+        run: |
+          mkdir -p $HOME/.config/scw
+          cat << EOF > $HOME/.config/scw/config.yaml
+          access_key: ${{ secrets.SCW_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCW_SECRET_KEY }}
+          default_region: ${{ secrets.SCW_DEFAULT_REGION }}
+          default_project_id: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
+          EOF
 
-        - name: Run integration tests with ansible ${{ matrix.ansible-version }}
-          working-directory: ${{ env.ansible-collections-path }}
-          run: |
-            ansible-test integration -v --requirements ${{ matrix.module }}
+      - name: Run integration tests with ansible ${{ matrix.ansible-version }}
+        working-directory: ${{ env.ansible-collections-path }}
+        run: |
+          ansible-test integration -v --requirements ${{ matrix.module }}
