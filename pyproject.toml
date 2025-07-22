@@ -3,6 +3,9 @@ name = "ansible"
 version = "2.7.0"
 requires-python = ">=3.8"
 
+[tool.poetry]
+package-mode = false
+
 [tool.poetry.group.dev.dependencies]
 ty = "^0.0.1a15"
 pyrefly = "^0.24.2"
