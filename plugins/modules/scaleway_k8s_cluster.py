@@ -375,10 +375,7 @@ def main() -> None:
             required=False,
             elements="str",
         ),
-        private_network_id=dict(
-            type="str",
-            required=True
-        )
+        private_network_id=dict(type="str", required=True),
     )
 
     module = AnsibleModule(

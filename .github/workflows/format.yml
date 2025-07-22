@@ -1,0 +1,17 @@
+name: Format
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+
+jobs:
+  ruff:
+    name: Format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v2
+        with:
+          args: "format --check"
