@@ -1,31 +1,30 @@
-name: Integration tests
+# We only support ansible-core versions that are not EOL
+# https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
+
+name: units
 
 on:
-  workflow_call:
-  workflow_dispatch:
   pull_request:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  integration:
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
+  units:
+    timeout-minutes: 30
+    name: Units (Ⓐ$${{ matrix.ansible-version }})
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
-        module:
-          - scaleway_secret
-
         ansible-version:
+          - stable-2.19
           - stable-2.17
           - stable-2.18
-          - stable-2.19
     env:
       ansible-collections-path: "./ansible_collections/scaleway/scaleway"
 
+    runs-on: ubuntu-latest
     steps:
       - name: Create directory
         run: |
@@ -47,17 +46,7 @@ jobs:
             https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz \
             --disable-pip-version-check
 
-      - name: Create scw config
-        run: |
-          mkdir -p $HOME/.config/scw
-          cat << EOF > $HOME/.config/scw/config.yaml
-          access_key: ${{ secrets.SCW_ACCESS_KEY }}
-          secret_key: ${{ secrets.SCW_SECRET_KEY }}
-          default_region: ${{ secrets.SCW_DEFAULT_REGION }}
-          default_project_id: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
-          EOF
-
-      - name: Run integration tests with ansible ${{ matrix.ansible-version }}
+      - name: Run unit tests with ansible ${{ matrix.ansible-version }}
         working-directory: ${{ env.ansible-collections-path }}
         run: |
-          ansible-test integration -v --requirements ${{ matrix.module }}
+          ansible-test units -v --requirements

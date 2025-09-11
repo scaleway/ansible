@@ -46,10 +46,14 @@ options:
         description: name
         type: str
         required: false
+    enable_vpc:
+        description: Whether or not to enable VPC access
+        type: bool
+        required: true
     project_id:
         description: project_id
         type: str
-        required: false
+        required: true
 """
 
 EXAMPLES = r"""
@@ -57,28 +61,111 @@ EXAMPLES = r"""
   scaleway.scaleway.scaleway_applesilicon_server:
     access_key: "{{ scw_access_key }}"
     secret_key: "{{ scw_secret_key }}"
-    type_: "aaaaaa"
+    project_id: "{{ scw_project_id }}"
+    type_: "M2-M"
+    enable_vpc: false
 """
 
 RETURN = r"""
 ---
-server:
-    description: The server information
-    returned: when I(state=present)
+id:
+    description: The unique identifier of the server.
+    returned: always
+    type: str
+    sample: "00000000-0000-0000-0000-000000000000"
+
+type_:
+    description: The type of the server, such as the instance class or size.
+    returned: always
+    type: str
+    sample: "M2-M"
+
+name:
+    description: The name of the server.
+    returned: always
+    type: str
+    sample: "my-applesilicon-server"
+
+project_id:
+    description: The unique identifier of the project to which the server belongs.
+    returned: always
+    type: str
+    sample: "00000000-0000-0000-0000-000000000000"
+
+organization_id:
+    description: The unique identifier of the organization under which the server resides.
+    returned: always
+    type: str
+    sample: "00000000-0000-0000-0000-000000000000"
+
+ip:
+    description: The IP address assigned to the server.
+    returned: always
+    type: str
+    sample: "192.168.1.100"
+
+vnc_url:
+    description: The VNC URL for accessing the server's console (if applicable).
+    returned: always
+    type: str
+    sample: "vnc://192.168.1.100:5900"
+
+status:
+    description: The current status of the server (e.g., "starting", "running", "stopped").
+    returned: always
+    type: str
+    sample: "starting"
+
+os:
+    description: The initially installed OS, this does not necessarily reflect the current OS version
+    returned: always
     type: dict
-    sample:
-        id: 00000000-0000-0000-0000-000000000000
-        type_: "aaaaaa"
-        name: "aaaaaa"
-        project_id: 00000000-0000-0000-0000-000000000000
-        organization_id: 00000000-0000-0000-0000-000000000000
-        ip: "aaaaaa"
-        vnc_url: "aaaaaa"
-        status: starting
-        created_at: "aaaaaa"
-        updated_at: "aaaaaa"
-        deletable_at: "aaaaaa"
-        zone: "aaaaaa"
+    sample: {
+                "compatible_server_types": [
+                    "M1-M",
+                    "M2-M",
+                    "M2-L",
+                    "M4-S"
+                ],
+                "family": "Sequoia",
+                "id": "367b9c18-d57f-4c9a-bcea-9e1fda66fc70",
+                "image_url": "https://scw-apple-silicon.s3.fr-par.scw.cloud/scw-console/os/macos-sequoia.png",
+                "is_beta": false,
+                "label": "macOS Sequoia 15.2",
+                "name": "macos-sequoia-15.2",
+                "version": "15.2",
+                "xcode_version": "16"
+            }
+
+created_at:
+    description: The UTC timestamp of when the server was created.
+    returned: always
+    type: str
+    sample: "2025-02-24T12:00:00Z"
+
+updated_at:
+    description: The UTC timestamp of the last update to the server.
+    returned: always
+    type: str
+    sample: "2025-02-24T12:30:00Z"
+
+deletable_at:
+    description: The UTC timestamp of when the server can be deleted (if applicable).
+    returned: always
+    type: str
+    sample: "2025-12-24T12:00:00Z"
+
+zone:
+    description: The zone where the server is located (e.g., "fr-par-1" for Paris).
+    returned: always
+    type: str
+    sample: "fr-par-1"
+
+enable_vpc:
+    description: Whether the server is part of a Virtual Private Cloud (VPC).
+    returned: always
+    type: bool
+    sample: false
 """
 
 from ansible.module_utils.basic import (
@@ -91,6 +178,7 @@ from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import 
     scaleway_get_client_from_module,
     scaleway_pop_client_params,
     scaleway_pop_waitable_resource_params,
+    object_to_dict,
 )
 
 try:
@@ -120,12 +208,11 @@ def create(module: AnsibleModule, client: "Client") -> None:
     not_none_params = {
         key: value for key, value in module.params.items() if value is not None
     }
+    not_none_params["project_id"] = client.default_project_id
     resource = api.create_server(**not_none_params)
-    resource = api.wait_for_server(
-        server_id=resource.id, region=module.params["region"]
-    )
+    resource = api.wait_for_server(server_id=resource.id, zone=resource.zone)
 
-    module.exit_json(changed=True, data=resource.__dict__)
+    module.exit_json(changed=True, data=object_to_dict(resource))
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
@@ -135,27 +222,31 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     name = module.params.pop("name", None)
 
     if id is not None:
-        resource = api.get_server(server_id=id, region=module.params["region"])
+        resource = api.get_server(server_id=id, zone=module.params["zone"])
     elif name is not None:
-        resources = api.list_servers_all(name=name, region=module.params["region"])
-        if len(resources) == 0:
+        resources = api.list_servers_all(zone=module.params["zone"])
+        final_resources = []
+        for resource in resources:
+            if resource.name == name:
+                final_resources.append(resource)
+        if len(final_resources) == 0:
             module.exit_json(msg="No server found with name {name}")
-        elif len(resources) > 1:
+        elif len(final_resources) > 1:
             module.exit_json(msg="More than one server found with name {name}")
         else:
-            resource = resources[0]
+            resource = final_resources[0]
     else:
         module.fail_json(msg="id is required")
 
     if module.check_mode:
         module.exit_json(changed=True)
 
-    api.delete_server(server_id=resource.id, region=module.params["region"])
+    api.delete_server(server_id=resource.id, zone=module.params["zone"])
 
     try:
-        api.wait_for_server(server_id=resource.id, region=module.params["region"])
+        api.wait_for_server(server_id=resource.id, zone=module.params["zone"])
     except ScalewayException as e:
-        if e.status_code != 404:
+        if e.status_code != 403:
             raise e
 
     module.exit_json(
@@ -197,7 +288,11 @@ def main() -> None:
         ),
         project_id=dict(
             type="str",
-            required=False,
+            required=True,
+        ),
+        enable_vpc=dict(
+            type="bool",
+            required=True,
         ),
     )
 

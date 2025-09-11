@@ -4,12 +4,44 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import absolute_import, division, print_function
-
+import os
+import sys
 from typing import Any, Dict
 
-__metaclass__ = type
-
 from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
+
+HAS_YAML = False
+try:
+    import yaml
+
+    HAS_YAML = True
+except ImportError:
+    pass
+
+__version__: str = "integration"
+
+# Try to find galaxy.yml in different possible locations
+possible_paths = [
+    # Development environment
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "galaxy.yml"),
+    # Runtime environment (when installed as collection)
+    os.path.join(
+        os.path.dirname(sys.modules[__name__].__file__), "..", "..", "..", "galaxy.yml"
+    ),
+    # Fallback to current directory
+    "galaxy.yml",
+]
+
+for path in possible_paths:
+    if os.path.isfile(path) and HAS_YAML:
+        try:
+            with open(path, "r") as file:
+                config = yaml.safe_load(file)
+                __version__ = config.get("version", "integration")
+                break
+        except yaml.YAMLError:
+            continue
+
 
 try:
     from scaleway import Client
@@ -140,3 +172,54 @@ def scaleway_pop_waitable_resource_params(module: AnsibleModule) -> None:
     for param in params:
         if param in module.params:
             module.params.pop(param)
+
+
+def object_to_dict(obj):
+    if isinstance(obj, list):
+        return [object_to_dict(item) for item in obj]
+    elif isinstance(obj, dict):
+        return {key: object_to_dict(value) for key, value in obj.items()}
+    elif hasattr(obj, "__dict__"):
+        return {key: object_to_dict(value) for key, value in obj.__dict__.items()}
+    else:
+        return obj
+
+
+class BuildException(Exception):
+    pass
+
+
+def build_scaleway_client() -> "Client":
+    if not HAS_SCALEWAY_SDK:
+        raise BuildException("scaleway SDK is not installed")
+
+    client = Client.from_config_file_and_env(
+        filepath=os.environ.get("SCW_CONFIG_PATH"),
+        profile_name=os.environ.get("SCW_PROFILE"),
+    )
+    # handle a few client validation here because it is not done by the scaleway-sdk
+    if client.default_region is None:
+        raise BuildException(
+            "default_region parameter must be set in the configuration"
+            + " or via the SCW_DEFAULT_REGION environment variable"
+        )
+
+    if client.default_project_id is None and client.default_organization_id is None:
+        raise BuildException(
+            "default_project_id or default_organization_id parameter must be set in the configuration"
+            + " or via the SCW_DEFAULT_PROJECT_ID or SCW_DEFAULT_ORGANIZATION_ID environment variable"
+        )
+
+    client.user_agent = f"scaleway-ansible/{__version__}"
+
+    return client
+
+
+def build_scaleway_client_and_module(argument_spec: dict, **kwargs: Any):
+    module = AnsibleModule(argument_spec=argument_spec, **kwargs)
+    try:
+        client = build_scaleway_client()
+    except BuildException as e:
+        module.fail_json(msg=str(e))
+
+    return client, module

@@ -1,0 +1,7 @@
+resource_name: "ansible-test-private-network"
+resource_region: "fr-par"
+resource_tags:
+  - "tag1"
+  - "tag2"
+resource_subnets:
+  - "1.234.56.78/9"

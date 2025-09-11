@@ -34,8 +34,8 @@ options:
         description: private_network_id
         type: str
         required: false
-    zone:
-        description: zone
+    region:
+        description: region
         type: str
         required: false
     name:
@@ -76,7 +76,7 @@ private_network:
         name: "aaaaaa"
         organization_id: 00000000-0000-0000-0000-000000000000
         project_id: 00000000-0000-0000-0000-000000000000
-        zone: "aaaaaa"
+        region: "aaaaaa"
         tags:
             - aaaaaa
             - bbbbbb
@@ -91,17 +91,18 @@ from ansible.module_utils.basic import (
     AnsibleModule,
     missing_required_lib,
 )
-from ansible_collections.scaleway.scaleway.plugins.module_utils.scaleway import (
+from ..module_utils.scaleway import (
     scaleway_argument_spec,
     scaleway_waitable_resource_argument_spec,
     scaleway_get_client_from_module,
     scaleway_pop_client_params,
     scaleway_pop_waitable_resource_params,
+    object_to_dict,
 )
 
 try:
     from scaleway import Client
-    from scaleway.vpc.v1 import VpcV1API
+    from scaleway.vpc.v2 import VpcV2API
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -109,7 +110,7 @@ except ImportError:
 
 
 def create(module: AnsibleModule, client: "Client") -> None:
-    api = VpcV1API(client)
+    api = VpcV2API(client)
 
     id = module.params.pop("id", None)
     if id is not None:
@@ -128,11 +129,11 @@ def create(module: AnsibleModule, client: "Client") -> None:
     }
     resource = api.create_private_network(**not_none_params)
 
-    module.exit_json(changed=True, data=resource.__dict__)
+    module.exit_json(changed=True, data=object_to_dict(resource))
 
 
 def delete(module: AnsibleModule, client: "Client") -> None:
-    api = VpcV1API(client)
+    api = VpcV2API(client)
 
     id = module.params.pop("id", None)
     name = module.params.pop("name", None)
@@ -171,8 +172,10 @@ def core(module: AnsibleModule) -> None:
     client = scaleway_get_client_from_module(module)
 
     state = module.params.pop("state")
+    project_id = module.params["project_id"]
     scaleway_pop_client_params(module)
     scaleway_pop_waitable_resource_params(module)
+    module.params["project_id"] = project_id
 
     if state == "present":
         create(module, client)
@@ -186,7 +189,7 @@ def main() -> None:
     argument_spec.update(
         state=dict(type="str", default="present", choices=["absent", "present"]),
         private_network_id=dict(type="str"),
-        zone=dict(
+        region=dict(
             type="str",
             required=False,
         ),

@@ -1,0 +1,60 @@
+---
+- name: Test VPC Private Network
+  block:
+    - name: Ensure Access Key is provided
+      ansible.builtin.fail:
+        msg: scw_access_key should be defined in tests/integration/integration_config.yml
+      when:
+        - scw_access_key is not defined
+        - scw_access_key | length == 0
+
+    - name: Ensure Secret Key is provided
+      ansible.builtin.fail:
+        msg: scw_secret_key should be defined in tests/integration/integration_config.yml
+      when:
+        - scw_secret_key is not defined
+        - scw_secret_key | length == 0
+
+    - name: Ensure Default Project ID is provided
+      ansible.builtin.fail:
+        msg: scw_default_project_id should be defined in tests/integration/integration_config.yml
+      when:
+        - scw_default_project_id is not defined
+        - scw_default_project_id | length == 0
+
+    - name: Create Private Network
+      scaleway.scaleway.scaleway_vpc_private_network:
+        name: "{{ resource_name }}"
+        region: "{{ resource_region }}"
+        project_id: "{{ scw_default_project_id }}"
+        access_key: "{{ scw_access_key }}"
+        secret_key: "{{ scw_secret_key }}"
+        state: present
+        tags: "{{ resource_tags }}"
+        subnets: "{{ resource_subnets }}"
+      register: integration_vpc_pn_creation
+
+    - name: Delete Private Network
+      scaleway.scaleway.scaleway_vpc_private_network:
+        name: "{{ resource_name }}"
+        region: "{{ resource_region }}"
+        project_id: "{{ scw_default_project_id }}"
+        access_key: "{{ scw_access_key }}"
+        secret_key: "{{ scw_secret_key }}"
+        state: absent
+        tags: "{{ resource_tags }}"
+        subnets: "{{ resource_subnets }}"
+      register: integration_vpc_pn_deletion
+
+    - name: Create Private Network (Check)
+      check_mode: true
+      scaleway.scaleway.scaleway_vpc_private_network:
+        name: "{{ resource_name }}"
+        region: "{{ resource_region }}"
+        project_id: "{{ scw_default_project_id }}"
+        access_key: "{{ scw_access_key }}"
+        secret_key: "{{ scw_secret_key }}"
+        state: present
+        tags: "{{ resource_tags }}"
+        subnets: "{{ resource_subnets }}"
+      register: integration_vpc_pn_creation

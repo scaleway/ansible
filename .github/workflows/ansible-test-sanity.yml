@@ -1,15 +1,13 @@
 # We only support ansible-core versions that are not EOL
 # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
 
-name: sanity
+name: Sanity
 
 on:
   pull_request:
   push:
     branches:
       - main
-  # schedule:
-  #   - cron: '0 6 * * *'
   workflow_dispatch:
 
 jobs:
@@ -19,10 +17,9 @@ jobs:
     strategy:
       matrix:
         ansible:
-          - stable-2.16
+          - stable-2.19
           - stable-2.17
           - stable-2.18
-          - devel
     runs-on: ubuntu-latest
     steps:
       - name: Perform testing
