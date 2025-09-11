@@ -247,6 +247,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         forbidden_characters = [
             "-",
             " ",
+            ":",
         ]
         for forbidden_character in forbidden_characters:
             tag = tag.strip().replace(forbidden_character, "_")
