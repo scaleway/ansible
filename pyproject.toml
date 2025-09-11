@@ -9,6 +9,10 @@ package-mode = false
 [tool.poetry.group.dev.dependencies]
 ty = "^0.0.1a15"
 pyrefly = "^0.24.2"
+ruff = "^0.12.4"
+
+[tool.ruff.lint]
+ignore = ["E402"]
 
 [tool.ty.rules]
 unresolved-import = "ignore"
