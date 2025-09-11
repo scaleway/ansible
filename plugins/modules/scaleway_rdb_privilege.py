@@ -204,7 +204,7 @@ def main() -> None:
         permission=dict(
             type="str",
             required=False,
-            defaut="readonly",
+            default="readonly",
             choices=["readonly", "readwrite", "all", "custom", "none"],
         ),
         region=dict(
