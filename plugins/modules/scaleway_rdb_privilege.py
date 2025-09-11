@@ -146,7 +146,9 @@ def delete(module: AnsibleModule, client: "Client") -> None:
     if resources.total_count == 0:
         module.exit_json(changed=False)
     elif resources.total_count > 1:
-        module.exit_json(msg="More than one user privilege found with username {user_name} on database {database_name}")
+        module.exit_json(
+            msg="More than one user privilege found with username {user_name} on database {database_name}"
+        )
     else:
         resource = resources.privileges[0]
 

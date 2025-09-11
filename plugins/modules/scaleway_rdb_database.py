@@ -92,7 +92,11 @@ except ImportError:
 def create(module: AnsibleModule, client: "Client") -> None:
     api = RdbV1API(client)
 
-    resources = api.list_databases(name=module.params["name"], instance_id=module.params["instance_id"], region=module.params["region"])
+    resources = api.list_databases(
+        name=module.params["name"],
+        instance_id=module.params["instance_id"],
+        region=module.params["region"],
+    )
 
     if resources.total_count > 0:
         if module.check_mode:
@@ -118,7 +122,11 @@ def delete(module: AnsibleModule, client: "Client") -> None:
 
     name = module.params["name"]
 
-    resources = api.list_databases(name=name, instance_id=module.params["instance_id"], region=module.params["region"])
+    resources = api.list_databases(
+        name=name,
+        instance_id=module.params["instance_id"],
+        region=module.params["region"],
+    )
     if resources.total_count == 0:
         module.exit_json(msg="No database found with name {name}")
     elif resources.total_count > 1:
@@ -130,7 +138,11 @@ def delete(module: AnsibleModule, client: "Client") -> None:
         module.exit_json(changed=True)
 
     try:
-        api.delete_database(name=name, instance_id=module.params["instance_id"], region=module.params["region"])
+        api.delete_database(
+            name=name,
+            instance_id=module.params["instance_id"],
+            region=module.params["region"],
+        )
     except ScalewayException as e:
         if e.status_code != 404:
             raise e
