@@ -1,6 +1,8 @@
 from dataclasses import field, dataclass
 from abc import ABC, abstractmethod
 
+from scaleway.ipam.v1 import IpamV1API, IP
+
 _ALLOWED_FILE_NAME_SUFFIXES = (
     "scaleway.yaml",
     "scaleway.yml",
@@ -11,7 +13,8 @@ _ALLOWED_FILE_NAME_SUFFIXES = (
 try:
     from scaleway_core.bridge import Zone
     from scaleway import Client, ScalewayException
-    from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API
+    from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API, ApplesiliconV1Alpha1PrivateNetworkAPI, \
+    ServerPrivateNetworkStatus
     from scaleway.applesilicon.v1alpha1 import Server as ApplesiliconServer
     from scaleway.baremetal.v1 import BaremetalV1API, IPVersion as BaremetalIPVersion
     from scaleway.baremetal.v1 import Server as BaremetalServer
@@ -35,6 +38,7 @@ class _Host(ABC):
     public_ipv4: list[str] = field(default_factory=list)
     private_ipv4: list[str] = field(default_factory=list)
     public_ipv6: list[str] = field(default_factory=list)
+    private_ipv6: list[str] = field(default_factory=list)
 
     @abstractmethod
     def populate_network(self, server, api):
@@ -46,7 +50,7 @@ class _InstanceHost(_Host):
     public_dns: str | None = None
     private_dns: str | None = None
 
-    def populate_network(self, server: "InstanceServer", api: "InstanceV1API"):
+    def populate_network(self, server: "InstanceServer", client: "Client"):
         if server.public_ip:
             self.public_ipv4.append(server.public_ip.address)
         if server.private_ip:
@@ -59,9 +63,40 @@ class _InstanceHost(_Host):
         self.private_dns = f"{server.id}.priv.instances.scw.cloud"
 
 
+from dataclasses import dataclass, field
+from typing import List
+
 @dataclass
 class _ApplesiliconHost(_Host):
-    def populate_network(self, server: "ApplesiliconServer", api: "ApplesiliconV1Alpha1API"):
+    def populate_network(self, server: "ApplesiliconServer", client: "Client") -> None:
+        if server.ip:
+            self.public_ipv4.append(server.ip)
+        if server.vpc_status == ServerPrivateNetworkStatus.VPC_DISABLED:
+            return
+
+        applesilicon_api = ApplesiliconV1Alpha1PrivateNetworkAPI(client=client)
+        ipam_api = IpamV1API(client=client)
+
+        private_networks = applesilicon_api.list_server_private_networks_all(server_id=server.id)
+
+        ips: List[IP] = [
+            ip
+            for pn in private_networks
+            for ip in ipam_api.list_i_ps_all(resource_id=pn.id, attached=True)
+        ]
+
+        self.private_ipv4.extend(ip.address.split("/")[0] for ip in ips if not ip.is_ipv6)
+        self.private_ipv6.extend(ip.address.split("/")[0] for ip in ips if ip.is_ipv6)
+
+@dataclass
+class _InstanceServerHost(_Host):
+    public_dns: str | None = None
+    private_dns: str | None = None
+    def populate_network(self, server: "InstanceServer", client: "Client") -> None:
+        if server.public_ip:
+            self.public_ipv4.append(server.public_ip.address)
+        if server.private_ip:
+            if server.private_ip
 
 
 
