@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List
 
-from scaleway.k8s.v1.tests.test_k8s_sk import private_network
 
 _ALLOWED_FILE_NAME_SUFFIXES = (
     "scaleway.yaml",
@@ -104,6 +103,9 @@ class _ElasticMetalHost(_Host):
             target_list = self.public_ipv4 if ip.version.lower() == "ipv4" else self.public_ipv6
             target_list.append(ip.address)
 
+        has_private_network = any(opt.name == "Private Network" for opt in server.options)
+        if not has_private_network:
+            return
         baremetal_pn_api = BaremetalV1PrivateNetworkAPI(client=client)
         private_networks = baremetal_pn_api.list_server_private_networks_all(server_id=server.id)
         ipam_api = IpamV1API(client=client)
@@ -115,6 +117,17 @@ class _ElasticMetalHost(_Host):
 
         self.private_ipv4.extend(ip.address.split("/")[0] for ip in ips if not ip.is_ipv6)
         self.private_ipv6.extend(ip.address.split("/")[0] for ip in ips if ip.is_ipv6)
+
+class _DediboxHost(_Host):
+    public_dns: list[str] = []
+    def populate_network(self, server: "DediboxServer", client: "Client") -> None:
+        for interface in server.interfaces or []:
+            for ip in interface.ips or []:
+                target_list_ip = self.public_ipv4 if ip.version == DediboxIPVersion.IPV4 else self.private_ipv6
+                target_list_ip.append(ip.address)
+                if ip.reverse:
+                    self.public_dns.append(ip.reverse)
+
 
 
 
