@@ -63,6 +63,19 @@ class _Host(ABC):
     def populate_network(self, server, client: Client) -> None:
         """Extract IPs/DNS from the Scaleway SDK object."""
 
+    def _populate_private_network(self, client: Client, private_networks_id: list[str]) -> None:
+        """Fetch private IPs from IPAM api."""
+        ipam_api = IpamV1API(client=client)
+        ips: List[IP] = [
+            ip
+            for pn in private_networks_id
+            for ip in ipam_api.list_i_ps_all(resource_id=pn.id, attached=True)
+        ]
+
+        self.private_ipv4.extend(ip.address.split("/")[0] for ip in ips if not ip.is_ipv6)
+        self.private_ipv6.extend(ip.address.split("/")[0] for ip in ips if ip.is_ipv6)
+
+
 
 # ---------------------------------------------------------------------------
 # Product-specific subclasses
@@ -78,17 +91,9 @@ class _ApplesiliconHost(_Host):
             return
 
         applesilicon_api = ApplesiliconV1Alpha1PrivateNetworkAPI(client=client)
-        ipam_api = IpamV1API(client=client)
 
         private_networks = applesilicon_api.list_server_private_networks_all(server_id=server.id)
-        ips: List[IP] = [
-            ip
-            for pn in private_networks
-            for ip in ipam_api.list_i_ps_all(resource_id=pn.id, attached=True)
-        ]
-
-        self.private_ipv4.extend(ip.address.split("/")[0] for ip in ips if not ip.is_ipv6)
-        self.private_ipv6.extend(ip.address.split("/")[0] for ip in ips if ip.is_ipv6)
+        self._populate_private_network(client, private_networks)
 
 
 @dataclass
@@ -106,15 +111,7 @@ class _InstanceServerHost(_Host):
             else:
                 self.public_ipv6.append(ip.address)
 
-        ipam_api = IpamV1API(client=client)
-        ips: List[IP] = [
-            ip
-            for pn in server.private_nics
-            for ip in ipam_api.list_i_ps_all(resource_id=pn.id, attached=True)
-        ]
-
-        self.private_ipv4.extend(ip.address.split("/")[0] for ip in ips if not ip.is_ipv6)
-        self.private_ipv6.extend(ip.address.split("/")[0] for ip in ips if ip.is_ipv6)
+        self._populate_private_network(client, [pn.id for pn in server.private_nics])
 
 
 @dataclass
@@ -129,17 +126,9 @@ class _ElasticMetalHost(_Host):
             return
 
         baremetal_pn_api = BaremetalV1PrivateNetworkAPI(client=client)
-        ipam_api = IpamV1API(client=client)
 
         private_networks = baremetal_pn_api.list_server_private_networks_all(server_id=server.id)
-        ips: List[IP] = [
-            ip
-            for pn in private_networks
-            for ip in ipam_api.list_i_ps_all(resource_id=pn.id, attached=True)
-        ]
-
-        self.private_ipv4.extend(ip.address.split("/")[0] for ip in ips if not ip.is_ipv6)
-        self.private_ipv6.extend(ip.address.split("/")[0] for ip in ips if ip.is_ipv6)
+        self._populate_private_network(client, private_networks)
 
 
 @dataclass
