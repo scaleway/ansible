@@ -2,14 +2,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional, Any
 
-_ALLOWED_FILE_NAME_SUFFIXES = (
-    "scaleway.yaml",
-    "scaleway.yml",
-    "scw.yaml",
-    "scw.yml",
-)
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
+from ansible.errors import AnsibleError
 
 try:
     from scaleway_core.bridge import Zone
@@ -42,6 +38,8 @@ try:
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
+    ''' TO DO create a method to check_sdk '''
+
 
 
 @dataclass
@@ -49,15 +47,15 @@ class _Host(ABC):
     """Abstract base host object with common fields and network handling."""
 
     id: str
-    tags: List[str]
+    tags: list[str]
     zone: Zone
     state: ServerState
     hostname: str
 
-    public_ipv4: List[str] = field(default_factory=list)
-    private_ipv4: List[str] = field(default_factory=list)
-    public_ipv6: List[str] = field(default_factory=list)
-    private_ipv6: List[str] = field(default_factory=list)
+    public_ipv4: list[str] = field(default_factory=list)
+    private_ipv4: list[str] = field(default_factory=list)
+    public_ipv6: list[str] = field(default_factory=list)
+    private_ipv6: list[str] = field(default_factory=list)
 
     @abstractmethod
     def populate_network(self, server, client: Client) -> None:
@@ -66,7 +64,7 @@ class _Host(ABC):
     def _populate_private_network(self, client: Client, private_networks_id: list[str]) -> None:
         """Fetch private IPs from IPAM api."""
         ipam_api = IpamV1API(client=client)
-        ips: List[IP] = [
+        ips: list[IP] = [
             ip
             for pn in private_networks_id
             for ip in ipam_api.list_i_ps_all(resource_id=pn.id, attached=True)
@@ -133,7 +131,7 @@ class _ElasticMetalHost(_Host):
 
 @dataclass
 class _DediboxHost(_Host):
-    public_dns: List[str] = field(default_factory=list)
+    public_dns: list[str] = field(default_factory=list)
 
     def populate_network(self, server: DediboxServer, client: Client) -> None:
         for interface in server.interfaces or []:
@@ -142,3 +140,72 @@ class _DediboxHost(_Host):
                 target_list_ip.append(ip.address)
                 if ip.reverse:
                     self.public_dns.append(ip.reverse)
+
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
+    NAME = "scaleway.scaleway.scaleway"
+    _ALLOWED_FILE_NAME_SUFFIXES = (
+        "scaleway.yaml",
+        "scaleway.yml",
+        "scw.yaml",
+        "scw.yml",
+    )
+    def verify_file(self, path: str) -> bool:
+        """ return true/false if this is possibly a valid file for this plugin to consume """
+        ''' source: https://docs.ansible.com/ansible/latest/dev_guide/developing_inventory.html#verify-file-method '''
+        valid = False
+        if super(InventoryModule, self).verify_file(path):
+            if path.endswith(self._ALLOWED_FILE_NAME_SUFFIXES):
+                valid = True
+        return valid
+
+    def get_cached_result(self, path: str, cache: bool) -> tuple[bool, Optional[Any]]:
+        if not cache:
+            return False, None
+        if not self.get_option("cache"):
+            return False, None
+
+        cache_key = self.get_cache_key(path)
+        try:
+            cached_result = self._cache[cache_key]
+        except KeyError: # no cache (expires or missing)
+            return False, None
+        return True, cached_result
+
+    def parse(self, inventory, loader, path, cache=True):
+        """ Parse a file into a dict """
+        super(InventoryModule, self).parse(inventory, loader, path, cache)
+        self._read_config_data(path)  # Loads config + auto-loads cache plugin
+
+        # Cache handling
+        use_cached, cached_result = self.get_cached_result(path, cache)
+
+        # Use cache
+        if not use_cached:
+            self.populate(cached_result)
+            return
+
+        # Fetch fresh data
+        try:
+            all_hosts = self.get_inventory() #TODO implementation
+        except Exception as e:
+            raise AnsibleError(f"Failed to query Scaleway API: {e}")
+
+        # Update cache
+        cache_key = self.get_cache_key(path)
+        self._cache[cache_key] = all_hosts
+
+        self.populate(all_hosts)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
