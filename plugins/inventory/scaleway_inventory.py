@@ -15,15 +15,11 @@ try:
     from scaleway_core.bridge import Zone
     from scaleway import Client, ScalewayException
     from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API, ApplesiliconV1Alpha1PrivateNetworkAPI, \
-    ServerPrivateNetworkStatus
-    from scaleway.applesilicon.v1alpha1 import Server as ApplesiliconServer
+    ServerPrivateNetworkStatus, Server as ApplesiliconServer
     from scaleway.baremetal.v1 import BaremetalV1API, IPVersion as BaremetalIPVersion, IPVersion, \
-    BaremetalV1PrivateNetworkAPI
-    from scaleway.baremetal.v1 import Server as BaremetalServer
-    from scaleway.instance.v1 import InstanceV1API, ServerState
-    from scaleway.instance.v1 import Server as InstanceServer
-    from scaleway.dedibox.v1 import DediboxV1API, IPVersion as DediboxIPVersion
-    from scaleway.dedibox.v1 import ServerSummary as DediboxServer
+    BaremetalV1PrivateNetworkAPI, Server as BaremetalServer
+    from scaleway.instance.v1 import InstanceV1API, ServerState, ServerIpIpFamily, Server as InstanceServer
+    from scaleway.dedibox.v1 import DediboxV1API, IPVersion as DediboxIPVersion, ServerSummary as DediboxServer
     from scaleway.ipam.v1 import IpamV1API, IP
 
     HAS_SCALEWAY_SDK = True
@@ -80,7 +76,7 @@ class _InstanceServerHost(_Host):
         self.private_dns = f"{server.id}.priv.instances.scw.cloud"
         if server.public_ips:
             for ip in server.public_ips:
-                if ip.family == "ipv4":
+                if ip.family == ServerIpIpFamily.INET:
                     self.public_ipv4.append(ip.address)
                 else:
                     self.public_ipv6.append(ip.address)
