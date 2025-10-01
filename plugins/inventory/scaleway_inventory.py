@@ -1,12 +1,25 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import Optional, Any
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
 from ansible.errors import AnsibleError
 
+DOCUMENTATION =r"""
+
+"""
+EXAMPLES = r"""
+plugin: scaleway.scaleway.scaleway
+regions:
+    - fr-par-2
+    - nl-ams-1
+tags:
+    - dev
+state:
+    - stopped
+"""
 try:
     from scaleway_core.bridge import Zone
     from scaleway import Client, ScalewayException
@@ -149,6 +162,22 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         "scw.yaml",
         "scw.yml",
     )
+
+    def __init__(self):
+        super().__init__()
+        self.FILTERS_HOSTS = {}
+
+    def _register_filter(self, name, func):
+        self.FILTERS_HOSTS[name] = func
+
+    def _apply_filters(self, hosts):
+        """Apply all filters to the list of hosts."""
+        for name, filter_func in self.FILTERS_HOSTS.items():
+            options = self.get_option(name)  # Ansible auto-reads from inventory file
+            if options:
+                hosts = [h for h in hosts if filter_func(h, options)]
+        return hosts
+
     def verify_file(self, path: str) -> bool:
         """ return true/false if this is possibly a valid file for this plugin to consume """
         ''' source: https://docs.ansible.com/ansible/latest/dev_guide/developing_inventory.html#verify-file-method '''
@@ -161,6 +190,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def get_cached_result(self, path: str, cache: bool) -> tuple[bool, Optional[Any]]:
         if not cache:
             return False, None
+
+        # user has not caching enabled
         if not self.get_option("cache"):
             return False, None
 
@@ -171,6 +202,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             return False, None
         return True, cached_result
 
+    def _host_to_dict(self, host: _Host) -> dict[str, Any]:
+        return asdict(host)
+
     def parse(self, inventory, loader, path, cache=True):
         """ Parse a file into a dict """
         super(InventoryModule, self).parse(inventory, loader, path, cache)
@@ -179,10 +213,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # Cache handling
         use_cached, cached_result = self.get_cached_result(path, cache)
 
+        ## Filters management
+        self._register_filter("regions", lambda h, regions: str(h.region) in regions)
+        self._register_filter("tags", lambda h, tags: any(t in h.tags for t in tags))
+        self._register_filter("state", lambda h, states: h.state in states)
+
         # Use cache
         if not use_cached:
             self.populate(cached_result)
-            return
 
         # Fetch fresh data
         try:
@@ -192,7 +230,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # Update cache
         cache_key = self.get_cache_key(path)
-        self._cache[cache_key] = all_hosts
+        self._cache[cache_key] = [self._host_to_dict(h) for h in all_hosts]
 
         self.populate(all_hosts)
 
