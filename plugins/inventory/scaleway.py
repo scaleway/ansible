@@ -138,10 +138,6 @@ try:
 except ImportError:
     HAS_SCALEWAY_SDK = False
 
-
-FILTERS_HOSTS = {}
-
-
 @dataclass
 class _Host(ABC):
     """Abstract base host object with common fields and network handling."""
@@ -174,6 +170,7 @@ class _Host(ABC):
         self.private_ipv6.extend(ip.address.split("/")[0] for ip in ips if ip.is_ipv6)
 
     def normalized_state(self) -> str:
+        """Normalize server state into standard values."""
         mapping = {
             "running": "running",
             "ready": "running",
@@ -260,9 +257,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         "scw.yml",
     )
 
-    # def __init__(self):
-    #     super().__init__()
-    #     self.FILTERS_HOSTS = {}
+    def __init__(self):
+        super().__init__()
+        self.FILTERS_HOSTS = {}
 
     def verify_file(self, path: str) -> bool:
         """ return true/false if this is possibly a valid file for this plugin to consume """
@@ -291,15 +288,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             )
 
     def _register_filter(self, name, func):
-        FILTERS_HOSTS[name] = func
+        self.FILTERS_HOSTS[name] = func
 
     def _apply_filters(self, hosts):
         """Apply all registered filters to the list of hosts."""
-        print("hosts:", hosts)
-        for name, filter_func in FILTERS_HOSTS.items():
-            print("filter:", name, filter_func)
+        for name, filter_func in self.FILTERS_HOSTS.items():
             options = self.get_option(name)# Ansible auto-reads from inventory file
-            print("options:", options)
             if not options:
                 continue
             if isinstance(options, str):
