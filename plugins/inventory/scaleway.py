@@ -8,6 +8,8 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
+import ipaddress
+
 DOCUMENTATION = r"""
 name: scaleway
 author:
@@ -110,11 +112,12 @@ from ansible.errors import AnsibleError
 try:
     from scaleway_core.bridge import Zone
     from scaleway import Client, ScalewayException
+    from scaleway.flexibleip.v1alpha1 import FlexibleipV1Alpha1API
     from scaleway.applesilicon.v1alpha1 import (
         ApplesiliconV1Alpha1API,
         ApplesiliconV1Alpha1PrivateNetworkAPI,
         ServerPrivateNetworkStatus,
-        Server as ApplesiliconServer, Server,
+        Server as ApplesiliconServer,
 )
     from scaleway.baremetal.v1 import (
         BaremetalV1API,
@@ -139,7 +142,7 @@ except ImportError:
     HAS_SCALEWAY_SDK = False
 
 @dataclass
-class _Host(ABC):
+class Host(ABC):
     """Abstract base host object with common fields and network handling."""
 
     id: str
@@ -169,6 +172,23 @@ class _Host(ABC):
         self.private_ipv4.extend(ip.address.split("/")[0] for ip in ips if not ip.is_ipv6)
         self.private_ipv6.extend(ip.address.split("/")[0] for ip in ips if ip.is_ipv6)
 
+    def _populate_flexible_ip(self, client: "Client", server: Any ) -> None:
+        supported_types = ("InstanceServer", "BaremetalServer")
+        if server.__class__.__name__ not in supported_types:
+            return
+        flexible_ip_api = FlexibleipV1Alpha1API(client=client)
+        fips = flexible_ip_api.list_flexible_i_ps_all(zone=server.zone, server_ids=[server.id])
+        for fip in fips:
+            ip_address = fip.ip_address.split("/")[0]
+            if self.get_ip_version(fip.ip_address) == "IPv6":
+                getattr(self, "flexible_ipv6", []).append(ip_address)
+                getattr(self, "public_flexible_dns_ipv6", []).append(fip.reverse)
+            else:
+                getattr(self, "flexible_ipv4", []).append(ip_address)
+                getattr(self, "public_flexible_dns_ipv4", []).append(fip.reverse)
+
+
+
     def normalized_state(self) -> str:
         """Normalize server state into standard values."""
         mapping = {
@@ -180,6 +200,16 @@ class _Host(ABC):
         state_str = str(self.state).lower()
         return mapping.get(state_str, state_str)
 
+    def get_ip_version(self, ip: str) -> str:
+        """
+        https://docs.python.org/3/library/ipaddress.html
+        """
+        try:
+            parsed_ip = ipaddress.ip_network(ip)
+            return "IPv4" if isinstance(parsed_ip, ipaddress.IPv4Network) else "IPv6"
+        except ValueError:
+            return "Invalid"
+
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +217,7 @@ class _Host(ABC):
 # ---------------------------------------------------------------------------
 
 @dataclass
-class _ApplesiliconHost(_Host):
+class ApplesiliconHost(Host):
     def populate_network(self, server: "ApplesiliconServer", client: "Client") -> None:
         if server.ip:
             self.public_ipv4.append(server.ip)
@@ -198,13 +228,18 @@ class _ApplesiliconHost(_Host):
         applesilicon_api = ApplesiliconV1Alpha1PrivateNetworkAPI(client=client)
 
         private_networks = applesilicon_api.list_server_private_networks_all(server_id=server.id)
-        self._populate_private_network(client, private_networks)
+        self._populate_private_network(client, [pn.id for pn in private_networks])
 
 
 @dataclass
-class _InstanceServerHost(_Host):
+class InstanceServerHost(Host):
     public_dns: Optional[str] = None
     private_dns: Optional[str] = None
+    flexible_ipv4: list[str] = field(default_factory=list)
+    flexible_ipv6: list[str] = field(default_factory=list)
+    public_flexible_dns_ipv4: list[str] = field(default_factory=list)
+    public_flexible_dns_ipv6: list[str] = field(default_factory=list)
+
 
     def populate_network(self, server: "InstanceServer", client: "Client") -> None:
         self.public_dns = f"{server.id}.pub.instances.scw.cloud"
@@ -217,12 +252,19 @@ class _InstanceServerHost(_Host):
                 self.public_ipv6.append(ip.address)
 
         self._populate_private_network(client, [pn.id for pn in server.private_nics])
-
+        self._populate_flexible_ip(client, server)
 
 @dataclass
-class _ElasticMetalHost(_Host):
+class ElasticMetalHost(Host):
+    flexible_ipv4: list[str] = field(default_factory=list)
+    flexible_ipv6: list[str] = field(default_factory=list)
+    public_flexible_dns_ipv4: list[str] = field(default_factory=list)
+    public_flexible_dns_ipv6: list[str] = field(default_factory=list)
+
     def populate_network(self, server: "BaremetalServer", client: "Client") -> None:
-        for ip in server.ips or []:
+        if server.ips is None:
+            return
+        for ip in server.ips:
             target_list = self.public_ipv4 if ip.version.lower() == "ipv4" else self.public_ipv6
             target_list.append(ip.address)
 
@@ -233,12 +275,17 @@ class _ElasticMetalHost(_Host):
         baremetal_pn_api = BaremetalV1PrivateNetworkAPI(client=client)
 
         private_networks = baremetal_pn_api.list_server_private_networks_all(server_id=server.id)
-        self._populate_private_network(client, private_networks)
+        self._populate_private_network(client, [pn.id for pn in private_networks])
+        self._populate_flexible_ip(client, server)
 
 
 @dataclass
-class _DediboxHost(_Host):
+class DediboxHost(Host):
     public_dns: list[str] = field(default_factory=list)
+    failover_ipv4: list[str] = field(default_factory=list)
+    failover_ipv6: list[str] = field(default_factory=list)
+    failover_dns_ipv4: list[str] = field(default_factory=list)
+    failover_dns_ipv6: list[str] = field(default_factory=list)
 
     def populate_network(self, server: "DediboxServer", client: "Client") -> None:
         for interface in server.interfaces or []:
@@ -247,6 +294,16 @@ class _DediboxHost(_Host):
                 target_list_ip.append(ip.address)
                 if ip.reverse:
                     self.public_dns.append(ip.reverse)
+        dedibox_api = DediboxV1API(client=client)
+        failover_ips = dedibox_api.list_failover_i_ps_all(zone=server.zone)
+        for failover_ip in failover_ips:
+            if failover_ip.server_id != server.id:
+                continue
+            ip_target_list = self.failover_ipv4 if failover_ip.ip_version == DediboxIPVersion.IPV4 else self.failover_ipv6
+            dns_target_list = self.failover_dns_ipv4 if failover_ip.ip_version == DediboxIPVersion.IPV4 else self.failover_dns_ipv6
+            ip_target_list.append(failover_ip.address)
+            dns_target_list.append(failover_ip.reverse)
+
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = "scaleway.scaleway.scaleway"
@@ -321,7 +378,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return True, cached_result
 
     @staticmethod
-    def _host_to_dict(host: _Host) -> dict[str, Any]:
+    def _host_to_dict(host: Host) -> dict[str, Any]:
         return asdict(host)
 
     def _list_servers_safe(self, api, zone):
@@ -335,16 +392,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 return []
             raise e
 
-    def _get_instances(self, client: "Client") -> list[_InstanceServerHost]:
+    def _get_instances(self, client: "Client") -> list[InstanceServerHost]:
         instance_api = InstanceV1API(client)
         servers: list[InstanceServer] = []
         zones = self.get_option("zones")
         for zone in zones:
             servers.extend(instance_api.list_servers_all(zone=zone))
-        results: list[_InstanceServerHost] = []
+        results: list[InstanceServerHost] = []
 
         for server in servers:
-            host = _InstanceServerHost(
+            host = InstanceServerHost(
                 id=server.id,
                 tags= ["instance"] + server.tags,
                 zone=server.zone,
@@ -355,17 +412,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             results.append(host)
         return results
 
-    def _get_elastic_metal(self, client: "Client") -> list[_ElasticMetalHost]:
+    def _get_elastic_metal(self, client: "Client") -> list[ElasticMetalHost]:
         baremetal_api = BaremetalV1API(client)
         servers: list[BaremetalServer] = []
         zones = self.get_option("zones")
         for zone in zones:
             servers.extend(self._list_servers_safe(baremetal_api, zone))
 
-        results: list[_ElasticMetalHost] = []
+        results: list[ElasticMetalHost] = []
 
         for server in servers:
-            host = _ElasticMetalHost(
+            host = ElasticMetalHost(
                 id=server.id,
                 tags=["elasticmetal"] + server.tags,
                 zone=server.zone,
@@ -376,15 +433,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             results.append(host)
         return results
 
-    def _get_apple_silicon(self, client: "Client") -> list[_ApplesiliconHost]:
+    def _get_apple_silicon(self, client: "Client") -> list[ApplesiliconHost]:
         api = ApplesiliconV1Alpha1API(client)
         servers = []
         for zone in self.get_option("zones"):
             servers.extend(self._list_servers_safe(api, zone))
 
-        results: list[_ApplesiliconHost] = []
+        results: list[ApplesiliconHost] = []
         for server in servers:
-            host = _ApplesiliconHost(
+            host = ApplesiliconHost(
                 id=server.id,
                 tags=["applesilicon"] + server.tags,
                 zone=server.zone,
@@ -395,17 +452,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             results.append(host)
         return results
 
-    def _get_dedibox(self, client: "Client") -> list[_DediboxHost]:
+    def _get_dedibox(self, client: "Client") -> list[DediboxHost]:
         dedibox_api = DediboxV1API(client)
         servers: list[DediboxServer] = []
         zones = self.get_option("zones")
         for zone in zones:
             servers.extend(self._list_servers_safe(dedibox_api, zone))
 
-        results: list[_DediboxHost] = []
+        results: list[DediboxHost] = []
 
         for server in servers:
-            host = _DediboxHost(
+            host = DediboxHost(
                 id=str(server.id),
                 tags=["dedibox"],
                 zone=server.zone,
@@ -418,7 +475,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return results
 
     @staticmethod
-    def _get_host_attribute(host: _Host, host_attributes: list[str]):
+    def _get_host_attribute(host: Host, host_attributes: list[str]):
         host_as_dict = host.__dict__
 
         for host_attribute in host_attributes:
@@ -431,7 +488,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         raise AnsibleError(f"{host.id} has no attribute {host_attributes}")
 
 
-    def get_host_groups(self, host: _Host):
+    def get_host_groups(self, host: Host):
         return set(self.sanitize_tag(tag) for tag in host.tags).union(
             {self.sanitize_tag(host.zone)}
         )
@@ -447,29 +504,33 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return tag
 
-    def populate(self, all_hosts: list[_Host]):
+    def populate(self, all_hosts: list[Host]):
         host_attributes = self.get_option("hostnames")
+        print("value of get_options(hostname): ", host_attributes)
         variables = self.get_option("variables") or {}
+        print("value of get_options(variable): ", variables)
 
         for host in all_hosts:
             groups = self.get_host_groups(host)
             try:
                 hostname_value = self._get_host_attribute(host, host_attributes)
+                print("value of _get_host_attribute(host, host_attributes): ", hostname_value)
             except AnsibleError as e:
                 self.display.warning(f"Skipping host {host.id}: {e}")
                 continue
 
             # If the hostname attribute is a list, create a host for each element
             hostnames = hostname_value if isinstance(hostname_value, list) else [hostname_value]
+            print("value of hostnames: ", hostnames)
 
             for idx, hostname in enumerate(hostnames):
                 # Ensure hostname is a string and unique if multiple
+                print("vale of idx and hostnames: ", idx, hostname)
                 if isinstance(hostname, list):
                     self.display.warning(f"Skipping host {host.id}: nested lists are not supported.")
                     continue
 
-                # Append index if multiple hostnames to avoid duplicates
-                unique_hostname = f"{hostname}_{idx}" if len(hostnames) > 1 else str(hostname)
+                unique_hostname = f"{hostname}" if len(hostnames) > 1 else str(hostname)
 
                 self.inventory.add_host(host=unique_hostname)
 
@@ -503,10 +564,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def get_inventory(self):
         client = self._get_client()
 
-        instances: list[_InstanceServerHost] = self._get_instances(client)
-        elastic_metals: list[_ElasticMetalHost] = self._get_elastic_metal(client)
-        apple_silicon: list[_ApplesiliconHost] = self._get_apple_silicon(client)
-        dedibox: list[_DediboxHost] = self._get_dedibox(client)
+        instances: list[InstanceServerHost] = self._get_instances(client)
+        elastic_metals: list[ElasticMetalHost] = self._get_elastic_metal(client)
+        apple_silicon: list[ApplesiliconHost] = self._get_apple_silicon(client)
+        dedibox: list[DediboxHost] = self._get_dedibox(client)
 
         return instances + elastic_metals + apple_silicon + dedibox
 
