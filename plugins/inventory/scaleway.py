@@ -11,7 +11,8 @@ __metaclass__ = type
 import ipaddress
 
 DOCUMENTATION = r"""
-name: scaleway
+name: 
+plugin_type: inventory
 author:
     - Devtool's Team
 short_description: Scaleway inventory source
@@ -86,18 +87,30 @@ options:
         type: dict
 """
 
-EXAMPLES = r"""
-plugin: scaleway.scaleway.scaleway
-regions:
-    - fr-par-2
-    - nl-ams-1
-tags:
-    - dev
-state:
-    - stopped
-variables:
-    ansible_host: public_ipv4
-"""
+
+EXAMPLES = r'''
+        plugin: scaleway.scaleway.scaleway
+        regions:
+          - fr-par-2
+          - nl-ams-1
+        tags:
+          - dev
+        state:
+          - stopped
+        variables:
+          ansible_host: public_ipv4
+'''
+
+RETURN = r'''
+        hosts:
+          description: List of hosts discovered on Scaleway
+          returned: always
+          type: list
+          sample:
+            - id: "11111111-1111-1111-1111-111111111111"
+              hostname: "my-instance"
+              public_ipv4: "51.158.123.45"
+'''
 
 
 import os
@@ -319,18 +332,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.FILTERS_HOSTS = {}
 
     def verify_file(self, path: str) -> bool:
-        """ return true/false if this is possibly a valid file for this plugin to consume """
-        ''' source: https://docs.ansible.com/ansible/latest/dev_guide/developing_inventory.html#verify-file-method '''
-        valid = False
-        if super(InventoryModule, self).verify_file(path):
-            if path.endswith(self._ALLOWED_FILE_NAME_SUFFIXES):
-                valid = True
-        self.display.vvv(
-            "Skipping due to inventory source file name mismatch. "
-            "The file name has to end with one of the following: "
-            f"{', '.join(self._ALLOWED_FILE_NAME_SUFFIXES)}."
-        )
-        return valid
+        if not super(InventoryModule, self).verify_file(path):
+            return False
+        return any(suffix in path for suffix in self._ALLOWED_FILE_NAME_SUFFIXES)
 
     def _get_client(self):
         return Client.from_config_file_and_env(
@@ -424,7 +428,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for server in servers:
             host = ElasticMetalHost(
                 id=server.id,
-                tags=["elasticmetal"] + server.tags,
+                tags=["elastic_metal"] + server.tags,
                 zone=server.zone,
                 state=server.status,
                 hostname=server.name,
@@ -506,26 +510,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def populate(self, all_hosts: list[Host]):
         host_attributes = self.get_option("hostnames")
-        print("value of get_options(hostname): ", host_attributes)
         variables = self.get_option("variables") or {}
-        print("value of get_options(variable): ", variables)
 
         for host in all_hosts:
             groups = self.get_host_groups(host)
             try:
                 hostname_value = self._get_host_attribute(host, host_attributes)
-                print("value of _get_host_attribute(host, host_attributes): ", hostname_value)
             except AnsibleError as e:
                 self.display.warning(f"Skipping host {host.id}: {e}")
                 continue
 
             # If the hostname attribute is a list, create a host for each element
             hostnames = hostname_value if isinstance(hostname_value, list) else [hostname_value]
-            print("value of hostnames: ", hostnames)
 
             for idx, hostname in enumerate(hostnames):
                 # Ensure hostname is a string and unique if multiple
-                print("vale of idx and hostnames: ", idx, hostname)
                 if isinstance(hostname, list):
                     self.display.warning(f"Skipping host {host.id}: nested lists are not supported.")
                     continue
