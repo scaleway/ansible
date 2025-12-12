@@ -1,0 +1,17 @@
+---
+plugin: scaleway.scaleway.scaleway
+# Test with specific zones
+tags:
+  - test
+  - inventory
+state:
+  - running
+# Define hostname preference order
+hostnames:
+  - public_ipv4
+  - hostname
+# Define variables to expose
+timeout: 60
+# Add cache settings for testing
+cache: yes
+cache_timeout: 300

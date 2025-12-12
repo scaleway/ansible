@@ -1,0 +1,51 @@
+---
+- name: Test Scaleway inventory plugin
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Assert inventory plugin is available
+      assert:
+        that:
+          - "'scaleway.scaleway.scaleway' in available_inventory_plugins"
+        fail_msg: "Scaleway inventory plugin not available"
+
+- name: Test inventory functionality
+  hosts: scaleway_*
+  gather_facts: false
+  tasks:
+    - name: Check if host has required variables
+      assert:
+        that:
+          - hostvars[inventory_hostname].has_key('id')
+          - hostvars[inventory_hostname].has_key('zone')
+          - hostvars[inventory_hostname].has_key('state')
+        fail_msg: "Host is missing required variables"
+
+    - name: Display host information
+      debug:
+        msg: |
+          Host: {{ inventory_hostname }}
+          ID: {{ hostvars[inventory_hostname].id }}
+          Zone: {{ hostvars[inventory_hostname].zone }}
+          State: {{ hostvars[inventory_hostname].state }}
+      when: verbose|bool
+
+- name: Test inventory groups
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get inventory hosts and groups
+      set_fact:
+        inventory_hosts: "{{ groups.keys() | list }}"
+        inventory_groups: "{{ groups | dict2items(key_name='group', value_name='hosts') }}"
+
+    - name: Check if groups are created from tags and zones
+      assert:
+        that:
+          - "inventory_groups | selectattr('group', 'match', '^(fr_par|nl_ams|pl_waw).*') | list | length > 0"
+        fail_msg: "No zone-based groups found in inventory"
+
+    - name: Display inventory structure
+      debug:
+        var: inventory_groups
+      when: verbose|bool
