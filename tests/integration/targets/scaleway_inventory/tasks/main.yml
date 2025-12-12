@@ -1,0 +1,3 @@
+---
+- name: Run Scaleway inventory integration test
+  ansible.builtin.include_playbook: "{{ playbook_dir }}/test_scaleway_inventory.yml"
