@@ -1,10 +1,11 @@
 ---
-- name: Test Scaleway inventory plugin
+- name: Test Scaleway inventory plugin availability
+  scaleway.scaleway.scaleway:
   hosts: localhost
   gather_facts: false
   tasks:
     - name: Assert inventory plugin is available
-      assert:
+      ansible.builtin.assert:
         that:
           - "'scaleway.scaleway.scaleway' in available_inventory_plugins"
         fail_msg: "Scaleway inventory plugin not available"
@@ -14,7 +15,7 @@
   gather_facts: false
   tasks:
     - name: Check if host has required variables
-      assert:
+      ansible.builtin.assert:
         that:
           - hostvars[inventory_hostname].has_key('id')
           - hostvars[inventory_hostname].has_key('zone')
@@ -22,30 +23,30 @@
         fail_msg: "Host is missing required variables"
 
     - name: Display host information
-      debug:
+      ansible.builtin.debug:
         msg: |
           Host: {{ inventory_hostname }}
           ID: {{ hostvars[inventory_hostname].id }}
           Zone: {{ hostvars[inventory_hostname].zone }}
           State: {{ hostvars[inventory_hostname].state }}
-      when: verbose|bool
+      when: verbose | bool
 
 - name: Test inventory groups
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Get inventory hosts and groups
-      set_fact:
+    - name: Extract inventory hosts and groups
+      ansible.builtin.set_fact:
         inventory_hosts: "{{ groups.keys() | list }}"
         inventory_groups: "{{ groups | dict2items(key_name='group', value_name='hosts') }}"
 
-    - name: Check if groups are created from tags and zones
-      assert:
+    - name: Validate that zone-based groups are present
+      ansible.builtin.assert:
         that:
           - "inventory_groups | selectattr('group', 'match', '^(fr_par|nl_ams|pl_waw).*') | list | length > 0"
         fail_msg: "No zone-based groups found in inventory"
 
-    - name: Display inventory structure
-      debug:
+    - name: Display inventory groups
+      ansible.builtin.debug:
         var: inventory_groups
-      when: verbose|bool
+      when: verbose | bool
