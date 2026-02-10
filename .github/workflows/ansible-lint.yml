@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Run ansible-lint
-        uses: ansible/ansible-lint@main
+        uses: ansible/ansible-lint@ef14ce6b520f5da2bde30c6966a7af38d0cbe5a0 # v24.9.0
         # optional (see below):
         with:
           args: "--exclude=.github"
