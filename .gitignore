@@ -133,3 +133,5 @@ dmypy.json
 
 # Archive files
 *.tar.gz
+
+tests/.../inventory

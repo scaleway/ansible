@@ -1,2 +1,2 @@
-scaleway>=2.9.0
+scaleway>=2.10.0
 pyyaml
