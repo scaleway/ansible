@@ -1,14 +1,14 @@
-import tempfile
-import os
-import yaml
-import pytest
-import uuid
 import json
+import os
+import tempfile
+import uuid
+
+import pytest
+import yaml
 from ansible.module_utils import basic
 from ansible.module_utils.common.text.converters import to_bytes
+from scaleway.baremetal.v1.types import IP, IPReverseStatus, IPVersion, Server
 from scaleway_core.profile import Profile
-
-from scaleway.baremetal.v1.types import Server, IP, IPVersion, IPReverseStatus
 
 
 @pytest.fixture()
@@ -51,6 +51,7 @@ def create_temporary_scaleway_config() -> Profile:
 def list_bare_metals_fixture():
     return [
         Server(
+            protected=False,
             id="bmc-12345678-1234-1234-1234-123456789012",
             organization_id="org-12345678-1234-1234-1234-123456789012",
             project_id="project-12345678-1234-1234-1234-123456789012",
@@ -89,6 +90,7 @@ def list_bare_metals_fixture():
             ],
         ),
         Server(
+            protected=False,
             id="bmc-12345678-1234-1234-1234-123456789012",
             organization_id="org-12345678-1234-1234-1234-123456789012",
             project_id="project-12345678-1234-1234-1234-123456789012",
