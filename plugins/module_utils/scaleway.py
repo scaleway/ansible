@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import absolute_import, division, print_function
+
 import os
 import sys
 from typing import Any, Dict
@@ -45,7 +46,6 @@ for path in possible_paths:
 
 try:
     from scaleway import Client
-
     from scaleway_core.profile.env import (
         ENV_KEY_SCW_ACCESS_KEY,
         ENV_KEY_SCW_API_URL,
