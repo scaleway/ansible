@@ -34,7 +34,8 @@ options:
     path:
         description: path
         type: str
-        required: true
+        required: false
+        default: /
     project_id:
         description: project_id
         type: str
@@ -207,7 +208,7 @@ def main() -> None:
         dict(
             state=dict(type="str", default="present", choices=["absent", "present"]),
             name=dict(type="str", required=True),
-            path=dict(type="str", required=False),
+            path=dict(type="str", required=False, default="/"),
             project_id=dict(type="str", required=False),
             tags=dict(type="list", required=False, elements="str"),
             description=dict(type="str", required=False),
