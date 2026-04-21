@@ -96,6 +96,44 @@ class TestScalewaySecret:
         [
             {
                 "name": "test_secret",
+                "path": "/custom/path",
+                "tags": ["test", "secret"],
+                "description": "test_description",
+                "protected": False,
+            }
+        ],
+        indirect=True,
+    )
+    @patch.object(secret_api, "unmarshal_Secret")
+    @patch.object(secret_api.SecretV1Beta1API, "_request")
+    def test_create_with_custom_path(
+        self,
+        mock_request,
+        mock_unmarshal_secret,
+        scaleway_config_profile,
+        set_module_args,
+    ):
+        mock_unmarshal_secret.return_value = MagicMock()
+        mock_request.return_value = MagicMock(status_code=201)
+        scaleway_secret.main()
+        mock_request.assert_called_once_with(
+            "POST",
+            f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets",
+            body={
+                "name": "test_secret",
+                "path": "/custom/path",
+                "tags": ["test", "secret"],
+                "description": "test_description",
+                "protected": False,
+                "project_id": scaleway_config_profile.default_project_id,
+            },
+        )
+
+    @pytest.mark.parametrize(
+        "set_module_args",
+        [
+            {
+                "name": "test_secret",
                 "state": "absent",
             }
         ],
@@ -129,6 +167,154 @@ class TestScalewaySecret:
             "DELETE",
             f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}",
         )
+
+    @pytest.mark.parametrize(
+        "set_module_args",
+        [
+            {
+                "name": "test_secret",
+                "path": "/custom/path",
+                "state": "absent",
+            }
+        ],
+        indirect=True,
+    )
+    @patch.object(secret_api, "unmarshal_ListSecretsResponse")
+    @patch.object(secret_api.SecretV1Beta1API, "_request")
+    def test_delete_secret_with_path(
+        self,
+        mock_request,
+        mock_unmarshal_list_secrets_response,
+        scaleway_config_profile,
+        set_module_args,
+    ):
+        class MockedSecret(MagicMock):
+            id = self.test_uuid
+            name = "test_secret"
+            path = "/custom/path"
+
+            def __dict__(self):
+                return {
+                    "id": self.id,
+                    "name": self.name,
+                    "path": self.path,
+                }
+
+        mock_unmarshal_list_secrets_response.return_value = MagicMock(
+            secrets=[MockedSecret]
+        )
+        mock_request.side_effect = [
+            MagicMock(status_code=200),  # list secret response
+            MagicMock(status_code=204),  # delete secret response
+        ]
+        scaleway_secret.main()
+        mock_request.assert_any_call(
+            "DELETE",
+            f"/secret-manager/v1beta1/regions/{scaleway_config_profile.default_region}/secrets/{self.test_uuid}",
+        )
+
+    def test_update_secret_with_path_check_mode(self):
+        """Test updating a secret with path in check mode"""
+        from ....plugins.module_utils.scaleway_secret import update_secret
+        from ....plugins.module_utils.model import Secret
+
+        mock_api = MagicMock()
+
+        existing_secret = MagicMock()
+        existing_secret.name = "test_secret"
+        existing_secret.path = "/custom/path"
+        existing_secret.id = self.test_uuid
+        existing_secret.description = "old_description"
+        existing_secret.tags = ["old-tag"]
+
+        mock_list_response = MagicMock()
+        mock_list_response.secrets = [existing_secret]
+
+        mock_api.list_secrets.return_value = mock_list_response
+
+        parameters = {
+            "name": "test_secret",
+            "path": "/custom/path",
+            "description": "test_description",
+            "tags": ["test", "secret"],
+            "protected": False,
+        }
+
+        changed, local_model, remote_model = update_secret(
+            mock_api, parameters, check_mode=True
+        )
+
+        mock_api.list_secrets.assert_called_once_with(
+            name="test_secret", scheduled_for_deletion=False, path="/custom/path"
+        )
+
+        mock_api.update_secret.assert_not_called()
+
+        assert changed is False
+        assert local_model.name == "test_secret"
+        assert local_model.path == "/custom/path"
+        assert local_model.description == "test_description"
+        assert isinstance(local_model, Secret)
+
+    def test_update_secret_with_path(self):
+        """Test updating a secret with path parameter"""
+        from ....plugins.module_utils.scaleway_secret import update_secret
+        from ....plugins.module_utils.model import Secret
+
+        mock_api = MagicMock()
+
+        existing_secret = MagicMock()
+        existing_secret.name = "test_secret"
+        existing_secret.path = "/custom/path"
+        existing_secret.id = self.test_uuid
+        existing_secret.description = "old_description"
+        existing_secret.tags = ["old-tag"]
+
+        mock_list_response = MagicMock()
+        mock_list_response.secrets = [existing_secret]
+
+        updated_secret = MagicMock()
+        updated_secret.name = "test_secret"
+        updated_secret.path = "/custom/path"
+        updated_secret.id = self.test_uuid
+        updated_secret.description = "test_description"
+        updated_secret.tags = ["test", "secret"]
+
+        mock_api.list_secrets.return_value = mock_list_response
+        mock_api.update_secret.return_value = updated_secret
+
+        parameters = {
+            "name": "test_secret",
+            "path": "/custom/path",
+            "description": "test_description",
+            "tags": ["test", "secret"],
+            "protected": False,
+        }
+
+        changed, local_model, remote_model = update_secret(mock_api, parameters)
+
+        mock_api.list_secrets.assert_called_once_with(
+            name="test_secret", scheduled_for_deletion=False, path="/custom/path"
+        )
+
+        mock_api.update_secret.assert_called_once_with(
+            secret_id=self.test_uuid,
+            description="test_description",
+            tags=["test", "secret"],
+        )
+
+        assert changed is True
+        assert local_model.name == "test_secret"
+        assert local_model.path == "/custom/path"
+        assert local_model.description == "test_description"
+        assert local_model.tags == ["test", "secret"]
+        assert isinstance(local_model, Secret)
+
+        assert remote_model.name == "test_secret"
+        assert remote_model.path == "/custom/path"
+        assert remote_model.description == "old_description"
+        assert remote_model.tags == ["old-tag"]
+        assert isinstance(remote_model, Secret)
 
 
 @patch.object(basic.AnsibleModule, "exit_json", MagicMock())
