@@ -191,7 +191,7 @@ from ..module_utils.scaleway import (
 try:
     from scaleway import Client, ScalewayException
     from scaleway.k8s.v1 import K8SV1API
-    from scaleway_core.utilsimport import WaitForOptions
+    from scaleway_core.utils import WaitForOptions
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
