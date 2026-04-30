@@ -221,7 +221,9 @@ def create(module: AnsibleModule, client: "Client") -> None:
         options = WaitForOptions()
         if "wait_timeout" in module.params:
             options.timeout = module.params["wait_timeout"]
-        resource = api.wait_for_pool(pool_id=resource.id, region=module.params["region"], options=options)
+        resource = api.wait_for_pool(
+            pool_id=resource.id, region=module.params["region"], options=options
+        )
 
     module.exit_json(changed=True, data=object_to_dict(resource))
 
@@ -357,7 +359,7 @@ def main() -> None:
             type="bool",
             required=False,
             default=False,
-        )
+        ),
     )
 
     module = AnsibleModule(

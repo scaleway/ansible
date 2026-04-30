@@ -210,10 +210,7 @@ def create(module: AnsibleModule, client: "Client") -> None:
     }
     not_none_params["project_id"] = client.default_project_id
     resource = api.create_server(**not_none_params)
-    resource = api.wait_for_server(
-        server_id=resource.id,
-        zone=resource.zone
-    )
+    resource = api.wait_for_server(server_id=resource.id, zone=resource.zone)
 
     module.exit_json(changed=True, data=object_to_dict(resource))
 
@@ -296,7 +293,7 @@ def main() -> None:
         enable_vpc=dict(
             type="bool",
             required=True,
-        )
+        ),
     )
 
     module = AnsibleModule(
