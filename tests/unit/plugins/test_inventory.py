@@ -1,9 +1,10 @@
+from unittest.mock import patch
+
+from scaleway import Client
+from scaleway.baremetal.v1 import BaremetalV1API
+
 from ....plugins.inventory import scaleway as scaleway_inventory
 from ....plugins.inventory.scaleway import _Filters
-
-from unittest.mock import patch
-from scaleway.baremetal.v1.api import BaremetalV1API
-from scaleway import Client
 
 
 class TestInventory:
@@ -21,14 +22,14 @@ class TestInventory:
         mocked_client = Client.from_profile(scaleway_config_profile)
 
         instances = inventory._get_elastic_metal(
-            mocked_client, _Filters(zones=["fr-par"])
+            mocked_client, _Filters(zones=["fr-par-2"])
         )
-        mocked_list_server_all.assert_called_once_with(zone="fr-par", tags=None)
+        mocked_list_server_all.assert_called_once_with(zone="fr-par-2", tags=None)
         assert len(instances) == 2
-        assert instances[0].public_ipv4 == ["1.1.1.1", "192.168.0.1"]
-        assert instances[0].public_ipv6 == []
-        assert instances[1].public_ipv4 == ["1.1.1.1"]
-        assert instances[1].public_ipv6 == ["2001:db8::1"]
+        assert instances[0].public_ipv4 == "192.168.0.1"
+        assert instances[0].public_ipv6 is None
+        assert instances[1].public_ipv4 == "1.1.1.1"
+        assert instances[1].public_ipv6 == "2001:db8::1"
 
     def test_get_host_groups(self):
         inventory = scaleway_inventory.InventoryModule()

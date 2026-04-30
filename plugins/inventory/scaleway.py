@@ -62,7 +62,8 @@ options:
             - public_ipv4
         choices:
             - public_ipv4
-            - private_ipv4
+            - vpc_ipv4
+            - vpc_ipv6
             - public_ipv6
             - hostname
             - id
@@ -76,8 +77,8 @@ options:
             - "  - C(state): The server state."
             - "  - C(hostname): The server hostname."
             - "  - C(public_ipv4): The server public ipv4."
-            - "  - C(private_ipv4): The server private ipv4."
-            - "  - C(public_ipv6): The server public ipv6."
+            - "  - C(vpc_ipv4): The server private ipv4."
+            - "  - C(vpc_ipv6): The server public ipv6."
             - "  - C(public_dns): The server public dns."
             - "  - C(private_dns): The server private dns."
             - "If the variable is not found, the host will be ignored."
@@ -100,24 +101,28 @@ variables:
 
 import os
 from dataclasses import dataclass, field
-from types import SimpleNamespace
-from typing import List
+from typing import List, Optional
 
 from ansible.errors import AnsibleError
+from ansible.inventory.data import Host
 from ansible.module_utils.basic import missing_required_lib
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, Constructable
 
+from ..module_utils.instance import get_instance_private_ips
+
 try:
-    from scaleway_core.bridge import Zone
     from scaleway import Client, ScalewayException
     from scaleway.applesilicon.v1alpha1 import ApplesiliconV1Alpha1API
     from scaleway.applesilicon.v1alpha1 import Server as ApplesiliconServer
-    from scaleway.baremetal.v1 import BaremetalV1API, IPVersion as BaremetalIPVersion
+    from scaleway.baremetal.v1 import BaremetalV1API
+    from scaleway.baremetal.v1 import IPVersion as BaremetalIPVersion
     from scaleway.baremetal.v1 import Server as BaremetalServer
+    from scaleway.dedibox.v1 import DediboxV1API
+    from scaleway.dedibox.v1 import IPVersion as DediboxIPVersion
+    from scaleway.dedibox.v1 import ServerSummary as DediboxServer
     from scaleway.instance.v1 import InstanceV1API, ServerState
     from scaleway.instance.v1 import Server as InstanceServer
-    from scaleway.dedibox.v1 import DediboxV1API, IPVersion as DediboxIPVersion
-    from scaleway.dedibox.v1 import ServerSummary as DediboxServer
+    from scaleway_core.bridge import Zone
 
     HAS_SCALEWAY_SDK = True
 except ImportError:
@@ -139,16 +144,17 @@ class _Filters:
 
 
 @dataclass
-class _Host:
+class _Host(Host):
     id: str
     tags: List[str]
     zone: "Zone"
     state: "ServerState"
 
     hostname: str
-    public_ipv4: list[str] = field(default_factory=list)
-    private_ipv4: list[str] = field(default_factory=list)
-    public_ipv6: list[str] = field(default_factory=list)
+    public_ipv4: Optional[str] = None
+    public_ipv6: Optional[str] = None
+    vpc_ipv4: Optional[str] = None
+    vpc_ipv6: Optional[str] = None
 
     # Instances-only
     public_dns: str | None = None
@@ -225,7 +231,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     self.display.warning(
                         f"Skipping host {host.id}: Field {source} is not available."
                     )
-                    self.inventory.remove_host(SimpleNamespace(name=hostname))
                     should_skip = True
                     break
 
@@ -247,6 +252,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         forbidden_characters = [
             "-",
             " ",
+            ":",
         ]
         for forbidden_character in forbidden_characters:
             tag = tag.strip().replace(forbidden_character, "_")
@@ -280,17 +286,27 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     )
                 )
 
+        # get vpc private ips
+        vpc_ips = get_instance_private_ips(client, servers)
+
         results: List[_Host] = []
         for server in servers:
+            vpc4 = None
+            vpc6 = None
+            if server.id in vpc_ips:
+                vpc4 = vpc_ips[server.id].ipv4
+                vpc6 = vpc_ips[server.id].ipv6
+
             host = _Host(
                 id=server.id,
                 tags=["instance", *server.tags],
                 zone=server.zone,
                 state=str(server.state),
                 hostname=server.hostname,
-                public_ipv4=[server.public_ip.address] if server.public_ip else [],
-                private_ipv4=[server.private_ip.address] if server.private_ip else [],
-                public_ipv6=[server.ipv6.address] if server.ipv6 else [],
+                public_ipv4=server.public_ip.address if server.public_ip else None,
+                public_ipv6=server.ipv6.address if server.ipv6 else None,
+                vpc_ipv4=vpc4,
+                vpc_ipv6=vpc6,
                 public_dns=f"{server.id}.pub.instances.scw.cloud",
                 private_dns=f"{server.id}.priv.instances.scw.cloud",
             )
@@ -316,22 +332,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         results: List[_Host] = []
         for server in servers:
+            ipv4 = None
+            ipv6 = None
+            for ip in server.ips:
+                if ip.version == BaremetalIPVersion.I_PV4:
+                    ipv4 = ip.address
+                if ip.version == BaremetalIPVersion.I_PV6:
+                    ipv6 = ip.address
             host = _Host(
                 id=server.id,
                 tags=["elastic_metal", *server.tags],
                 zone=server.zone,
                 state=str(server.status),
                 hostname=server.name,
-                public_ipv4=[
-                    ip.address
-                    for ip in server.ips
-                    if ip.version == BaremetalIPVersion.I_PV4
-                ],
-                public_ipv6=[
-                    ip.address
-                    for ip in server.ips
-                    if ip.version == BaremetalIPVersion.I_PV6
-                ],
+                public_ipv4=ipv4,
+                public_ipv6=ipv6,
             )
 
             results.append(host)
@@ -361,9 +376,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 zone=server.zone,
                 state=str(server.status),
                 hostname=server.name,
-                public_ipv4=[server.ip],
-                private_ipv4=None,
-                public_ipv6=None,
+                public_ipv4=server.ip,
             )
 
             results.append(host)
@@ -386,15 +399,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         results: List[_Host] = []
         for server in servers:
-            public_ipv4 = []
-            public_ipv6 = []
-
+            public_ipv4 = None
+            public_ipv6 = None
             for interface in server.interfaces:
                 for ip in interface.ips:
                     if ip.version == DediboxIPVersion.IPV4:
-                        public_ipv4.append(ip.address)
-                    elif ip.version == DediboxIPVersion.IPV6:
-                        public_ipv6.append(ip.address)
+                        public_ipv4 = ip.address
+                        continue
+                    if ip.version == DediboxIPVersion.IPV6:
+                        public_ipv6 = ip.address
+                        continue
 
             host = _Host(
                 id=server.id,
@@ -403,7 +417,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 state=str(server.status),
                 hostname=server.name,
                 public_ipv4=public_ipv4,
-                private_ipv4=None,
                 public_ipv6=public_ipv6,
             )
             results.append(host)

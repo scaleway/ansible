@@ -3,14 +3,14 @@ releases:
   1.0.0:
     plugins:
       inventory:
-      - description: Scaleway inventory source
-        name: scaleway
-        namespace: null
+        - description: Scaleway inventory source
+          name: scaleway
+          namespace: null
     release_date: '2023-01-17'
   1.1.0:
     changes:
       minor_changes:
-      - scaleway inventory script - add elastic metal and apple silicon support
+        - scaleway inventory script - add elastic metal and apple silicon support
     release_date: '2023-01-17'
   1.2.0:
     release_date: '2023-01-17'
@@ -18,183 +18,183 @@ releases:
     release_date: '2023-02-03'
   2.1.0:
     modules:
-    - description: Manage Scaleway account's project
-      name: scaleway_account_project
-      namespace: ''
-    - description: Manage Scaleway applesilicon's server
-      name: scaleway_applesilicon_server
-      namespace: ''
-    - description: Manage Scaleway baremetal's server
-      name: scaleway_baremetal_server
-      namespace: ''
-    - description: Manage Scaleway container's container
-      name: scaleway_container
-      namespace: ''
-    - description: Manage Scaleway container's cron
-      name: scaleway_container_cron
-      namespace: ''
-    - description: Manage Scaleway container's domain
-      name: scaleway_container_domain
-      namespace: ''
-    - description: Manage Scaleway container's namespace
-      name: scaleway_container_namespace
-      namespace: ''
-    - description: Manage Scaleway container's token
-      name: scaleway_container_token
-      namespace: ''
-    - description: Manage Scaleway domain's ssl_certificate
-      name: scaleway_domain_ssl_certificate
-      namespace: ''
-    - description: Manage Scaleway flexibleip's flexible_ip
-      name: scaleway_flexibleip_flexible_ip
-      namespace: ''
-    - description: Manage Scaleway function's function
-      name: scaleway_function
-      namespace: ''
-    - description: Manage Scaleway function's cron
-      name: scaleway_function_cron
-      namespace: ''
-    - description: Manage Scaleway function's domain
-      name: scaleway_function_domain
-      namespace: ''
-    - description: Manage Scaleway function's namespace
-      name: scaleway_function_namespace
-      namespace: ''
-    - description: Manage Scaleway function's token
-      name: scaleway_function_token
-      namespace: ''
-    - description: Manage Scaleway function's trigger
-      name: scaleway_function_trigger
-      namespace: ''
-    - description: Manage Scaleway iam's api_key
-      name: scaleway_iam_api_key
-      namespace: ''
-    - description: Manage Scaleway iam's application
-      name: scaleway_iam_application
-      namespace: ''
-    - description: Manage Scaleway iam's group
-      name: scaleway_iam_group
-      namespace: ''
-    - description: Manage Scaleway iam's policy
-      name: scaleway_iam_policy
-      namespace: ''
-    - description: Manage Scaleway iam's ssh_key
-      name: scaleway_iam_ssh_key
-      namespace: ''
-    - description: Manage Scaleway instance's image
-      name: scaleway_instance_image
-      namespace: ''
-    - description: Manage Scaleway instance's ip
-      name: scaleway_instance_ip
-      namespace: ''
-    - description: Manage Scaleway instance's placement_group
-      name: scaleway_instance_placement_group
-      namespace: ''
-    - description: Manage Scaleway instance's private_nic
-      name: scaleway_instance_private_nic
-      namespace: ''
-    - description: Manage Scaleway instance's security_group
-      name: scaleway_instance_security_group
-      namespace: ''
-    - description: Manage Scaleway instance's security_group_rule
-      name: scaleway_instance_security_group_rule
-      namespace: ''
-    - description: Manage Scaleway instance's snapshot
-      name: scaleway_instance_snapshot
-      namespace: ''
-    - description: Manage Scaleway instance's volume
-      name: scaleway_instance_volume
-      namespace: ''
-    - description: Manage Scaleway iot's device
-      name: scaleway_iot_device
-      namespace: ''
-    - description: Manage Scaleway iot's hub
-      name: scaleway_iot_hub
-      namespace: ''
-    - description: Manage Scaleway iot's network
-      name: scaleway_iot_network
-      namespace: ''
-    - description: Manage Scaleway iot's route
-      name: scaleway_iot_route
-      namespace: ''
-    - description: Manage Scaleway k8s's cluster
-      name: scaleway_k8s_cluster
-      namespace: ''
-    - description: Manage Scaleway k8s's pool
-      name: scaleway_k8s_pool
-      namespace: ''
-    - description: Manage Scaleway lb's lb
-      name: scaleway_lb
-      namespace: ''
-    - description: Manage Scaleway lb's acl
-      name: scaleway_lb_acl
-      namespace: ''
-    - description: Manage Scaleway lb's backend
-      name: scaleway_lb_backend
-      namespace: ''
-    - description: Manage Scaleway lb's certificate
-      name: scaleway_lb_certificate
-      namespace: ''
-    - description: Manage Scaleway lb's frontend
-      name: scaleway_lb_frontend
-      namespace: ''
-    - description: Manage Scaleway lb's route
-      name: scaleway_lb_route
-      namespace: ''
-    - description: Manage Scaleway lb's subscriber
-      name: scaleway_lb_subscriber
-      namespace: ''
-    - description: Manage Scaleway mnq's credential
-      name: scaleway_mnq_credential
-      namespace: ''
-    - description: Manage Scaleway mnq's namespace
-      name: scaleway_mnq_namespace
-      namespace: ''
-    - description: Manage Scaleway rdb's database_backup
-      name: scaleway_rdb_database_backup
-      namespace: ''
-    - description: Manage Scaleway rdb's endpoint
-      name: scaleway_rdb_endpoint
-      namespace: ''
-    - description: Manage Scaleway rdb's instance
-      name: scaleway_rdb_instance
-      namespace: ''
-    - description: Manage Scaleway rdb's read_replica
-      name: scaleway_rdb_read_replica
-      namespace: ''
-    - description: Manage Scaleway rdb's snapshot
-      name: scaleway_rdb_snapshot
-      namespace: ''
-    - description: Manage Scaleway redis's cluster
-      name: scaleway_redis_cluster
-      namespace: ''
-    - description: Manage Scaleway registry's namespace
-      name: scaleway_registry_namespace
-      namespace: ''
-    - description: Manage Scaleway secret's secret
-      name: scaleway_secret
-      namespace: ''
-    - description: Manage Scaleway vpc's private_network
-      name: scaleway_vpc_private_network
-      namespace: ''
-    - description: Manage Scaleway vpcgw's dhcp
-      name: scaleway_vpcgw_dhcp
-      namespace: ''
-    - description: Manage Scaleway vpcgw's dhcp_entry
-      name: scaleway_vpcgw_dhcp_entry
-      namespace: ''
-    - description: Manage Scaleway vpcgw's gateway
-      name: scaleway_vpcgw_gateway
-      namespace: ''
-    - description: Manage Scaleway vpcgw's gateway_network
-      name: scaleway_vpcgw_gateway_network
-      namespace: ''
-    - description: Manage Scaleway vpcgw's ip
-      name: scaleway_vpcgw_ip
-      namespace: ''
-    - description: Manage Scaleway vpcgw's pat_rule
-      name: scaleway_vpcgw_pat_rule
-      namespace: ''
+      - description: Manage Scaleway account's project
+        name: scaleway_account_project
+        namespace: ''
+      - description: Manage Scaleway applesilicon's server
+        name: scaleway_applesilicon_server
+        namespace: ''
+      - description: Manage Scaleway baremetal's server
+        name: scaleway_baremetal_server
+        namespace: ''
+      - description: Manage Scaleway container's container
+        name: scaleway_container
+        namespace: ''
+      - description: Manage Scaleway container's cron
+        name: scaleway_container_cron
+        namespace: ''
+      - description: Manage Scaleway container's domain
+        name: scaleway_container_domain
+        namespace: ''
+      - description: Manage Scaleway container's namespace
+        name: scaleway_container_namespace
+        namespace: ''
+      - description: Manage Scaleway container's token
+        name: scaleway_container_token
+        namespace: ''
+      - description: Manage Scaleway domain's ssl_certificate
+        name: scaleway_domain_ssl_certificate
+        namespace: ''
+      - description: Manage Scaleway flexibleip's flexible_ip
+        name: scaleway_flexibleip_flexible_ip
+        namespace: ''
+      - description: Manage Scaleway function's function
+        name: scaleway_function
+        namespace: ''
+      - description: Manage Scaleway function's cron
+        name: scaleway_function_cron
+        namespace: ''
+      - description: Manage Scaleway function's domain
+        name: scaleway_function_domain
+        namespace: ''
+      - description: Manage Scaleway function's namespace
+        name: scaleway_function_namespace
+        namespace: ''
+      - description: Manage Scaleway function's token
+        name: scaleway_function_token
+        namespace: ''
+      - description: Manage Scaleway function's trigger
+        name: scaleway_function_trigger
+        namespace: ''
+      - description: Manage Scaleway iam's api_key
+        name: scaleway_iam_api_key
+        namespace: ''
+      - description: Manage Scaleway iam's application
+        name: scaleway_iam_application
+        namespace: ''
+      - description: Manage Scaleway iam's group
+        name: scaleway_iam_group
+        namespace: ''
+      - description: Manage Scaleway iam's policy
+        name: scaleway_iam_policy
+        namespace: ''
+      - description: Manage Scaleway iam's ssh_key
+        name: scaleway_iam_ssh_key
+        namespace: ''
+      - description: Manage Scaleway instance's image
+        name: scaleway_instance_image
+        namespace: ''
+      - description: Manage Scaleway instance's ip
+        name: scaleway_instance_ip
+        namespace: ''
+      - description: Manage Scaleway instance's placement_group
+        name: scaleway_instance_placement_group
+        namespace: ''
+      - description: Manage Scaleway instance's private_nic
+        name: scaleway_instance_private_nic
+        namespace: ''
+      - description: Manage Scaleway instance's security_group
+        name: scaleway_instance_security_group
+        namespace: ''
+      - description: Manage Scaleway instance's security_group_rule
+        name: scaleway_instance_security_group_rule
+        namespace: ''
+      - description: Manage Scaleway instance's snapshot
+        name: scaleway_instance_snapshot
+        namespace: ''
+      - description: Manage Scaleway instance's volume
+        name: scaleway_instance_volume
+        namespace: ''
+      - description: Manage Scaleway iot's device
+        name: scaleway_iot_device
+        namespace: ''
+      - description: Manage Scaleway iot's hub
+        name: scaleway_iot_hub
+        namespace: ''
+      - description: Manage Scaleway iot's network
+        name: scaleway_iot_network
+        namespace: ''
+      - description: Manage Scaleway iot's route
+        name: scaleway_iot_route
+        namespace: ''
+      - description: Manage Scaleway k8s's cluster
+        name: scaleway_k8s_cluster
+        namespace: ''
+      - description: Manage Scaleway k8s's pool
+        name: scaleway_k8s_pool
+        namespace: ''
+      - description: Manage Scaleway lb's lb
+        name: scaleway_lb
+        namespace: ''
+      - description: Manage Scaleway lb's acl
+        name: scaleway_lb_acl
+        namespace: ''
+      - description: Manage Scaleway lb's backend
+        name: scaleway_lb_backend
+        namespace: ''
+      - description: Manage Scaleway lb's certificate
+        name: scaleway_lb_certificate
+        namespace: ''
+      - description: Manage Scaleway lb's frontend
+        name: scaleway_lb_frontend
+        namespace: ''
+      - description: Manage Scaleway lb's route
+        name: scaleway_lb_route
+        namespace: ''
+      - description: Manage Scaleway lb's subscriber
+        name: scaleway_lb_subscriber
+        namespace: ''
+      - description: Manage Scaleway mnq's credential
+        name: scaleway_mnq_credential
+        namespace: ''
+      - description: Manage Scaleway mnq's namespace
+        name: scaleway_mnq_namespace
+        namespace: ''
+      - description: Manage Scaleway rdb's database_backup
+        name: scaleway_rdb_database_backup
+        namespace: ''
+      - description: Manage Scaleway rdb's endpoint
+        name: scaleway_rdb_endpoint
+        namespace: ''
+      - description: Manage Scaleway rdb's instance
+        name: scaleway_rdb_instance
+        namespace: ''
+      - description: Manage Scaleway rdb's read_replica
+        name: scaleway_rdb_read_replica
+        namespace: ''
+      - description: Manage Scaleway rdb's snapshot
+        name: scaleway_rdb_snapshot
+        namespace: ''
+      - description: Manage Scaleway redis's cluster
+        name: scaleway_redis_cluster
+        namespace: ''
+      - description: Manage Scaleway registry's namespace
+        name: scaleway_registry_namespace
+        namespace: ''
+      - description: Manage Scaleway secret's secret
+        name: scaleway_secret
+        namespace: ''
+      - description: Manage Scaleway vpc's private_network
+        name: scaleway_vpc_private_network
+        namespace: ''
+      - description: Manage Scaleway vpcgw's dhcp
+        name: scaleway_vpcgw_dhcp
+        namespace: ''
+      - description: Manage Scaleway vpcgw's dhcp_entry
+        name: scaleway_vpcgw_dhcp_entry
+        namespace: ''
+      - description: Manage Scaleway vpcgw's gateway
+        name: scaleway_vpcgw_gateway
+        namespace: ''
+      - description: Manage Scaleway vpcgw's gateway_network
+        name: scaleway_vpcgw_gateway_network
+        namespace: ''
+      - description: Manage Scaleway vpcgw's ip
+        name: scaleway_vpcgw_ip
+        namespace: ''
+      - description: Manage Scaleway vpcgw's pat_rule
+        name: scaleway_vpcgw_pat_rule
+        namespace: ''
     release_date: '2023-03-08'
   2.2.0:
     release_date: '2023-03-30'
