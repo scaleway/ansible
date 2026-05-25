@@ -23,15 +23,22 @@ def build_secret_version(parameters: dict) -> SecretVersion:
 
 def get_secret(api: "SecretV1Beta1API", **kwargs) -> Secret:
     """
-    Get a secret by secret_id or name
+    Get a secret by secret_id or name with optional path.
     """
     if "secret_id" in kwargs:
         secret = api.get_secret(secret_id=kwargs["secret_id"])
 
     elif "name" in kwargs:
-        secrets = api.list_secrets(name=kwargs["name"], scheduled_for_deletion=False)
+        list_kwargs = dict(name=kwargs["name"], scheduled_for_deletion=False)
+        if "path" in kwargs:
+            list_kwargs["path"] = kwargs["path"]
+        secrets = api.list_secrets(**list_kwargs)
 
         if len(secrets.secrets) == 0:
+            if "path" in kwargs:
+                raise SecretNotFound(
+                    f"Secret {kwargs['name']} not found at path {kwargs['path']}"
+                )
             raise SecretNotFound(f"Secret {kwargs['name']} not found")
 
         secret = secrets.secrets[0]
@@ -72,7 +79,10 @@ def update_secret(
 
     return changed, local_model, remote_model
     """
-    remote_model = get_secret(api, name=parameters.get("name"))
+    lookup = {"name": parameters.get("name")}
+    if "path" in parameters:
+        lookup["path"] = parameters["path"]
+    remote_model = get_secret(api, **lookup)
 
     # build and diff source model with the api one
     local_model = build_secret(parameters)
