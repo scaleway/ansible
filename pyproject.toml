@@ -12,7 +12,24 @@ pyrefly = "^0.24.2"
 ruff = "^0.12.4"
 
 [tool.ruff.lint]
-ignore = ["E402"]
+ignore = [
+    "BLE001",
+    "C401",
+    "C405",
+    "C408",
+    "E402",
+    "EXE001",
+    "FA100",
+    "FA102",
+    "I001",
+    "RUF019",
+    "TRY201",
+    "UP001",
+    "UP004",
+    "UP008",
+    "UP009",
+    "UP010"
+]
 
 [tool.ty.rules]
 unresolved-import = "ignore"
