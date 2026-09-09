@@ -243,6 +243,25 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self.inventory.add_group(group=group)
                 self.inventory.add_child(group=group, child=hostname)
 
+            host_vars = {}
+            host_vars['id'] = host.id
+            host_vars['hostname'] = host.hostname
+            host_vars['state'] = host.state
+            host_vars['zone'] = host.zone
+            host_vars['public_ipv4'] = host.public_ipv4
+            host_vars['public_ipv6'] = host.public_ipv6
+            host_vars['vpc_ipv4'] = host.vpc_ipv4
+            host_vars['vpc_ipv6'] = host.vpc_ipv6
+
+
+            strict = self.get_option('strict')
+            # Add variables created by the user's Jinja2 expressions to the host
+            self._set_composite_vars(self.get_option('compose'), host_vars, hostname, strict=strict)
+
+            # Create user-defined groups using variables and Jinja2 conditionals
+            self._add_host_to_composed_groups(self.get_option('groups'), host_vars, hostname, strict=strict)
+            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host_vars, hostname, strict=strict)
+
     def get_host_groups(self, host: _Host):
         return set(self.sanitize_tag(tag) for tag in host.tags).union(
             set([self.sanitize_tag(host.zone)])
