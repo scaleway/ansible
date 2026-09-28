@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.8
 
@@ -44,14 +44,14 @@ jobs:
         run: ansible-galaxy collection publish --api-key ${{ secrets.GALAXY_API_KEY }} scaleway-scaleway-${{ github.ref_name }}.tar.gz
 
       - name: Create a release with the collection artifact
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           files: |
             scaleway-scaleway-${{ github.ref_name }}.tar.gz
           generate_release_notes: true
 
       - name: Create a PR to update changelog
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "docs: update changelog for ${{ github.ref_name }}"
