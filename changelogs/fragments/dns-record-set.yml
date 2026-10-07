@@ -1,0 +1,2 @@
+minor_changes:
+  - Add scaleway_dns_record_set for idempotent management of one DNS record set in an existing zone.
