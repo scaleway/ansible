@@ -409,3 +409,38 @@ def test_listing_api_error_fails_instead_of_claiming_success():
     module.exit_json.assert_not_called()
     api_class.return_value.update_dns_zone_records.assert_not_called()
     assert "API unavailable" in module.fail_json.call_args.kwargs["msg"]
+
+
+def test_absent_refuses_to_delete_advanced_record_it_cannot_represent():
+    module = MagicMock()
+    module.params = {
+        "state": "absent",
+        "dns_zone": "example.com",
+        "name": "www",
+        "record_type": "A",
+        "records": None,
+        "project_id": None,
+    }
+    module.check_mode = False
+    module.fail_json.side_effect = SystemExit(1)
+    with ExitStack() as stack:
+        api_class = stack.enter_context(
+            patch.object(scaleway_dns_record_set, "DomainV2Beta1API")
+        )
+        stack.enter_context(
+            patch.object(scaleway_dns_record_set, "scaleway_get_client_from_module")
+        )
+        stack.enter_context(
+            patch.object(
+                scaleway_dns_record_set,
+                "list_matching_records",
+                return_value=[
+                    record("advanced-id", "192.0.2.1", has_advanced_configuration=True)
+                ],
+            )
+        )
+        with pytest.raises(SystemExit):
+            scaleway_dns_record_set.run_module(module)
+
+    assert "advanced DNS records" in module.fail_json.call_args.kwargs["msg"]
+    api_class.return_value.update_dns_zone_records.assert_not_called()

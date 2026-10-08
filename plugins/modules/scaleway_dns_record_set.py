@@ -306,11 +306,10 @@ def run_module(module):
             record_type,
             project_id=params["project_id"],
         )
-        if params["state"] == "present":
-            if any(record.get("has_advanced_configuration") for record in existing):
-                module.fail_json(
-                    msg="This record set contains advanced DNS records that this module cannot manage"
-                )
+        if any(record.get("has_advanced_configuration") for record in existing):
+            module.fail_json(
+                msg="This record set contains advanced DNS records that this module cannot manage"
+            )
         changes = reconcile_records(
             existing, desired, record_name, record_type, params["state"]
         )
