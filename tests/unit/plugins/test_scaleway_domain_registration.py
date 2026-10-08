@@ -62,7 +62,7 @@ def domain(
     *,
     auto_renew="disabled",
     dnssec="disabled",
-    project_id="project-1"
+    project_id="project-1",
 ):
     return SimpleNamespace(
         domain=name,

@@ -482,7 +482,7 @@ def run_module(module):
                 )
             params["record_id"] = record_id
         if record_type not in RecordType.__members__ or record_type == "UNKNOWN":
-            raise ValueError("Unsupported DNS record type: %s" % record_type)
+            raise ValueError(f"Unsupported DNS record type: {record_type}")
         if params["state"] == "present" and params["data"] is None:
             raise ValueError("data is required when state=present")
         if params["state"] == "absent" and not any(
@@ -582,7 +582,7 @@ def run_module(module):
     except ValueError as exc:
         module.fail_json(msg=str(exc))
     except Exception as exc:
-        module.fail_json(msg="Failed to manage DNS record: %s" % exc)
+        module.fail_json(msg=f"Failed to manage DNS record: {exc}")
 
 
 def main():

@@ -70,9 +70,8 @@ def run(module_params, records, check_mode=False):
         scaleway_dns_record, "DomainV2Beta1API", return_value=api
     ), patch.object(
         scaleway_dns_record, "scaleway_get_client_from_module", return_value=MagicMock()
-    ):
-        with pytest.raises(Finished) as result:
-            scaleway_dns_record.run_module(FakeModule(module_params, check_mode))
+    ), pytest.raises(Finished) as result:
+        scaleway_dns_record.run_module(FakeModule(module_params, check_mode))
     return result.value.result, api
 
 
@@ -123,9 +122,8 @@ def test_auto_create_zone_is_an_explicit_opt_in():
         scaleway_dns_record, "DomainV2Beta1API", return_value=api
     ), patch.object(
         scaleway_dns_record, "scaleway_get_client_from_module", return_value=MagicMock()
-    ):
-        with pytest.raises(Finished) as result:
-            scaleway_dns_record.run_module(FakeModule(params(create_zone=True)))
+    ), pytest.raises(Finished) as result:
+        scaleway_dns_record.run_module(FakeModule(params(create_zone=True)))
     assert result.value.result["changed"] is True
     assert (
         api.update_dns_zone_records.call_args.kwargs["disallow_new_zone_creation"]

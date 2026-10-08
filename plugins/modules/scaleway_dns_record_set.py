@@ -288,7 +288,7 @@ def run_module(module):
         record_name = params["name"].lower()
         dns_zone = params["dns_zone"].lower()
         if record_type not in RecordType.__members__:
-            module.fail_json(msg="Unsupported DNS record type: %s" % record_type)
+            module.fail_json(msg=f"Unsupported DNS record type: {record_type}")
         desired = params["records"] or []
         if params["state"] == "present":
             if not desired:
@@ -331,9 +331,9 @@ def run_module(module):
             changed=bool(changes), records=existing, changes=changes, diff=diff
         )
     except ValueError as exc:
-        module.fail_json(msg="Invalid DNS record type or value: %s" % exc)
+        module.fail_json(msg=f"Invalid DNS record type or value: {exc}")
     except Exception as exc:
-        module.fail_json(msg="Failed to manage DNS record set: %s" % exc)
+        module.fail_json(msg=f"Failed to manage DNS record set: {exc}")
 
 
 def main():

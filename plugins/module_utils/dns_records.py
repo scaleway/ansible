@@ -39,7 +39,7 @@ def _normalize_target_fqdn(value, dns_zone):
     target = target.lower().rstrip(".")
     if "." in target:
         return target + "."
-    return "%s.%s." % (target, dns_zone)
+    return f"{target}.{dns_zone}."
 
 
 def _normalize_srv_data(value, dns_zone):
@@ -55,7 +55,7 @@ def _normalize_srv_data(value, dns_zone):
     zone_suffix = "." + dns_zone + "."
     if target.endswith(zone_suffix):
         target = target[: -len(zone_suffix)]
-    return " ".join((priority, weight, port, target))
+    return f"{priority} {weight} {port} {target}"
 
 
 def normalize_record_data_for_match(data, record_type, dns_zone):
@@ -96,10 +96,10 @@ def record_to_dict(record, dns_zone, project_id=None):
     """Return every supported DNS record setting as an Ansible-safe dictionary."""
     record_type = getattr(record.type_, "name", str(record.type_)).upper()
     name = record.name
-    fqdn = dns_zone if name in ("", "@") else "%s.%s" % (name, dns_zone)
+    fqdn = dns_zone if name in ("", "@") else f"{name}.{dns_zone}"
     return dict(
         id=record.id,
-        localized_id="%s/%s" % (dns_zone, record.id),
+        localized_id=f"{dns_zone}/{record.id}",
         dns_zone=dns_zone,
         project_id=project_id,
         name=name,

@@ -258,7 +258,7 @@ def _wait_for(api, domain, condition, timeout):
         if current is not None and condition(current):
             return current
         if time.monotonic() >= deadline:
-            raise TimeoutError("timed out waiting for domain %s" % domain)
+            raise TimeoutError(f"timed out waiting for domain {domain}")
         time.sleep(min(5, max(0, deadline - time.monotonic())))
 
 
@@ -308,8 +308,7 @@ def run(module, api, default_project_id=None):
                 and registration.project_id != project_id
             ):
                 raise ValueError(
-                    "domain %s belongs to project %s, not %s"
-                    % (name, registration.project_id, project_id)
+                    f"domain {name} belongs to project {registration.project_id}, not {project_id}"
                 )
             existing[name] = registration
 
@@ -366,8 +365,9 @@ def run(module, api, default_project_id=None):
         if to_purchase and params["state"] == "present":
             if not params["confirm_purchase"]:
                 raise ValueError(
-                    "purchasing %s incurs charges; set confirm_purchase=true to authorize it"
-                    % ", ".join(to_purchase)
+                    "purchasing {} incurs charges; set confirm_purchase=true to authorize it".format(
+                        ", ".join(to_purchase)
+                    )
                 )
             if bool(params["owner_contact_id"]) == bool(params["owner_contact"]):
                 raise ValueError(
@@ -391,14 +391,15 @@ def run(module, api, default_project_id=None):
                     existing[name] = _wait_for(
                         api,
                         name,
-                        lambda domain: _status(domain.status)
-                        not in ("creating", "checking", "status_unknown"),
+                        lambda domain: (
+                            _status(domain.status)
+                            not in ("creating", "checking", "status_unknown")
+                        ),
                         params["wait_timeout"],
                     )
                     if _status(existing[name].status) != "active":
                         raise RuntimeError(
-                            "registration of %s ended with status %s"
-                            % (name, _status(existing[name].status))
+                            f"registration of {name} ended with status {_status(existing[name].status)}"
                         )
                     actions.extend(
                         _feature_actions(
@@ -421,18 +422,21 @@ def run(module, api, default_project_id=None):
                     _wait_for(
                         api,
                         action["domain"],
-                        lambda domain: (_dnssec_status(domain) == "enabled") == wanted
-                        and _dnssec_status(domain) in ("enabled", "disabled"),
+                        lambda domain, wanted=wanted: (
+                            (_dnssec_status(domain) == "enabled") == wanted
+                            and _dnssec_status(domain) in ("enabled", "disabled")
+                        ),
                         params["wait_timeout"],
                     )
                 else:
                     _wait_for(
                         api,
                         action["domain"],
-                        lambda domain: (_status(domain.auto_renew_status) == "enabled")
-                        == wanted
-                        and _status(domain.auto_renew_status)
-                        in ("enabled", "disabled"),
+                        lambda domain, wanted=wanted: (
+                            (_status(domain.auto_renew_status) == "enabled") == wanted
+                            and _status(domain.auto_renew_status)
+                            in ("enabled", "disabled")
+                        ),
                         params["wait_timeout"],
                     )
 
@@ -457,7 +461,7 @@ def run(module, api, default_project_id=None):
             details["planned_actions"] = result["planned_actions"]
             if "task_id" in result:
                 details["task_id"] = result["task_id"]
-        module.fail_json(msg="Scaleway registrar request failed: %s" % error, **details)
+        module.fail_json(msg=f"Scaleway registrar request failed: {error}", **details)
 
 
 def main():

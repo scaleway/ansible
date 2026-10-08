@@ -118,9 +118,9 @@ except ImportError:
 
 def _exclusive_wildcard(values, name):
     if not values or "*" in values and values != ["*"]:
-        raise ValueError("%s must be nonempty and '*' must appear alone" % name)
+        raise ValueError(f"{name} must be nonempty and '*' must appear alone")
     if any(not value for value in values):
-        raise ValueError("%s cannot contain an empty string" % name)
+        raise ValueError(f"{name} cannot contain an empty string")
 
 
 def _timestamp(value, name):
@@ -129,9 +129,9 @@ def _timestamp(value, name):
     try:
         result = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
-        raise ValueError("%s must be an RFC3339 timestamp" % name)
+        raise ValueError(f"{name} must be an RFC3339 timestamp")
     if result.tzinfo is None:
-        raise ValueError("%s must include a timezone" % name)
+        raise ValueError(f"{name} must include a timezone")
     return result
 
 
@@ -203,7 +203,7 @@ def run_module(module):
     except ValueError as exc:
         module.fail_json(msg=str(exc))
     except Exception as exc:
-        module.fail_json(msg="Failed to list DNS zones: %s" % exc)
+        module.fail_json(msg=f"Failed to list DNS zones: {exc}")
 
 
 def main():

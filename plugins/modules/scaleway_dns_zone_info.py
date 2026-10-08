@@ -101,13 +101,13 @@ def run_module(module):
         )
         if zone is None:
             module.fail_json(
-                msg="DNS zone %s was not found" % zone_name(domain, subdomain)
+                msg=f"DNS zone {zone_name(domain, subdomain)} was not found"
             )
         module.exit_json(changed=False, dns_zone=zone_to_dict(zone))
     except ValueError as exc:
         module.fail_json(msg=str(exc))
     except Exception as exc:
-        module.fail_json(msg="Failed to read DNS zone: %s" % exc)
+        module.fail_json(msg=f"Failed to read DNS zone: {exc}")
 
 
 def main():

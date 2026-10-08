@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 def zone_name(domain, subdomain):
     """Build the API's full zone name, including the apex case."""
-    return "%s.%s" % (subdomain, domain) if subdomain else domain
+    return f"{subdomain}.{domain}" if subdomain else domain
 
 
 def _canonical_name(value):
@@ -33,8 +33,7 @@ def one_matching_zone(api, domain, subdomain, project_id=None):
     zones = matching_zones(api, domain, subdomain, project_id)
     if len(zones) > 1:
         raise ValueError(
-            "More than one DNS zone matches %s; specify project_id"
-            % zone_name(domain, subdomain)
+            f"More than one DNS zone matches {zone_name(domain, subdomain)}; specify project_id"
         )
     return zones[0] if zones else None
 

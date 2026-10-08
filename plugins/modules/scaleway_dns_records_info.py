@@ -132,7 +132,7 @@ def _validate_filters(params):
     if record_type is not None:
         record_type = record_type.upper()
         if record_type not in RecordType.__members__ or record_type == "UNKNOWN":
-            raise ValueError("unsupported DNS record type: %s" % record_type)
+            raise ValueError(f"unsupported DNS record type: {record_type}")
     return record_type
 
 
@@ -161,9 +161,7 @@ def _zones_to_query(api, project_id, requested):
         return sorted(
             {
                 normalize_dns_zone(
-                    "%s.%s" % (zone.subdomain, zone.domain)
-                    if zone.subdomain
-                    else zone.domain
+                    f"{zone.subdomain}.{zone.domain}" if zone.subdomain else zone.domain
                 )
                 for zone in zones
             }
@@ -234,7 +232,7 @@ def run_module(module):
         module.fail_json(msg=str(exc))
         return
     except Exception as exc:
-        module.fail_json(msg="Failed to list DNS records: %s" % exc)
+        module.fail_json(msg=f"Failed to list DNS records: {exc}")
         return
     module.exit_json(changed=False, records=records, total_count=len(records))
 

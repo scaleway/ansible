@@ -211,7 +211,7 @@ def run_module(module):
     except ValueError as exc:
         module.fail_json(msg=str(exc))
     except Exception as exc:
-        module.fail_json(msg="Failed to manage DNS zone: %s" % exc)
+        module.fail_json(msg=f"Failed to manage DNS zone: {exc}")
 
 
 def main():

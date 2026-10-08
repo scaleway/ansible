@@ -81,11 +81,10 @@ def read_registration(api, domain_name, project_id=None):
         raise ValueError("domain_name must not be empty")
     registration = get_domain_or_none(api, name)
     if registration is None:
-        raise ValueError("domain registration %s was not found" % name)
+        raise ValueError(f"domain registration {name} was not found")
     if project_id and registration.project_id != project_id:
         raise ValueError(
-            "domain %s belongs to project %s, not %s"
-            % (name, registration.project_id, project_id)
+            f"domain {name} belongs to project {registration.project_id}, not {project_id}"
         )
     task = find_registration_task(api, name, project_id=project_id)
     domain_names = (
@@ -116,7 +115,7 @@ def main():
             **read_registration(api, module.params["domain_name"], project_id)
         )
     except Exception as error:
-        module.fail_json(msg="Scaleway registrar request failed: %s" % error)
+        module.fail_json(msg=f"Scaleway registrar request failed: {error}")
 
 
 if __name__ == "__main__":

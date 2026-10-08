@@ -142,7 +142,7 @@ def _parse_selector(params):
     name = normalize_record_name(params["name"], zone)
     record_type = params["record_type"].upper()
     if record_type not in RecordType.__members__ or record_type == "UNKNOWN":
-        raise ValueError("unsupported DNS record type: %s" % record_type)
+        raise ValueError(f"unsupported DNS record type: {record_type}")
     return zone, None, name, record_type, params["data"]
 
 
@@ -154,7 +154,7 @@ def lookup_record(
     name=None,
     record_type=None,
     data=None,
-    project_id=None
+    project_id=None,
 ):
     """Read all pages and select exactly one record."""
     query = dict(dns_zone=dns_zone, name=name, project_id=project_id)
@@ -208,12 +208,12 @@ def run_module(module):
         module.fail_json(msg=str(exc))
         return
     except Exception as exc:
-        module.fail_json(msg="Failed to read DNS record: %s" % exc)
+        module.fail_json(msg=f"Failed to read DNS record: {exc}")
         return
 
     if record is None:
         module.fail_json(
-            msg="No DNS record matches the supplied selector in %s" % dns_zone
+            msg=f"No DNS record matches the supplied selector in {dns_zone}"
         )
         return
     module.exit_json(changed=False, record=record_to_dict(record, dns_zone, project_id))
