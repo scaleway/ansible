@@ -1,0 +1,4 @@
+minor_changes:
+  - Add scaleway_dns_record for ID-targeted management of individual records, including Geo IP, HTTP service, view, and weighted configurations.
+bugfixes:
+  - Prevent scaleway_dns_record_set from deleting advanced DNS records it cannot represent.
