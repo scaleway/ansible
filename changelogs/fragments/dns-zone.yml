@@ -1,0 +1,2 @@
+minor_changes:
+  - Add DNS zone lifecycle and read-only zone lookup/list modules for Scaleway Domains and DNS.

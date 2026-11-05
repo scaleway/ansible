@@ -53,6 +53,20 @@ ok: [localhost] => {
 }
 ```
 
+## Domains and DNS
+
+The DNS modules correspond to the Domains and DNS resources, data sources, and list resources in the Scaleway Terraform provider:
+
+| Terraform object | Ansible modules |
+| --- | --- |
+| `scaleway_domain_record` | `scaleway_dns_record`, `scaleway_dns_record_info`, `scaleway_dns_records_info` |
+| `scaleway_domain_zone` | `scaleway_dns_zone`, `scaleway_dns_zone_info`, `scaleway_dns_zones_info` |
+| `scaleway_domain_registration` | `scaleway_domain_registration`, `scaleway_domain_registration_info` |
+
+`scaleway_dns_record` manages **one record** and supports Geo IP, HTTP service, view, and weighted configurations. Use `record_id` (or `match_data`, the old value) when changing a record's value. The older `scaleway_dns_record_set` manages the **entire set** of records sharing a name and type, so its desired list must include every member that should remain.
+
+Domain registration purchases incur charges and require `confirm_purchase: true`. With `state: absent`, the registration module disables automatic renewal; it does not cancel ownership. DNS zone deletion removes the zone's records. Each module's options and examples are available through `ansible-doc scaleway.scaleway.<module_name>`.
+
 
 ## Authentication and Environment variables
 
