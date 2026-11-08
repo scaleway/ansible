@@ -32,7 +32,7 @@ jobs:
           mkdir -p ${{ env.ansible-collections-path }}
 
       - name: Checkout the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: ${{ env.ansible-collections-path }}
 
