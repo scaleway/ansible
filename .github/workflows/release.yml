@@ -51,7 +51,7 @@ jobs:
           generate_release_notes: true
 
       - name: Create a PR to update changelog
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "docs: update changelog for ${{ github.ref_name }}"
