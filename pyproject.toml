@@ -40,8 +40,9 @@ invalid-argument-type = "ignore"
 invalid-return-type = "ignore"
 
 [tool.pyrefly.errors]
-import-error = false
+missing-import = false
 missing-attribute = false
+unbound-name = false
 bad-assignment = false
 no-matching-overload = false
 bad-override = false
