@@ -8,7 +8,7 @@ package-mode = false
 
 [tool.poetry.group.dev.dependencies]
 ty = "^0.0.1a15"
-pyrefly = "^0.24.2"
+pyrefly = "^1.0.0"
 ruff = "^0.12.4"
 
 [tool.ruff.lint]
