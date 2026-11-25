@@ -46,9 +46,11 @@ action_groups:
     - scaleway_lb_subscriber
     - scaleway_mnq_credential
     - scaleway_mnq_namespace
+    - scaleway_rdb_database
     - scaleway_rdb_database_backup
     - scaleway_rdb_endpoint
     - scaleway_rdb_instance
+    - scaleway_rdb_privilege
     - scaleway_rdb_read_replica
     - scaleway_rdb_snapshot
     - scaleway_redis_cluster
