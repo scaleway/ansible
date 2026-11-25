@@ -74,6 +74,7 @@ class Secret(Model):
     id: str = ""
     description: str = ""
     tags: list[str] = field(default_factory=list)
+    path: str = ""
 
 
 @dataclass
